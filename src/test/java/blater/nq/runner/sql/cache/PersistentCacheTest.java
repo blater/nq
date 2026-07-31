@@ -129,6 +129,51 @@ class PersistentCacheTest {
   }
 
   @Test
+  void materializationConfigurationCreatesDistinctCanonicalVariants() throws Exception {
+    Path input = write("configured.json", "{}");
+    Map<String, String> defaults = cacheParams();
+    Map<String, String> configured = Map.of(
+        ParameterParser.CACHE_DIR_PARAM, PersistentCache.cacheRoot(defaults).toString(),
+        ParameterParser.ANONYMOUS_COLLECTIONS_PARAM, "error",
+        ParameterParser.RELATION_ALIAS_PREFIX + "000000", "/=records");
+
+    CacheHandle defaultCache = preparedCache(CacheSource.from(
+        input.toString(), InputType.JSON, defaults), defaults);
+    CacheHandle configuredCache = preparedCache(CacheSource.from(
+        input.toString(), InputType.JSON, configured), configured);
+
+    assertFalse(defaultCache.cacheFile().equals(configuredCache.cacheFile()));
+    assertEquals(2, PersistentCache.listCaches(defaults).size());
+    assertTrue(PersistentCache.listCaches(defaults).stream()
+        .map(CacheEntry::variantId).anyMatch(value -> value.startsWith("config-")));
+    assertThrows(IllegalArgumentException.class,
+        () -> PersistentCache.use(input.toString(), defaults));
+    assertEquals(configuredCache.cacheFile(),
+        PersistentCache.use(input.toString(), configured).cacheFile());
+  }
+
+  @Test
+  void outdatedInputCachesRemainListableButCannotBeSelected() throws Exception {
+    Path input = write("old.json", "{}");
+    Map<String, String> params = cacheParams();
+    CacheSource oldSource = new CacheSource(
+        input.toAbsolutePath().normalize().toString(), InputType.JSON, "", "");
+    CacheHandle oldCache = preparedCache(oldSource, params);
+
+    CacheEntry listed = PersistentCache.listCaches(params).getFirst();
+    assertTrue(listed.outdated());
+    assertEquals("outdated", listed.variantId());
+    assertThrows(IllegalArgumentException.class,
+        () -> PersistentCache.use(input.toString(), params));
+    assertThrows(IllegalArgumentException.class,
+        () -> PersistentCache.use(oldCache.cacheFile().getFileName().toString(), params));
+
+    PersistentCache.activate(oldCache);
+    assertThrows(IllegalStateException.class, PersistentCache::active);
+    assertTrue(PersistentCache.active().isEmpty());
+  }
+
+  @Test
   void useCacheRequiresParquetVariantWhenAPathHasMultipleCaches() throws Exception {
     Path input = write("customers.parquet", "not used by this test");
     Map<String, String> params = cacheParams();

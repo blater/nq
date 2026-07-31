@@ -32,6 +32,8 @@ public final class Help {
       Cache options:
         --cache
         --cache-dir <path>
+        --anonymous-collections <merge|error>
+        --relation-alias <source-path>=<relation-name>  (repeatable)
         --metadata-refresh
         --metadata-expiry-hours <hours>
 
@@ -121,12 +123,18 @@ public final class Help {
           Add --cache to persist and reuse that H2 database. With JDBC settings,
           the input supplies mapped DML values. With no input or JDBC connection,
           the script queries the active cache. DQL structure keys are inferred
-          from database metadata unless --no-key-inference is supplied.
+          from database metadata unless --no-key-inference is supplied. Named
+          JSON/YAML collections use their member names as tables; anonymous
+          record streams use ITEM. Resolve collisions or name anonymous paths
+          with repeatable --relation-alias path=name options. Use
+          --anonymous-collections error to reject ambiguous ITEM merging.
 
       EXAMPLES
           nq report.nq -p database.properties
           nq update.nq customers.json -p database.properties
           nq 'select id from item;' elements.json
+          nq 'select id from customers;' customers.json
+          nq query.nq data.json --relation-alias '/0=customers'
           nq query.nq customers.json --cache --output json
           nq 'output json; select 1 into {result.value};' -p database.properties
 
@@ -154,6 +162,13 @@ public final class Help {
           persistent cache. A script with no input or JDBC connection queries
           the active cache. Explicit --cache takes precedence over JDBC settings.
 
+          JSON and YAML relation names come from collection member names.
+          Anonymous JSON arrays, JSON Lines, and CSV use ITEM. Configure source
+          paths with repeatable --relation-alias path=name options. Several
+          unresolved anonymous paths merge into ITEM with a provenance-loss
+          warning by default; --anonymous-collections error rejects the load.
+          Materialization configuration is part of persistent cache identity.
+
       EXAMPLES
           nq customers.json
           nq totals.nq
@@ -179,12 +194,15 @@ public final class Help {
           filename. A bare cache filename is resolved in --cache-dir, or in
           ~/.nq/cache by default. The source file need not still exist. The
           command fails if no matching cache exists and does not create one. If
-          multiple Parquet variants exist, use --parquet-record to select one.
+          several current variants exist, repeat their materialization options
+          to select an exact variant; use --parquet-record for Parquet variants.
+          Outdated layouts are listed but must be rebuilt from the source.
 
       EXAMPLES
           nq --use-cache customers.json
           nq --use-cache cache-0123456789abcdef.mv.db
           nq --use-cache customers.parquet --parquet-record customer
+          nq --use-cache data.json --relation-alias '/0=customers'
 
       SEE ALSO
           nq --help cache
@@ -222,8 +240,9 @@ public final class Help {
           nq --list-caches [--cache-dir path]
 
       DESCRIPTION
-          Displays each cache's input type, creation time, and source path. The
-          active cache is marked with an asterisk.
+          Displays each cache's input type, creation time, materialization
+          variant, and source path. The active cache is marked with an asterisk.
+          Incompatible old input layouts are marked outdated and cannot be used.
 
       EXAMPLE
           nq --list-caches --cache-dir /tmp/nq-cache
@@ -341,7 +360,9 @@ public final class Help {
 
           Arguments may appear in any unambiguous order. A script may be a file
           or inline text. The input file type is selected by its extension. An
-          input file on its own is loaded into the cache and made active.
+          input file on its own is loaded into the cache and made active. Named
+          JSON/YAML collections become same-named relations; anonymous JSON,
+          JSON Lines, and CSV record streams use ITEM.
 
       HELP
           -h
@@ -405,8 +426,17 @@ public final class Help {
           --cache-dir path
               Store caches somewhere other than ~/.nq/cache.
 
+          --anonymous-collections merge|error
+              Merge several unresolved anonymous paths into ITEM with a warning,
+              or reject that ambiguous materialization. The default is merge.
+
+          --relation-alias source-path=relation-name
+              Assign a stable relation name to a source path. Repeat for more
+              paths. This option and the anonymous policy select cache variants.
+
           --list-caches
-              List persistent caches and their source files.
+              List persistent caches, variants, and source files. Incompatible
+              old input layouts are marked outdated.
 
           --clear-cache [input-file-or-cache-filename]
               Clear all caches, every variant for one input file, or one named

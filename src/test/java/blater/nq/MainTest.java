@@ -1022,6 +1022,25 @@ class MainTest {
   }
 
   @Test
+  void ephemeralQueryUsesNamedRootCollectionWithoutItemFallback() throws Exception {
+    Path input = write("named-customers.json", """
+        {"customers":[
+          {"id":1,"name":"Alice","city":"London"},
+          {"id":2,"name":"Bob","city":"Paris"},
+          {"id":3,"name":"Eva","city":"London"}
+        ]}
+        """);
+
+    String output = captureStdout(() -> Main.main(
+        "select id, name from customers where city = 'London' order by id;",
+        input.toString()));
+
+    assertEquals("""
+        [{"id":"1","name":"Alice"},{"id":"3","name":"Eva"}]
+        """, output);
+  }
+
+  @Test
   void standaloneCacheLoadReportsReuseAndSuppliesTheActiveCache() throws Exception {
     Path cacheDir = tempDir.resolve("active-cache");
     Path input = write("active.json", """

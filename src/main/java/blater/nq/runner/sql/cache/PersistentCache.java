@@ -70,6 +70,8 @@ public final class PersistentCache {
     for (var entry : entries) {
       Log.info((entry.active() ? "* " : "  ") + entry.inputType()
           + "\t" + ((entry.createdMillis()  <= 0) ? "-": Instant.ofEpochMilli(entry.createdMillis()).toString())
+          + "\t" + entry.variantId()
+          + (entry.outdated() ? " (outdated)" : "")
           + "\t" + entry.sourcePath());
     }
   }
@@ -198,10 +200,13 @@ public final class PersistentCache {
   public static CacheHandle use(String target, Map<String, String> params) {
     Optional<Path> namedCacheFile = resolveCacheFilename(target, params);
     if (namedCacheFile.isPresent()) {
+      if (MaterializationConfiguration.from(params).explicitlyConfigured()) {
+        return Log.fatal(IllegalArgumentException.class,
+            "Materialization options cannot be combined with --use-cache <cache-file>.");
+      }
       Path cacheFile = namedCacheFile.get();
       CacheHandle handle = readMetadata(cacheFile)
-          .map(metadata -> new CacheHandle(
-              cacheFile, jdbcUrl(cacheFile), false, metadata.source()))
+          .map(metadata -> currentHandle(cacheFile, metadata))
           .orElseGet(() -> Log.fatal(
               IllegalArgumentException.class,
               "No existing cache found at " + cacheFile + "."));
@@ -210,19 +215,30 @@ public final class PersistentCache {
     }
 
     String sourcePath = CacheSource.normalizedSourcePath(target).toString();
-    boolean variantSpecified = params.containsKey(PARQUET_RECORD_PARAM);
+    boolean variantSpecified = params.containsKey(PARQUET_RECORD_PARAM)
+        || MaterializationConfiguration.from(params).explicitlyConfigured();
     CacheSource requested = CacheSource.from(target, params);
 
-    List<CacheHandle> matches = cacheFiles(params).stream()
+    List<CacheHandle> sourceMatches = cacheFiles(params).stream()
         .map(cacheFile -> readMetadata(cacheFile)
+            .filter(metadata -> !metadata.databaseStructure())
             .filter(metadata -> sourcePath.equals(metadata.sourcePath()))
-            .filter(metadata -> !variantSpecified || requested.matches(metadata))
             .map(metadata -> new CacheHandle(
                 cacheFile, jdbcUrl(cacheFile), false, metadata.source())))
         .flatMap(Optional::stream)
         .toList();
+    List<CacheHandle> matches = sourceMatches.stream()
+        .filter(handle -> handle.source().currentLayout())
+        .filter(handle -> !variantSpecified || requested.identityText().equals(handle.source().identityText()))
+        .toList();
 
     if (matches.isEmpty()) {
+      boolean hasCurrent = sourceMatches.stream().anyMatch(handle -> handle.source().currentLayout());
+      if (!hasCurrent && sourceMatches.stream().anyMatch(handle -> !handle.source().currentLayout())) {
+        return Log.fatal(
+            IllegalArgumentException.class,
+            "Existing cache layout is outdated for " + sourcePath + "; reload the source file.");
+      }
       return Log.fatal(
           IllegalArgumentException.class,
           "No existing cache found for " + sourcePath + ".");
@@ -231,12 +247,27 @@ public final class PersistentCache {
       return Log.fatal(
           IllegalArgumentException.class,
           "Multiple caches found for " + sourcePath
-              + "; specify --parquet-record to select one.");
+              + "; specify --parquet-record and materialization options to select one. Variants: "
+              + matches.stream().map(handle -> handle.source().displayVariantId())
+                  .distinct().collect(java.util.stream.Collectors.joining(", ")) + ".");
     }
 
     CacheHandle handle = matches.getFirst();
     activate(handle);
     return handle;
+  }
+
+  private static CacheHandle currentHandle(Path cacheFile, Metadata metadata) {
+    if (metadata.databaseStructure()) {
+      return Log.fatal(IllegalArgumentException.class,
+          "Cache file is a database-structure metadata cache, not an input cache: " + cacheFile + ".");
+    }
+    CacheSource source = metadata.source();
+    if (!source.currentLayout()) {
+      return Log.fatal(IllegalArgumentException.class,
+          "Cache layout is outdated; reload " + source.sourcePath() + ".");
+    }
+    return new CacheHandle(cacheFile, jdbcUrl(cacheFile), false, source);
   }
 
   public static Optional<CacheHandle> active() {
@@ -252,13 +283,27 @@ public final class PersistentCache {
       return Optional.empty();
     }
 
+    Metadata selected = metadata.get();
+    if (selected.databaseStructure()) {
+      clearActiveSelection();
+      return Log.fatal(
+          IllegalStateException.class,
+          "The active cache is database-structure metadata, not an input cache.");
+    }
+    CacheSource source;
     try {
-      CacheSource source = metadata.get().source();
-      return Optional.of(new CacheHandle(cacheFile, jdbcUrl(cacheFile), false, source));
+      source = selected.source();
     } catch (RuntimeException ex) {
       clearActiveSelection();
       return Optional.empty();
     }
+    if (!source.currentLayout()) {
+      clearActiveSelection();
+      return Log.fatal(
+          IllegalStateException.class,
+          "The active input cache layout is outdated; reload " + source.sourcePath() + ".");
+    }
+    return Optional.of(new CacheHandle(cacheFile, jdbcUrl(cacheFile), false, source));
   }
 
   static int clearAll(Map<String, String> params) {
@@ -272,13 +317,23 @@ public final class PersistentCache {
   }
 
   static List<CacheEntry> listCaches(Map<String, String> params) {
-    Optional<Path> activeCache = active().map(CacheHandle::cacheFile);
+    Optional<Path> activeCache = configuredActiveCacheFile();
     return cacheFiles(params).stream()
-        .map(cacheFile -> readMetadata(cacheFile).map(metadata -> new CacheEntry(
-            metadata.sourcePath(),
-            metadata.inputType(),
-            metadata.createdMillis(),
-            activeCache.map(cacheFile::equals).orElse(false))))
+        .map(cacheFile -> readMetadata(cacheFile).map(metadata -> {
+          if (metadata.databaseStructure()) {
+            return new CacheEntry(
+                metadata.sourcePath(), metadata.inputType(), metadata.createdMillis(),
+                activeCache.map(cacheFile::equals).orElse(false), "database-metadata", false);
+          }
+          CacheSource source = metadata.source();
+          return new CacheEntry(
+              metadata.sourcePath(),
+              metadata.inputType(),
+              metadata.createdMillis(),
+              activeCache.map(cacheFile::equals).orElse(false),
+              source.displayVariantId(),
+              !source.currentLayout());
+        }))
         .flatMap(Optional::stream)
         .sorted(Comparator.comparing(CacheEntry::sourcePath))
         .toList();
@@ -629,7 +684,7 @@ public final class PersistentCache {
     }
   }
 
-  private static String sha256(String value) {
+  static String sha256(String value) {
     try {
       byte[] digest = MessageDigest.getInstance("SHA-256")
           .digest(value.getBytes(StandardCharsets.UTF_8));

@@ -373,7 +373,9 @@ class HierarchyCacheLoaderTest {
             () -> new HierarchyCacheLoader(executor).load(identifierCollisionHierarchy()));
 
         assertEquals(
-            "Cache table SQL identifier collision between [customer] and [CUSTOMER]",
+            "Relation name [CUSTOMER] is requested by [/data/CUSTOMER] and [/data/customer]. "
+                + "Assign a stable name with --relation-alias, for example "
+                + "--relation-alias '/data/customer=data_customer'.",
             thrown.getMessage());
       } finally {
         executor.close();
@@ -382,15 +384,15 @@ class HierarchyCacheLoaderTest {
   }
 
   @Test
-  void sameNamedNestedObjectsShareOneStructureTableWithParentReferences() throws Exception {
+  void sameNamedNestedObjectsAtDifferentPathsRequireAliases() throws Exception {
     try (H2Database database = new H2Database()) {
       SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
       try {
-        new HierarchyCacheLoader(executor).load(duplicateWalletHierarchy());
+        IllegalArgumentException thrown = assertThrows(
+            IllegalArgumentException.class,
+            () -> new HierarchyCacheLoader(executor).load(duplicateWalletHierarchy()));
 
-        assertEquals(4, database.queryInt("select count(*) from wallet"));
-        assertEquals(2, database.queryInt("select count(*) from wallet where customer_id is not null"));
-        assertEquals(2, database.queryInt("select count(*) from wallet where account_id is not null"));
+        assertEquals(true, thrown.getMessage().contains("Relation name [wallet] is requested by"));
       } finally {
         executor.close();
       }

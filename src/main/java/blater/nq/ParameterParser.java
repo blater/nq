@@ -41,6 +41,8 @@ public final class ParameterParser {
   public static final String CACHE_MODE_PARAM = "NSQL_CACHE";
   public static final String PARQUET_ROOT_PARAM = "NSQL_PARQUET_ROOT";
   public static final String PARQUET_RECORD_PARAM = "NSQL_PARQUET_RECORD";
+  public static final String ANONYMOUS_COLLECTIONS_PARAM = "NSQL_ANONYMOUS_COLLECTIONS";
+  public static final String RELATION_ALIAS_PREFIX = "NSQL_RELATION_ALIAS.";
   public static final String JDBC_DRIVER_PARAM = "jdbc.driver";
   public static final String JDBC_CLASS_NAME_PARAM = "jdbc.class.name";
   public static final String JDBC_DATABASE_PARAM = "jdbc.database";
@@ -109,6 +111,12 @@ public final class ParameterParser {
         case "--parquet-record" -> i = putValue(
             commandParameters, PARQUET_RECORD_PARAM,
             args, i, attachedValue, "no parquet record supplied");
+        case "--anonymous-collections" -> i = putValue(
+            commandParameters, ANONYMOUS_COLLECTIONS_PARAM,
+            args, i, attachedValue, "no anonymous collection mode supplied");
+        case "--relation-alias" -> i = putRepeatedValue(
+            commandParameters, RELATION_ALIAS_PREFIX,
+            args, i, attachedValue, "no relation alias supplied");
 
         case "--output", "-o" -> i = putValue(
             commandParameters, OUTPUT_TYPE_PARAM,
@@ -200,7 +208,49 @@ public final class ParameterParser {
       normalizeJdbcDriver(parameters);
     }
     resolvePositionals(parameters, positionals);
+    validateMaterializationOptions(parameters);
     return parameters;
+  }
+
+  private static void validateMaterializationOptions(Map<String, String> parameters) {
+    boolean configured = parameters.containsKey(ANONYMOUS_COLLECTIONS_PARAM)
+        || parameters.keySet().stream().anyMatch(key -> key.startsWith(RELATION_ALIAS_PREFIX));
+    if (!configured) return;
+
+    String anonymousMode = parameters.get(ANONYMOUS_COLLECTIONS_PARAM);
+    if (anonymousMode != null
+        && !anonymousMode.equalsIgnoreCase("merge")
+        && !anonymousMode.equalsIgnoreCase("error")) {
+      Log.fatal(IllegalArgumentException.class,
+          "--anonymous-collections must be one of: merge, error");
+    }
+
+    if (parameters.containsKey(CACHE_LIST_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_ALL_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_TARGET_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)
+        || parameters.containsKey(METADATA_REFRESH_PARAM)
+        || parameters.containsKey(METADATA_EXPIRY_HOURS_PARAM)) {
+      Log.fatal(IllegalArgumentException.class,
+          "Materialization options are not valid for this cache or metadata command.");
+    }
+    if (parameters.containsKey(CACHE_USE_PARAM)) return;
+    if (!parameters.containsKey(INPUT_FILENAME)) {
+      Log.fatal(IllegalArgumentException.class,
+          "Materialization options require an input file load or --use-cache source selection.");
+    }
+    if (!Boolean.parseBoolean(parameters.get(CACHE_MODE_PARAM))
+        && (parameters.containsKey(JDBC_DRIVER_PARAM)
+        || parameters.containsKey(JDBC_CLASS_NAME_PARAM)
+        || parameters.containsKey(JDBC_DATABASE_PARAM))) {
+      Log.fatal(IllegalArgumentException.class,
+          "Materialization options do not apply to JDBC-backed mapped DML input.");
+    }
+    InputType inputType = InputType.fromFilename(parameters.get(INPUT_FILENAME));
+    if (inputType == InputType.XML || inputType == InputType.PARQUET) {
+      Log.fatal(IllegalArgumentException.class,
+          "Materialization options are supported for JSON, JSON Lines, YAML, and CSV input.");
+    }
   }
 
   private static String helpTopic(String[] args) {
@@ -242,6 +292,19 @@ public final class ParameterParser {
       String attachedValue,
       String missingMessage) {
     parameters.put(key, requiredValue(args, index, attachedValue, missingMessage));
+    return nextIndex(index, attachedValue);
+  }
+
+  private static int putRepeatedValue(
+      Map<String, String> parameters,
+      String keyPrefix,
+      String[] args,
+      int index,
+      String attachedValue,
+      String missingMessage) {
+    long count = parameters.keySet().stream().filter(key -> key.startsWith(keyPrefix)).count();
+    parameters.put(keyPrefix + String.format("%06d", count),
+        requiredValue(args, index, attachedValue, missingMessage));
     return nextIndex(index, attachedValue);
   }
 
@@ -439,7 +502,9 @@ public final class ParameterParser {
         || key.equals(CACHE_LIST_PARAM)
         || key.equals(CACHE_USE_PARAM)
         || key.equals(PARQUET_ROOT_PARAM)
-        || key.equals(PARQUET_RECORD_PARAM));
+        || key.equals(PARQUET_RECORD_PARAM)
+        || key.equals(ANONYMOUS_COLLECTIONS_PARAM)
+        || key.startsWith(RELATION_ALIAS_PREFIX));
   }
 
   static void addParametersFromPropFile(Map<String, String> parameters, String filename) {

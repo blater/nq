@@ -1,0 +1,5 @@
+{"customers":[
+    {"id":1,"name":"Alice","city":"London"},
+    {"id":2,"name":"Bob","city":"Paris"},
+    {"id":3,"name":"Eva","city":"London"}
+]}

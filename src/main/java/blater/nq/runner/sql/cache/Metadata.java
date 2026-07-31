@@ -8,12 +8,18 @@ record Metadata(
     String identityText,
     long createdMillis) {
 
+  boolean databaseStructure() {
+    return "DATABASE_STRUCTURE".equals(inputType);
+  }
+
   CacheSource source() {
     String variant = identityText.lines()
         .filter(line -> line.startsWith("variant="))
         .map(line -> line.substring("variant=".length()))
         .findFirst()
         .orElse("");
-    return new CacheSource(sourcePath, InputType.valueOf(inputType), variant);
+    int layoutStart = identityText.indexOf("layoutVersion=");
+    String materializationKey = layoutStart < 0 ? "" : identityText.substring(layoutStart);
+    return new CacheSource(sourcePath, InputType.valueOf(inputType), variant, materializationKey);
   }
 }

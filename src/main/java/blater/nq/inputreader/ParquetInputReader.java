@@ -42,7 +42,11 @@ import static org.apache.parquet.schema.Type.Repetition.REPEATED;
 
 public class ParquetInputReader implements InputReader {
   @Override
-  public Hierarchy load(String filename, Map<String, String> parameters) {
+  public InputDocument read(String filename, Map<String, String> parameters) {
+    return InputDocument.fromHierarchy(loadHierarchy(filename, parameters));
+  }
+
+  private Hierarchy loadHierarchy(String filename, Map<String, String> parameters) {
     if (!hasValue(filename)) {
       return new Hierarchy();
     }

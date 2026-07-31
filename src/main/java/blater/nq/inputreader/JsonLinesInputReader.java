@@ -22,9 +22,9 @@ import static blater.nq.util.ValueUtil.hasValue;
  */
 public class JsonLinesInputReader implements InputReader {
   @Override
-  public Hierarchy load(String filename, Map<String, String> parameters) {
+  public InputDocument read(String filename, Map<String, String> parameters) {
     if (!hasValue(filename)) {
-      return new Hierarchy();
+      return InputDocument.fromHierarchy(new Hierarchy());
     }
 
     Path path = Path.of(filename);
@@ -46,7 +46,7 @@ public class JsonLinesInputReader implements InputReader {
               e);
         }
       }
-      return JsonInputReader.toHierarchy(records, parameters);
+      return JsonInputReader.toDocument(records, parameters);
     } catch (NoSuchFileException | AccessDeniedException e) {
       return Log.fatal(IllegalStateException.class, "Could not open input file: " + filename, e);
     } catch (IOException e) {

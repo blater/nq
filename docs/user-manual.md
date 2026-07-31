@@ -453,6 +453,85 @@ Input file type is selected by file extension:
 
 Extension matching is case-insensitive. Blank or missing input filenames preserve the historical empty XML-input behavior.
 
+### Source Relation Names and Aliases
+
+For JSON and YAML, NQ names a materialized object-record relation from the
+source member that declares it. The rule applies at every depth:
+
+| Source shape | SQL relation |
+|---|---|
+| `[{"id":1}]` | `ITEM` |
+| `{"customers":[{"id":1}]}` | `CUSTOMERS` |
+| `{"data":{"customers":[{"id":1}]}}` | `CUSTOMERS` |
+| `regions -> customers -> orders` | `REGIONS`, `CUSTOMERS`, `ORDERS` |
+| JSON Lines object records | `ITEM` |
+| CSV records | `ITEM` |
+
+A non-empty object-record collection becomes a relation; materializable
+singleton objects and existing scalar-owner layouts also retain their current
+tables. Explicit empty collections keep their source paths for aliases and
+collision validation but do not invent a schema or create a table. A completely
+empty file has no relation path. Repeated scalar fields retain value relations
+named from their effective owner, such as `CUSTOMER_TAG`; scalar collections
+are not converted to object rows.
+
+Distinct source paths never share a named relation implicitly. For example,
+`/crm/profile` and `/support/profile` both request `PROFILE`, so loading fails
+before table creation. Assign stable names with the repeatable option:
+
+```bash
+nq query.nq data.json \
+  --relation-alias '/crm/profile=crm_profile' \
+  --relation-alias '/support/profile=support_profile'
+```
+
+An alias target must match `[A-Za-z_][A-Za-z0-9_]*`. It can name an object
+collection, singleton object, anonymous root, scalar collection owner, or
+explicit empty collection. Aliasing an owner also renames derived scalar value
+relations and generated containment columns. Derived value relations are not
+direct alias targets.
+
+Source paths use a small JSON-Pointer-like grammar:
+
+- `/` is an anonymous or format-defined root relation.
+- `/name` addresses an object member.
+- `/*` represents every record occurrence when continuing below a collection.
+- `/0`, `/1`, and so on distinguish positional anonymous containers.
+- `~0` escapes `~`, and `~1` escapes `/` in member names.
+
+For example, nested orders use `/customers/*/orders`; the two inner record
+relations in `[[{"customerId":"C1"}],[{"sku":"P1"}]]` use `/0` and `/1`.
+Aliases are split at the final `=`, so a source member containing `=` remains
+addressable. Unknown, ambiguous, conflicting, or colliding aliases fail before
+NQ issues table DDL.
+
+One anonymous relation uses `ITEM` normally. If several unresolved anonymous
+paths would use `ITEM`, the default `merge` policy preserves compatibility by
+unioning their columns and emitting one warning. That merge is lossy: rows do
+not retain query-visible source provenance. Strict operation is available with:
+
+```bash
+nq query.nq data.json --anonymous-collections error
+```
+
+`error` still accepts one ordinary anonymous stream; it rejects only a
+cross-path `ITEM` merge. Aliasing anonymous paths removes them from that check:
+
+```bash
+nq query.nq batches.json \
+  --anonymous-collections error \
+  --relation-alias '/=batches' \
+  --relation-alias '/0=customers' \
+  --relation-alias '/1=products'
+```
+
+JSON and YAML have identical relation-path behavior. JSON Lines and CSV accept
+a root alias at `/`. XML and Parquet retain their existing naming behavior and
+reject these two materialization options rather than ignoring them. The options
+configure temporary and persistent input loading; they do not apply to
+JDBC-backed mapped DML, an already active cache query, list/clear commands, or
+metadata commands.
+
 ### Querying Input Files: Temporary and Persistent H2
 
 NQ materializes the same SQL tables for both modes. The difference is how long the H2 database lives and whether it can be reused.
@@ -506,7 +585,13 @@ path reported by `--list-caches` or a bare cache filename such as
 `--cache-dir`, or under `~/.nq/cache` by default. The source file need not
 still exist, and no cache is created or rebuilt when a match is missing. If the
 source has multiple Parquet cache variants, add the matching
-`--parquet-record` value.
+`--parquet-record` value. Relation aliases and the anonymous policy are also
+part of cache identity. If a source has several materialization variants,
+repeat the exact `--relation-alias` and `--anonymous-collections` options to
+select one. With no selector, a sole current variant is selected; several
+variants are ambiguous. Materialization selectors cannot be combined with an
+explicit bare cache filename because that filename already identifies one
+exact variant.
 
 By default, cache files are stored under:
 
@@ -670,7 +755,17 @@ List caches:
 nq --list-caches
 ```
 
-The listing shows input type, cache creation time, and source path. The active cache is marked with `*`. Cache metadata is stored inside each H2 cache database.
+The listing shows input type, cache creation time, variant, and source path. The
+active cache is marked with `*`. The default materialization variant is
+`default-v2`; configured variants use `config-<12 hex>`. Parquet selection is
+shown alongside that label. Cache metadata is stored inside each H2 cache
+database.
+
+Caches created with an incompatible earlier input layout remain listable and
+clearable but are marked `outdated`. NQ does not rename their tables in place;
+reload the source to build a current layout. Selection by source, explicit
+cache filename, or active pointer rejects an outdated input cache with reload
+guidance.
 
 Switch the active cache without loading or rebuilding it:
 

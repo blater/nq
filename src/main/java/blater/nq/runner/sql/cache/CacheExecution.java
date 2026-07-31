@@ -1,6 +1,6 @@
 package blater.nq.runner.sql.cache;
 
-import blater.nq.domain.Hierarchy;
+import blater.nq.inputreader.InputDocument;
 import blater.nq.inputreader.InputReader;
 import blater.nq.runner.sql.SqlExecutor;
 import blater.nq.util.Log;
@@ -111,9 +111,9 @@ public final class CacheExecution {
     try {
       String inputFilename = requiredInput(parameters);
       CacheSource source = CacheSource.from(inputFilename, parameters);
-      Hierarchy input = InputReader.of(source.inputType())
-          .load(source.sourcePath(), parameters);
-      new HierarchyCacheLoader(executor).load(input);
+      InputDocument input = InputReader.of(source.inputType())
+          .read(source.sourcePath(), parameters);
+      new HierarchyCacheLoader(executor).load(input, MaterializationConfiguration.from(parameters));
       return executor;
     } catch (RuntimeException | Error ex) {
       executor.close();
@@ -128,9 +128,9 @@ public final class CacheExecution {
     if (!handle.needsLoad()) {
       return;
     }
-    Hierarchy input = InputReader.of(handle.source().inputType())
-        .load(handle.source().sourcePath(), parameters);
-    new HierarchyCacheLoader(executor).load(input);
+    InputDocument input = InputReader.of(handle.source().inputType())
+        .read(handle.source().sourcePath(), parameters);
+    new HierarchyCacheLoader(executor).load(input, MaterializationConfiguration.from(parameters));
     PersistentCache.markLoaded(handle);
   }
 

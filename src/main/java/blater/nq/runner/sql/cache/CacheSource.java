@@ -10,7 +10,12 @@ import java.util.Map;
 public record CacheSource(
     String sourcePath,
     InputType inputType,
-    String variant) {
+    String variant,
+    String materializationKey) {
+  public CacheSource(String sourcePath, InputType inputType, String variant) {
+    this(sourcePath, inputType, variant, MaterializationConfiguration.from(Map.of()).canonicalKey());
+  }
+
   public static CacheSource from(String inputFilename, InputType inputType) {
     return from(inputFilename, inputType, Map.of());
   }
@@ -30,7 +35,8 @@ public record CacheSource(
     return new CacheSource(
         normalizedSourcePath(inputFilename).toString(),
         inputType,
-        variant);
+        variant,
+        MaterializationConfiguration.from(parameters).canonicalKey());
   }
 
   public static Path normalizedSourcePath(String inputFilename) {
@@ -51,7 +57,28 @@ public record CacheSource(
   String identityText() {
     return "sourcePath=" + sourcePath + '\n'
         + "inputType=" + inputType.name() + '\n'
-        + "variant=" + variant + '\n';
+        + "variant=" + variant + '\n'
+        + materializationKey;
+  }
+
+  boolean currentLayout() {
+    return materializationKey != null
+        && materializationKey.lines().anyMatch(
+            line -> line.equals("layoutVersion=" + MaterializationConfiguration.LAYOUT_VERSION));
+  }
+
+  String materializationVariantId() {
+    if (!currentLayout()) return "outdated";
+    String defaultKey = MaterializationConfiguration.from(Map.of()).canonicalKey();
+    if (defaultKey.equals(materializationKey)) return "default-v" + MaterializationConfiguration.LAYOUT_VERSION;
+    return "config-" + PersistentCache.sha256(materializationKey).substring(0, 12);
+  }
+
+  String displayVariantId() {
+    String materialization = materializationVariantId();
+    return variant == null || variant.isBlank()
+        ? materialization
+        : variant + " + " + materialization;
   }
 
 }

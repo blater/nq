@@ -26,7 +26,12 @@ public class CsvInputReader implements InputReader {
   private static final String ITEM = "item";
 
   @Override
-  public Hierarchy load(String filename, Map<String, String> parameters) {
+  public InputDocument read(String filename, Map<String, String> parameters) {
+    Hierarchy hierarchy = loadHierarchy(filename, parameters);
+    return new InputDocument(hierarchy, SourceStructure.fromAnonymousRecords(hierarchy));
+  }
+
+  private Hierarchy loadHierarchy(String filename, Map<String, String> parameters) {
     return csvToHierarchy(filename, parameters);
   }
 

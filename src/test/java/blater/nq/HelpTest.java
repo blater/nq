@@ -27,6 +27,8 @@ class HelpTest {
     assertTrue(shortHelp.contains("nq <input-file> [cache-options]"));
     assertTrue(shortHelp.contains("--use-cache <input-file-or-cache-filename>"));
     assertTrue(shortHelp.contains("--parquet-record <name>"));
+    assertTrue(shortHelp.contains("--anonymous-collections <merge|error>"));
+    assertTrue(shortHelp.contains("--relation-alias <source-path>=<relation-name>"));
     assertTrue(shortHelp.contains("Run 'nq --help' for the complete manual"));
     assertFalse(shortHelp.contains("NQ(1)"));
     assertTrue(longHelp.startsWith("NQ(1)"));
@@ -51,6 +53,7 @@ class HelpTest {
 
     assertTrue(output.startsWith("QUERY\n"));
     assertTrue(output.contains("nq <script-file-or-text>"));
+    assertTrue(output.contains("--relation-alias"));
     assertTrue(output.contains("nq --help connection"));
   }
 
@@ -72,6 +75,7 @@ class HelpTest {
     assertTrue(output.startsWith("USE-CACHE\n"));
     assertTrue(output.contains("nq --use-cache <input-file-or-cache-filename>"));
     assertTrue(output.contains("does not create one"));
+    assertTrue(output.contains("materialization options"));
   }
 
   @Test

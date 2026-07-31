@@ -24,5 +24,9 @@ public interface InputReader {
       return Log.fatal(IllegalArgumentException.class, "unknown input reader type");
   }
 
-  Hierarchy load(String filename, Map<String, String> parameters);
+  InputDocument read(String filename, Map<String, String> parameters);
+
+  default Hierarchy load(String filename, Map<String, String> parameters) {
+    return read(filename, parameters).hierarchy();
+  }
 }

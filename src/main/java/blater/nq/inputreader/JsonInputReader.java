@@ -23,9 +23,16 @@ public class JsonInputReader implements InputReader {
   private static final String ARRAY_ITEM = "item";
 
   @Override
-  public Hierarchy load(String filename, Map<String, String> parameters) {
+  public InputDocument read(String filename, Map<String, String> parameters) {
     Object inputJson = loadJsonFile(filename);
-    return toHierarchy(inputJson, parameters);
+    return toDocument(inputJson, parameters);
+  }
+
+  static InputDocument toDocument(Object inputJson, Map<String, String> parameters) {
+    Hierarchy hierarchy = toHierarchy(inputJson, parameters);
+    return new InputDocument(
+        hierarchy,
+        SourceStructure.fromStructured(inputJson, hierarchy, SYNTHETIC_ROOT));
   }
 
   private static Object loadJsonFile(String filename) {
