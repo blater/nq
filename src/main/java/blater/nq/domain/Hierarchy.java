@@ -86,13 +86,16 @@ public class Hierarchy {
       KeyedPath repeatedRoot = repeatedPath(rootPath);
       boolean flatRows = flatRows();
       boolean anonymousCollection = plan.getKeyedPaths().stream()
-          .anyMatch(key -> key.inferred() && plan.repetitionPath(key) == null);
+          .anyMatch(key -> key.placement() instanceof RepetitionPlacement.AnonymousItem anonymous
+              && anonymous.containerPath().isEmpty());
       if (flatRows || anonymousCollection) {
         root = new Node("");
         rootKind = RootKind.SYNTHETIC_ARRAY;
       } else if (repeatedRoot != null) {
         root = new Node("");
-        rootKind = repeatedRoot.inferred() ? RootKind.SYNTHETIC_OBJECT : RootKind.SYNTHETIC_ARRAY;
+        rootKind = repeatedRoot.placement() instanceof RepetitionPlacement.AnonymousItem
+            ? RootKind.SYNTHETIC_OBJECT
+            : RootKind.SYNTHETIC_ARRAY;
       } else {
         root = new Node(rootName);
         rootKind = RootKind.NAMED;
@@ -176,7 +179,8 @@ public class Hierarchy {
       KeyedPath repeated = repeatedPath(currentPath);
       if (repeated == null && rootKind == RootKind.SYNTHETIC_ARRAY) {
         KeyedPath owner = keyedPath(currentPath);
-        if (owner != null && plan.repetitionPath(owner) == null) {
+        if (owner != null && owner.placement() instanceof RepetitionPlacement.AnonymousItem anonymous
+            && anonymous.containerPath().isEmpty()) {
           KeyState state = keyState(owner, row);
           if (state == KeyState.ABSENT) return null;
           Node item = state == KeyState.PARTIAL
@@ -192,7 +196,7 @@ public class Hierarchy {
           return null;
         if (state == KeyState.PARTIAL && !repeated.inferred())
           throw new IllegalStateException("Partially null structure key: " + currentPath);
-        if (isInferredCollectionKey(repeated)) {
+        if (repeated.placement() instanceof RepetitionPlacement.AnonymousItem) {
           Node collection = singletonChild(current, currentPath);
           collection.setCollection(true);
           current = state == KeyState.PARTIAL
@@ -224,14 +228,17 @@ public class Hierarchy {
 
   private KeyedPath repeatedPath(HierarchyPath path) {
     for (KeyedPath keyedPath : plan.getKeyedPaths()) {
-      if (path.equals(plan.repetitionPath(keyedPath))) return keyedPath;
+      if (keyedPath.placement() instanceof RepetitionPlacement.NamedItem
+          && path.equals(keyedPath.identityPath())) return keyedPath;
+      if (keyedPath.placement() instanceof RepetitionPlacement.AnonymousItem anonymous
+          && anonymous.containerPath().filter(path::equals).isPresent()) return keyedPath;
     }
     return null;
   }
 
   private boolean isInferredOwner(HierarchyPath path) {
     KeyedPath key = keyedPath(path);
-    return key != null && key.inferred() && !path.equals(plan.repetitionPath(key));
+    return key != null && key.placement() instanceof RepetitionPlacement.AnonymousItem;
   }
 
   private boolean flatRows() {
@@ -240,17 +247,18 @@ public class Hierarchy {
   }
 
   private boolean isInferredCollectionKey(KeyedPath key) {
-    return key.inferred() && !Objects.equals(key.path(), plan.repetitionPath(key));
+    return key.placement() instanceof RepetitionPlacement.AnonymousItem;
   }
 
   private void initializeInferredCollections() {
     for (KeyedPath key : plan.getKeyedPaths()) {
       if (!isInferredCollectionKey(key)) continue;
-      HierarchyPath collectionPath = plan.repetitionPath(key);
-      if (collectionPath == null) {
+      Optional<HierarchyPath> collectionPath =
+          ((RepetitionPlacement.AnonymousItem) key.placement()).containerPath();
+      if (collectionPath.isEmpty()) {
         root.setCollection(true);
       } else {
-        collectionNode(collectionPath).setCollection(true);
+        collectionNode(collectionPath.get()).setCollection(true);
       }
     }
   }

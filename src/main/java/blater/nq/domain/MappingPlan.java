@@ -55,15 +55,4 @@ public class MappingPlan{
     return null;
   }
 
-  /**
-   * Explicit keys repeat their declared object. The outermost inferred key
-   * identifies a row object inside its enclosing collection; inferred child
-   * keys continue to repeat their own nested object paths.
-   */
-  public HierarchyPath repetitionPath(KeyedPath key) {
-    if (!key.inferred()) return key.path();
-    boolean hasKeyedAncestor = keyedPaths.stream()
-        .anyMatch(candidate -> candidate != key && key.path().isBelow(candidate.path()));
-    return hasKeyedAncestor ? key.path() : key.path().parent();
-  }
 }

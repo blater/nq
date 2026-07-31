@@ -344,12 +344,61 @@ class MainTest {
         structure {result.customer} key (c.group_code);
         """);
 
-    String output = captureStdout(() -> Main.main(script.toString(), "-p", properties.toString(),
-        "--cache-dir", tempDir.resolve("partial-cache").toString()));
+    String[] output = new String[1];
+    String debug;
+    try {
+      debug = captureStderr(() -> output[0] = captureStdout(() -> Main.main(
+          script.toString(), "-p", properties.toString(),
+          "--cache-dir", tempDir.resolve("partial-cache").toString(), "--debug")));
+    } finally {
+      blater.nq.util.Log.debug(false);
+    }
 
     assertEquals("""
         {"result":{"customer":{"code":"G","name":"Shared","purchase":[{"id":"10","item":"Tea"},{"id":"11","item":"Cake"}]}}}
-        """, output);
+        """, output[0]);
+    assertTrue(debug.contains("{result.customer.purchase} -> p"));
+    assertTrue(debug.contains("parent c via"));
+  }
+
+  @Test
+  void explicitKeyExpressionBindsAnOtherwiseUnmappedParentForDescendantInference() throws Exception {
+    String url = databaseUrl();
+    Path properties = propertiesFile(url);
+    try (Connection connection = DriverManager.getConnection(url, "sa", "")) {
+      execute(connection,
+          "create table customer (id integer primary key)",
+          "create table purchase (id integer primary key, customer_id integer not null, item varchar(80), "
+              + "foreign key (customer_id) references customer(id))",
+          "insert into customer values (1)",
+          "insert into purchase values (10, 1, 'Tea')",
+          "insert into purchase values (11, 1, 'Cake')");
+    }
+    Path script = write("explicit-unmapped-parent.nq", """
+        output json;
+        select
+          p.id into {result.customer.purchase.id},
+          p.item into {result.customer.purchase.item}
+        from customer c
+        join purchase p on p.customer_id = c.id
+        order by p.id
+        structure {result.customer} key (c.id);
+        """);
+    String[] output = new String[1];
+    String debug;
+    try {
+      debug = captureStderr(() -> output[0] = captureStdout(() -> Main.main(
+          script.toString(), "-p", properties.toString(),
+          "--cache-dir", tempDir.resolve("explicit-unmapped-parent-cache").toString(), "--debug")));
+    } finally {
+      blater.nq.util.Log.debug(false);
+    }
+
+    assertEquals("""
+        {"result":{"customer":{"purchase":[{"id":"10","item":"Tea"},{"id":"11","item":"Cake"}]}}}
+        """, output[0]);
+    assertTrue(debug.contains("{result.customer.purchase} -> p"));
+    assertTrue(debug.contains("parent c via"));
   }
 
   @Test
@@ -520,6 +569,99 @@ class MainTest {
 
     assertEquals("""
         {"result":[{"summary":{"category":"A","total":"30"}},{"summary":{"category":"B","total":"5"}}]}
+        """, output);
+  }
+
+  @Test
+  void groupedInferenceKeepsIndependentCustomerAndOrderIdentity() throws Exception {
+    String url = databaseUrl();
+    Path properties = propertiesFile(url);
+    try (Connection connection = DriverManager.getConnection(url, "sa", "")) {
+      execute(connection,
+          "create table customers (customer_id integer primary key, customer_name varchar(80))",
+          "create table orders (order_id integer primary key, customer_id integer not null, amount integer, "
+              + "foreign key (customer_id) references customers(customer_id))",
+          "insert into customers values (1, 'Ada')",
+          "insert into customers values (2, 'Lin')",
+          "insert into orders values (10, 1, 12)",
+          "insert into orders values (11, 1, 8)");
+    }
+    Path script = write("grouped-customer-orders.nq", """
+        output json;
+        select
+          c.customer_id into {customers.customer.id},
+          c.customer_name into {customers.customer.name},
+          o.order_id into {customers.customer.orders.id},
+          sum(o.amount) into {customers.customer.orders.total}
+        from customers c
+        left join orders o on o.customer_id = c.customer_id
+        group by c.customer_id, c.customer_name, o.order_id
+        order by c.customer_id, o.order_id;
+        """);
+
+    String output = captureStdout(() -> Main.main(
+        script.toString(), "-p", properties.toString(),
+        "--cache-dir", tempDir.resolve("grouped-customer-orders-cache").toString()));
+
+    assertEquals("""
+        {"customers":{"customer":[{"id":"1","name":"Ada","orders":[{"id":"10","total":"12"},{"id":"11","total":"8"}]},{"id":"2","name":"Lin"}]}}
+        """, output);
+  }
+
+  @Test
+  void quotedIdentifierBoundariesSurviveKeyInference() throws Exception {
+    String url = databaseUrl();
+    Path properties = propertiesFile(url);
+    try (Connection connection = DriverManager.getConnection(url, "sa", "")) {
+      execute(connection,
+          "create table \"Customers\" (\"Customer.Id\" integer primary key, \"Display Name\" varchar(80))",
+          "insert into \"Customers\" values (1, 'Ada')",
+          "insert into \"Customers\" values (2, 'Lin')");
+    }
+    Path script = write("quoted-key-inference.nq", """
+        output json;
+        select
+          c."Customer.Id" into {customers.customer.id},
+          c."Display Name" into {customers.customer.name}
+        from "Customers" c
+        order by c."Customer.Id";
+        """);
+
+    String output = captureStdout(() -> Main.main(
+        script.toString(), "-p", properties.toString(),
+        "--cache-dir", tempDir.resolve("quoted-key-cache").toString()));
+
+    assertEquals("""
+        {"customers":{"customer":[{"id":"1","name":"Ada"},{"id":"2","name":"Lin"}]}}
+        """, output);
+  }
+
+  @Test
+  void unclassifiedFunctionPreservesRowFirstOutput() throws Exception {
+    String url = databaseUrl();
+    Path properties = propertiesFile(url);
+    try (Connection connection = DriverManager.getConnection(url, "sa", "")) {
+      execute(connection,
+          "create table company (id integer primary key, name varchar(80))",
+          "create table tag (id integer primary key, company_id integer not null, "
+              + "foreign key (company_id) references company(id))",
+          "insert into company values (1, 'Acme')",
+          "insert into tag values (10, 1)",
+          "insert into tag values (11, 1)");
+    }
+    Path script = write("unknown-function-inference.nq", """
+        output json;
+        select upper(c.name) into {result.company.name}
+        from company c join tag t on t.company_id = c.id
+        order by t.id;
+        """);
+
+    String output = captureStdout(() -> Main.main(
+        script.toString(), "-p", properties.toString(),
+        "--cache-dir", tempDir.resolve("unknown-function-cache").toString()));
+
+    assertEquals("""
+        {"result":{"company":[{"name":"ACME"},{"name":"ACME"}]}}
         """, output);
   }
 

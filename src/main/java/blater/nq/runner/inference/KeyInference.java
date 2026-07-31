@@ -4,6 +4,7 @@ import blater.nq.ParameterParser;
 import blater.nq.domain.HierarchyPath;
 import blater.nq.parser.script.NestStatement;
 import blater.nq.parser.script.SelectBlueprint;
+import blater.nq.parser.script.QueryShape;
 import blater.nq.runner.sql.SqlExecutor;
 import blater.nq.runner.sql.cache.CachedArtifact;
 import blater.nq.runner.sql.cache.CacheExecution;
@@ -63,14 +64,15 @@ public final class KeyInference {
   public static DatabaseStructure refresh(
       SqlExecutor executor,
       Map<String, String> parameters) throws SQLException {
-    return structure(executor, parameters, true, List.of());
+    return structure(executor, parameters, true, QueryShape.ReferencedRelations.none());
   }
 
   public static DatabaseStructure configureExpiry(
       SqlExecutor executor,
       Map<String, String> parameters,
       long expiryHours) throws SQLException {
-    DatabaseStructure structure = structure(executor, parameters, false, List.of());
+    DatabaseStructure structure = structure(
+        executor, parameters, false, QueryShape.ReferencedRelations.none());
     DatabaseTargetIdentity target = DatabaseTargetIdentity.from(parameters);
     String identityText = executor.cacheIdentity().orElse(target.identityText());
     Path cacheFile = executor.cacheFile().orElseGet(() ->
@@ -84,7 +86,7 @@ public final class KeyInference {
       SqlExecutor executor,
       Map<String, String> parameters,
       boolean forceRefresh,
-      List<String> referencedRelations) throws SQLException {
+      QueryShape.ReferencedRelations referencedRelations) throws SQLException {
     if (CacheExecution.usesEphemeralCache(parameters)) {
       return DatabaseStructureInferrer.infer(executor.connection());
     }
@@ -105,9 +107,14 @@ public final class KeyInference {
               cacheFile, identityText, configuredExpiry);
         }
         DatabaseStructure structure = DatabaseStructureCodec.decode(cached.get().payload());
-        if (referencedRelations.isEmpty()
-            || DatabaseStructureInferrer.matches(
-                executor.connection(), structure, referencedRelations)) {
+        if (referencedRelations.names().isEmpty()) {
+          if (referencedRelations.hasUnsupportedSources()) {
+            Log.debug("DQL key inference: unsupported relation sources are excluded from metadata cache validation.");
+          }
+          return structure;
+        }
+        if (DatabaseStructureInferrer.matches(
+            executor.connection(), structure, referencedRelations.names())) {
           return structure;
         }
         Log.info("Cached database structure changed; refreshing key metadata.");

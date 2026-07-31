@@ -416,7 +416,23 @@ nq report.nq --db postgresql --database customer_data -p database.properties
 
 Both commands use the generated PostgreSQL URL and the credentials from the properties file. A command-line `--user`, `--password`, `--jdbc-*`, or `jdbc.*=value` replaces the corresponding property. Exact command-line `--jdbc-*` values override values inferred from the simple form regardless of argument position. If a command-line property is supplied more than once, its last value wins. An explicit command-line `jdbc.class.name` replaces a `jdbc.driver` inherited from properties; when both are supplied directly on the command line, `jdbc.driver` takes precedence.
 
-The selected executable must contain the requested JDBC dependency. If it does not, driver class loading fails when the connection is opened; nq does not maintain a separate build-profile validation registry.
+#### Supplying a JDBC Driver JAR
+
+The JVM build can use a JDBC driver that is not bundled with NQ. Put both the NQ fat JAR and the driver JAR on the Java classpath, invoke the main class directly, and supply the driver's class name and complete JDBC URL:
+
+```bash
+java -cp '/path/to/nq.jar:/path/to/vendor-driver.jar' \
+  blater.nq.Main report.nq \
+  --jdbc-class-name com.vendor.jdbc.Driver \
+  --jdbc-database 'jdbc:vendor://db.internal.example/customer_data' \
+  --jdbc-username report_user
+```
+
+On Windows, separate classpath entries with `;` instead of `:`. Add any other JARs required by the driver to the classpath as well. Do not combine this form with `--jdbc-driver`: that option selects one of NQ's predefined logical drivers and takes precedence over `--jdbc-class-name`.
+
+Use `java -cp` and `blater.nq.Main`, not `java -jar`; Java's `-jar` launch mode does not add user-supplied classpath entries. The native `nq`, `nq-enterprise`, and `nq-all` executables cannot load JARs at runtime. A custom driver for a native executable must be added as a build dependency and included when the executable is rebuilt, with any GraalVM Native Image configuration the driver requires.
+
+For predefined drivers, the selected JAR or native executable must contain the requested JDBC dependency. If it does not, driver class loading fails when the connection is opened; NQ does not maintain a separate build-profile validation registry.
 
 Supplied values are used as written. NQ does not validate port ranges, encode URL components, or reconcile inconsistent credentials; the JDBC driver or database reports those errors. For example, `--host=` and `--port=` supply explicit empty values rather than selecting defaults, while omitting those options selects documented defaults. The simple form requires `--db` and `--database` together and does not decompose an existing `jdbc.database` URL from a properties file.
 
@@ -902,6 +918,8 @@ The final path segment is the field, the segment above it is the object that own
 
 Inferred collections remain arrays for zero, one, or many objects. XML introduces a `<result>` document element when the inferred collection has no ordinary named root.
 
+NQ also recognizes one explicit collection/item naming convention. If a plural relation name matches the container and its singular form matches the item, the item path itself repeats. For example, a `customers` relation mapped to `{customers.customer.*}` produces a `customers` object containing repeated `customer` items. Other names retain the compatibility shapes shown above.
+
 The explicit tuple is complete and authoritative for `{companies.company}`. Inference cannot add to or replace it, but remains available for undeclared sibling and descendant paths, even when they use the same table or alias. Use `--no-key-inference` to disable inference for the entire query.
 
 Keys are typed tuples. Use a comma-separated list for a composite identity:
@@ -917,6 +935,10 @@ structure
   {people.person} key (p.personid),
   {people.person.nickname} key (n.nicknameid)
 ```
+
+Grouped entity paths are also inferred independently. A relation key is eligible only when every component is present in the `group by` set; additional grouped display columns do not become part of the identity. A path with a mapped aggregate can instead use the complete grouping tuple as summary identity when all its non-aggregate mappings are grouped. Unsupported grouping, `distinct`, ungrouped aggregates, and unclassified function calls preserve row-first output rather than adding a hidden key that could change query grain.
+
+For a left-joined child, an all-null inferred identity means that the child is absent. The parent remains in the output without an empty or null child member.
 
 Key declarations do not change SQL ordering. Ordinary `order by` controls the first-encounter order of output objects. Add normal SQL tie-breakers when deterministic order matters:
 

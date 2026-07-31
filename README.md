@@ -7,19 +7,19 @@ NQ is a tool that lets you use SQL to query JSON YAML, XML, CSV files, and to lo
 
 Find the elements with the highest values in a JSON file:
 
-Given a JSON file [`elements.json`](docs/examples/jq/elements.json):
+Given a JSON file...
 
 ```json
-[ {"id":1, "value": 1}, {"id": 2, "value": 2}, {"id": 3, "value": 2}, {"id": 4, "value": 1} ]
+[ {"id":1, "value": 1}, {"id": 2, "value": 3}, {"id": 3, "value": 3}, {"id": 4, "value": 2} ]
 ```
 
 ```bash
-nq 'select id,  from item where a in (select max(a) from item);' docs/examples/jq/elements.json
+nq 'select id, value from item where a in (select max(a) from item);' docs/examples/jq/elements.json
 ```
 result:
 
 ```json
-[{"id":"2"},{"id":"3"}]
+[{"id":"2", "value":"3"},{"id":"3", "value":"3"}]
 ```
 
 ### Get JSON from a database
@@ -64,28 +64,83 @@ nq "select id into {customerId}, name into {firstname} from customer where statu
 
 This example produces a customer document with each customer's orders nested underneath, ready to save as JSON, XML or YAML or pass to another application.
 
-A relational join returns one row for every customer/order combination:
+Given two tables in a DB, customers and orders:
 
-| customer_id | customer_name | order_id | total |
-|------------:|---------------|---------:|------:|
-| 1           | Alice         | 10       | 24.50 |
-| 1           | Alice         | 11       | 13.00 |
-| 2           | Bob           | 12       | 40.00 |
-| 2           | Bob           | 13       | 5.00  |
+***customers***
+| customer_id | customer_name |
+|------------:|---------------|
+| 1           | Alice         |
+| 2           | Bob           |
+| 3           | Eva           |
+
+***orders***
+| customer_id | order_id | item_sku   | amount |
+| 1           | 10       | B0K12345XY |  4.50 |
+| 1           | 10       | C0K32199ZZ | 20.00 |
+| 1           | 11       | B01M12345X | 13.00 |
+| 2           | 12       | C0K32199ZZ | 20.00 |
+| 2           | 12       | C0K32199ZZ | 20.00 |
+| 2           | 13       | B0K99999AA |  5.00 |
+
+ we want a json file of each customer as an object with an array of orders and totals underneath.
+
+```sql
+select
+    c.customer_id into {customers.customer.id},
+    c.customer_name into {customers.customer.name},
+    o.order_id into {customers.customer.orders.id},
+    sum(o.amount) into {customers.customer.orders.total}
+  from customers c
+  left join orders o on o.customer_id = c.customer_id
+  group by c.customer_id, c.customer_name, o.order_id
+  order by c.customer_id, o.order_id;
+```
+
+  Expected JSON:
+```json
+  {
+    "customers": {
+      "customer": [
+        {
+          "id": "1",
+          "name": "Alice",
+          "orders": [
+            {"id": "10", "total": "24.50"},
+            {"id": "11", "total": "13.00"}
+          ]
+        },
+        {
+          "id": "2",
+          "name": "Bob",
+          "orders": [
+            {"id": "12", "total": "40.00"},
+            {"id": "13", "total": "5.00"}
+          ]
+        },
+        {
+          "id": "3",
+          "name": "Eva"
+        }
+      ]
+    }
+  }
+```
 
 #### Inference and `structure`
 
-NQ must decide when multiple SQL rows describe the same customer or child object.
-By default it infers object identity and parent-child relationships from database metadata and naming conventions,
+There is some magic happening behind the scenes in the example above. NQ must decide when multiple SQL rows describe the same customer or 
+child object.  By default it infers object identity and parent-child relationships from database metadata and naming conventions,
 using primary, unique and composite keys where available.
 
-Most mapped queries therefore need no `structure` clause. If the DB has no keys defined or an informal structure you'll need to give
-NQ hints about the structure.
+This works most of the time, but what happens if your database has no keys or unique indexes defined, so there's no metadata for NQ to 
+use?  It'll try to use common sense to match the names of columns then e.g. customer_id exists on both orders and customers table, 
+so it knows which customer object to attach their orders to.  
+Most mapped queries therefore need no `structure` clause. However, if the DB has no keys and no easily recognised naming convention then 
+you can provide explicit directions to NQ via the ***"structure"*** keyword.
+
 In this example `structure` declares the identity of the repeated objects:
 
 ```sql
-output json;
-
 select
   c.id    into {customers.customer.id},
   c.name  into {customers.customer.name},
@@ -99,49 +154,13 @@ structure
   {customers.customer.order} key (c.id, o.id);
 ```
 
-Run the script against the database:
-```bash
-nq customer-orders.nq -p database.properties
-```
+The structure declarations state that rows with the same customer ID contribute to one customer, while rows with the same customer and order IDs contribute to one order. An explicit key overrides inference for that output path; if no key is declared or inferred, NQ preserves row-first output for the path.
 
-Result:
 
-```json
-{
-  "customers": {
-    "customer": [
-      {
-        "id": "1",
-        "name": "Alice",
-        "order": [
-          {"id": "10", "total": "24.50"},
-          {"id": "11", "total": "13.00"}
-        ]
-      },
-      {
-        "id": "2",
-        "name": "Bob",
-        "order": [
-          {"id": "12", "total": "40.00"},
-          {"id": "13", "total": "5.00"}
-        ]
-      }
-    ]
-  }
-}
-```
-
-The declarations state that rows with the same customer ID contribute to one customer, while rows with the same customer and order IDs contribute to one order. An explicit key overrides inference for that output path; if no key is declared or inferred, NQ preserves row-first output for the path.
-
-To write the result to a file, use the required output format and ordinary shell redirection:
-
-```bash
-nq customer-orders.nq -p database.properties --output yaml > customer-orders.yaml
-```
-
-### Apply data from a file to a database
+### Applying data from a file to a database
 
 This example uses values from an incoming JSON document to update the corresponding database record.
+Note that this also works for YAML, JSONL, CSV, XML, with experimental support for Parquet files as well.
 
 Given `person.json`:
 
@@ -384,3 +403,7 @@ The resulting executable names are:
 
 GitHub Actions builds the release executables for macOS ARM64, Linux x64 and
 Windows x64. See the [release guide](docs/releases.md) for setup and publishing.
+
+### Custom JDBC drivers
+
+The JVM build can use a user-supplied JDBC driver JAR: put the NQ fat JAR, the driver JAR, and any driver dependencies on the Java classpath, invoke `blater.nq.Main`, and provide `--jdbc-class-name` and `--jdbc-database`. Native executables cannot load JARs at runtime. See [Supplying a JDBC Driver JAR](docs/user-manual.md#supplying-a-jdbc-driver-jar) for the full command and limitations.

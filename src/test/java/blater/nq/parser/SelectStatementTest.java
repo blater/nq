@@ -5,8 +5,11 @@ import blater.nq.parser.ScriptParser;
 import blater.nq.parser.script.NestScript;
 import blater.nq.parser.script.NestStatement;
 import blater.nq.parser.script.NestSqlStatementType;
+import blater.nq.parser.script.QueryShape;
 import blater.nq.domain.HierarchyPath;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -295,5 +298,90 @@ public class SelectStatementTest {
             order by upper(surname) asc, 1 desc
             \\g
             """));
+  }
+
+  @Test
+  void extractsEquivalentQueryFactsAcrossWhitespaceAndComments() {
+    String compact = "select c.id into {result.customer.id}, sum(o.amount) into {result.customer.total} "
+        + "from customer c left join orders o on o.customer_id=c.id group by c.id;";
+    String formatted = """
+        select
+          c /* qualifier */ . id into {result.customer.id},
+          sum(o.amount) into {result.customer.total}
+        from /* source */ customer c
+        left join orders o -- child
+          on o.customer_id = c.id
+        group by
+          c . id;
+        """;
+
+    QueryShape left = ScriptParser.parse(compact).statements().getFirst()
+        .getSelectBlueprint().branches().getFirst().queryShape();
+    QueryShape right = ScriptParser.parse(formatted).statements().getFirst()
+        .getSelectBlueprint().branches().getFirst().queryShape();
+
+    assertEquals(left, right);
+    assertEquals(List.of("customer", "orders"),
+        left.baseRelations().stream().map(relation -> relation.qualifiedName().value()).toList());
+    assertInstanceOf(QueryShape.KnownGrouping.class, left.grouping());
+    assertEquals(QueryShape.TruthValue.YES, left.characteristics().containsAggregate());
+  }
+
+  @Test
+  void preservesQuotedIdentifierPartsAndMarksDerivedRelationsUnsupported() {
+    NestStatement statement = ScriptParser.parse("""
+        select q."Customer.Id" into {result.customer.id}
+        from (select "Customer.Id" from "Sales.Schema"."Customers") as q;
+        """).statements().getFirst();
+    QueryShape shape = statement.getSelectBlueprint().branches().getFirst().queryShape();
+    QueryShape.ExpressionFacts expression = statement.getSelectBlueprint().branches().getFirst()
+        .items().getFirst().expressionFacts();
+
+    assertTrue(shape.hasUnsupportedSource());
+    QueryShape.ReferencedRelations references = QueryShape.referencedRelations(List.of(shape));
+    assertTrue(references.names().isEmpty());
+    assertTrue(references.hasUnsupportedSources());
+    var column = expression.directColumn().orElseThrow();
+    assertEquals("q", column.qualifier().orElseThrow().value());
+    assertEquals("Customer.Id", column.column().text());
+    assertTrue(column.column().quoted());
+  }
+
+  @Test
+  void distinguishesAbsentGroupingFromUnknownAggregateClassification() {
+    QueryShape shape = ScriptParser.parse("""
+        select upper(c.name) into {result.customer.name} from customer c;
+        """).statements().getFirst().getSelectBlueprint().branches().getFirst().queryShape();
+
+    assertInstanceOf(QueryShape.NoGrouping.class, shape.grouping());
+    assertEquals(QueryShape.TruthValue.UNKNOWN, shape.characteristics().containsAggregate());
+  }
+
+  @Test
+  void extractsCommaRelationsAndCompositeGrouping() {
+    QueryShape shape = ScriptParser.parse("""
+        select distinct a.tenant_id into {result.entry.tenant},
+          b.entry_id into {result.entry.id}
+        from account a, entry b
+        where b.tenant_id = a.tenant_id
+        group by a.tenant_id, b.entry_id;
+        """).statements().getFirst().getSelectBlueprint().branches().getFirst().queryShape();
+
+    assertEquals(List.of("account", "entry"),
+        shape.baseRelations().stream().map(relation -> relation.qualifiedName().value()).toList());
+    QueryShape.KnownGrouping grouping = assertInstanceOf(QueryShape.KnownGrouping.class, shape.grouping());
+    assertEquals(2, grouping.expressions().size());
+    assertTrue(grouping.expressions().stream().allMatch(expression -> expression.directColumn().isPresent()));
+    assertEquals(QueryShape.TruthValue.YES, shape.characteristics().distinct());
+  }
+
+  @Test
+  void marksAdvancedGroupingAsUnsupported() {
+    QueryShape shape = ScriptParser.parse("""
+        select department into {result.summary.department}, count(*) into {result.summary.total}
+        from employee group by rollup(department);
+        """).statements().getFirst().getSelectBlueprint().branches().getFirst().queryShape();
+
+    assertInstanceOf(QueryShape.UnsupportedGrouping.class, shape.grouping());
   }
 }

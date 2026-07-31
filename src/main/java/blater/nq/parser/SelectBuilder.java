@@ -63,7 +63,10 @@ final class SelectBuilder {
         orderItems.stream().map(item -> new SelectBlueprint.OrderItem(
             item.expression, item.direction, item.legacyPaths)).toList(),
         structureItems.stream().map(item -> new SelectBlueprint.StructureKey(
-            item.path, item.keyExpressions, blater.nq.domain.KeyOrigin.EXPLICIT)).toList());
+            item.path,
+            blater.nq.domain.RepetitionPlacement.named(),
+            new SelectBlueprint.CommonKeyExpressions(item.keyExpressions, item.expressionFacts),
+            blater.nq.domain.KeyOrigin.EXPLICIT)).toList());
     SelectBlueprint.Compiled compiled = blueprint.compile(List.of());
     return NestStatement.select(compiled.sql(), compiled.plan(), using.namespace, blueprint);
   }
@@ -75,8 +78,10 @@ final class SelectBuilder {
             item.name,
             item.outputPath,
             item.appendText,
-            item.absentOnNull)).toList(),
-        branch.sqlTail);
+            item.absentOnNull,
+            item.expressionFacts)).toList(),
+        branch.sqlTail,
+        branch.queryShape);
   }
 
 
@@ -138,6 +143,7 @@ final class SelectBuilder {
       if (branchCtx.sqlTail() != null) {
         branch.sqlTail = ParseUtils.textOf(branchCtx.sqlTail());
       }
+      branch.queryShape = QueryShapeExtractor.extract(branchCtx);
       branches.add(branch);
     }
     return branches;
@@ -164,6 +170,7 @@ final class SelectBuilder {
     } else {
       selectItem = new SelectItem(exprText, name);
     }
+    selectItem.expressionFacts = QueryShapeExtractor.expressionFacts(ctx.selectExpr());
 
     return selectItem;
   }
@@ -184,6 +191,7 @@ final class SelectBuilder {
       for (HiQLParser.CreatesNewClauseContext createsNew : itemCtx.createsNewClause()) {
         orderBy.legacyPaths.add(PathContextMapper.toHierarchyPath(createsNew.path()));
       }
+      orderBy.expressionFacts = QueryShapeExtractor.expressionFacts(itemCtx.orderExpr());
       items.add(orderBy);
     }
     return items;
@@ -210,7 +218,11 @@ final class SelectBuilder {
           .map(ParseUtils::textOf)
           .map(String::trim)
           .toList();
-      items.add(new StructureItem(path, expressions));
+      List<blater.nq.parser.script.QueryShape.ExpressionFacts> expressionFacts =
+          itemCtx.structureKeyExpr().stream()
+              .map(QueryShapeExtractor::expressionFacts)
+              .toList();
+      items.add(new StructureItem(path, expressions, expressionFacts));
     }
     return items;
   }
@@ -224,7 +236,8 @@ final class SelectBuilder {
             || items.stream().anyMatch(item -> item.path.equals(path));
         if (duplicate)
           Log.fatal(HiqlSyntaxException.class, "duplicate structure path: " + path);
-        items.add(new StructureItem(path, List.of(orderItem.expression)));
+        items.add(new StructureItem(
+            path, List.of(orderItem.expression), List.of(orderItem.expressionFacts)));
       }
     }
     return items;
@@ -289,6 +302,7 @@ final class SelectBuilder {
   private static final class Branch {
     final List<SelectItem> items = new ArrayList<>();
     String sqlTail;
+    blater.nq.parser.script.QueryShape queryShape;
 
     boolean hasHierarchyFields() {
       return items.stream().anyMatch(item -> item.outputPath != null);
@@ -310,6 +324,7 @@ final class SelectBuilder {
     HierarchyPath outputPath;
     String appendText = null;
     boolean absentOnNull;
+    blater.nq.parser.script.QueryShape.ExpressionFacts expressionFacts;
 
     SelectItem(String text, String name) {
       this.text = text;
@@ -344,11 +359,15 @@ final class SelectBuilder {
 
   private static final class OrderItem {
     String expression;
+    blater.nq.parser.script.QueryShape.ExpressionFacts expressionFacts;
     String direction;
     final List<HierarchyPath> legacyPaths = new ArrayList<>();
   }
 
-  private record StructureItem(HierarchyPath path, List<String> keyExpressions) {
+  private record StructureItem(
+      HierarchyPath path,
+      List<String> keyExpressions,
+      List<blater.nq.parser.script.QueryShape.ExpressionFacts> expressionFacts) {
   }
 
 }

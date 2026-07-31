@@ -7,6 +7,7 @@ import blater.nq.domain.KeyedPath;
 import blater.nq.domain.MappingCondition;
 import blater.nq.domain.MappingPlan;
 import blater.nq.domain.OutputField;
+import blater.nq.domain.RepetitionPlacement;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -80,8 +81,8 @@ public final class SelectBlueprint {
     }
     List<KeyedPath> keyedPaths = new ArrayList<>();
     for (StructureKey key : keys) {
-      List<String> columns = key.expressions().stream().map(internalColumns::get).toList();
-      keyedPaths.add(new KeyedPath(key.path(), columns, key.origin()));
+      List<String> columns = key.internalExpressionNames().stream().map(internalColumns::get).toList();
+      keyedPaths.add(new KeyedPath(key.identityPath(), key.placement(), columns, key.origin()));
     }
 
     MappingPlan plan = new MappingPlan(fields, legacyCorrelationRules(orderItems, internalExpressions), keyedPaths);
@@ -109,13 +110,13 @@ public final class SelectBlueprint {
       List<OrderItem> orderItems) {
     Map<String, InternalExpression> expressions = new LinkedHashMap<>();
     for (StructureKey key : keys) {
-      if (key.branchExpressions().isEmpty()) {
-        for (String expression : key.expressions()) {
+      if (key.keyExpressions() instanceof CommonKeyExpressions common) {
+        for (String expression : common.expressions()) {
           expressions.putIfAbsent(expression, new InternalExpression(expression, key.path(), null, -1));
         }
       } else {
-        for (int component = 0; component < key.expressions().size(); component++) {
-          String expression = key.expressions().get(component);
+        for (int component = 0; component < key.internalExpressionNames().size(); component++) {
+          String expression = key.internalExpressionNames().get(component);
           expressions.put(expression, new InternalExpression(expression, key.path(), key, component));
         }
       }
@@ -243,7 +244,7 @@ public final class SelectBlueprint {
   public record Compiled(String sql, MappingPlan plan) {
   }
 
-  public record Branch(List<SelectItem> items, String sqlTail) {
+  public record Branch(List<SelectItem> items, String sqlTail, QueryShape queryShape) {
     public Branch {
       items = List.copyOf(items);
     }
@@ -268,7 +269,8 @@ public final class SelectBlueprint {
       String name,
       HierarchyPath outputPath,
       String appendText,
-      boolean absentOnNull) {
+      boolean absentOnNull,
+      QueryShape.ExpressionFacts expressionFacts) {
   }
 
   public record OrderItem(String expression, String direction, List<HierarchyPath> legacyPaths) {
@@ -277,44 +279,104 @@ public final class SelectBlueprint {
     }
   }
 
-  public record StructureKey(
-      HierarchyPath path,
+  public sealed interface KeyExpressions permits CommonKeyExpressions, BranchKeyExpressions {
+  }
+
+  public record CommonKeyExpressions(
       List<String> expressions,
-      KeyOrigin origin,
-      Map<Integer, List<String>> branchExpressions) {
+      List<QueryShape.ExpressionFacts> expressionFacts) implements KeyExpressions {
+
+    public CommonKeyExpressions(List<String> expressions) {
+      this(expressions, List.of());
+    }
+
+    public CommonKeyExpressions {
+      expressions = List.copyOf(expressions);
+      if (expressions.isEmpty()) throw new IllegalArgumentException("A structure key requires expressions.");
+      expressionFacts = expressionFacts == null ? List.of() : List.copyOf(expressionFacts);
+      if (!expressionFacts.isEmpty() && expressionFacts.size() != expressions.size()) {
+        throw new IllegalArgumentException("Structure key expression facts must match expression arity.");
+      }
+    }
+  }
+
+  public record BranchKeyExpressions(Map<Integer, List<String>> expressions) implements KeyExpressions {
+    public BranchKeyExpressions {
+      if (expressions.isEmpty()) throw new IllegalArgumentException("A branch key requires expressions.");
+      Map<Integer, List<String>> copied = new LinkedHashMap<>();
+      expressions.forEach((branch, values) -> copied.put(branch, List.copyOf(values)));
+      int components = copied.values().iterator().next().size();
+      if (components == 0 || copied.values().stream().anyMatch(values -> values.size() != components)) {
+        throw new IllegalArgumentException("Hierarchy-union inferred keys must have compatible arity.");
+      }
+      expressions = Map.copyOf(copied);
+    }
+
+    int componentCount() {
+      return expressions.values().iterator().next().size();
+    }
+  }
+
+  public record StructureKey(
+      HierarchyPath identityPath,
+      RepetitionPlacement placement,
+      KeyExpressions keyExpressions,
+      KeyOrigin origin) {
+
     public StructureKey(HierarchyPath path, List<String> expressions, KeyOrigin origin) {
-      this(path, expressions, origin, Map.of());
+      this(
+          path,
+          origin == KeyOrigin.INFERRED
+              ? RepetitionPlacement.anonymous(path.parent())
+              : RepetitionPlacement.named(),
+          new CommonKeyExpressions(expressions),
+          origin);
     }
 
     public StructureKey {
-      expressions = List.copyOf(expressions);
+      if (identityPath == null) throw new IllegalArgumentException("A structure key requires an identity path.");
+      if (placement == null) throw new IllegalArgumentException("A structure key requires repetition placement.");
+      if (keyExpressions == null) throw new IllegalArgumentException("A structure key requires expressions.");
       origin = origin == null ? KeyOrigin.EXPLICIT : origin;
-      Map<Integer, List<String>> copied = new LinkedHashMap<>();
-      branchExpressions.forEach((branch, values) -> copied.put(branch, List.copyOf(values)));
-      branchExpressions = Map.copyOf(copied);
+      if (origin == KeyOrigin.EXPLICIT && !(placement instanceof RepetitionPlacement.NamedItem)) {
+        throw new IllegalArgumentException("Explicit keys must repeat their named identity path.");
+      }
     }
 
-    public static StructureKey inferred(HierarchyPath path, List<String> expressions) {
-      return new StructureKey(path, expressions, KeyOrigin.INFERRED);
+    public HierarchyPath path() {
+      return identityPath;
+    }
+
+    public static StructureKey inferred(
+        HierarchyPath path,
+        RepetitionPlacement placement,
+        List<String> expressions) {
+      return new StructureKey(path, placement, new CommonKeyExpressions(expressions), KeyOrigin.INFERRED);
     }
 
     public static StructureKey inferredBranches(
         HierarchyPath path,
+        RepetitionPlacement placement,
         Map<Integer, List<String>> branchExpressions) {
-      int components = branchExpressions.values().stream().findFirst().map(List::size).orElse(0);
-      if (components == 0 || branchExpressions.values().stream().anyMatch(values -> values.size() != components)) {
-        throw new IllegalArgumentException("Hierarchy-union inferred keys must have compatible arity: " + path);
-      }
-      String prefix = "__nq_inferred_" + String.join("_", path.getPathParts()) + "_";
-      List<String> identities = java.util.stream.IntStream.range(0, components)
+      return new StructureKey(
+          path, placement, new BranchKeyExpressions(branchExpressions), KeyOrigin.INFERRED);
+    }
+
+    List<String> internalExpressionNames() {
+      if (keyExpressions instanceof CommonKeyExpressions common) return common.expressions();
+      BranchKeyExpressions branches = (BranchKeyExpressions) keyExpressions;
+      String prefix = "__nq_inferred_" + String.join("_", identityPath.getPathParts()) + "_";
+      return java.util.stream.IntStream.range(0, branches.componentCount() + 1)
           .mapToObj(index -> prefix + index)
           .toList();
-      return new StructureKey(path, identities, KeyOrigin.INFERRED, branchExpressions);
     }
 
     String expressionFor(int branch, int component) {
-      List<String> values = branchExpressions.get(branch);
-      return values == null || component >= values.size() ? null : values.get(component);
+      if (!(keyExpressions instanceof BranchKeyExpressions branches)) return null;
+      if (component == 0) return "'" + SELECT_BRANCH_VALUE_PREFIX + branch + "'";
+      List<String> values = branches.expressions().get(branch);
+      int branchComponent = component - 1;
+      return values == null || branchComponent >= values.size() ? null : values.get(branchComponent);
     }
   }
 

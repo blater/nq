@@ -20,7 +20,7 @@ public final class SchemaNamingHeuristics {
       DatabaseStructure.RelationId relation,
       List<DatabaseStructure.Column> columns) {
     String table = DatabaseStructure.normalize(relation.name());
-    String singular = singular(table);
+    String singular = IdentifierNaming.singular(table);
     List<DatabaseStructure.CandidateKey> result = new ArrayList<>();
     for (DatabaseStructure.Column column : columns) {
       String name = DatabaseStructure.normalize(column.name());
@@ -89,9 +89,9 @@ public final class SchemaNamingHeuristics {
         .filter(relation -> {
           String table = DatabaseStructure.normalize(relation.name());
           return normalizedStem.equals(table)
-              || normalizedStem.equals(singular(table))
+              || normalizedStem.equals(IdentifierNaming.singular(table))
               || normalizedStem.endsWith(table)
-              || normalizedStem.endsWith(singular(table));
+              || normalizedStem.endsWith(IdentifierNaming.singular(table));
         })
         .sorted((left, right) -> Integer.compare(
             DatabaseStructure.normalize(right.name()).length(),
@@ -107,13 +107,6 @@ public final class SchemaNamingHeuristics {
     if (column.endsWith("Id") && column.length() > 2) return column.substring(0, column.length() - 2);
     if (column.endsWith("Key") && column.length() > 3) return column.substring(0, column.length() - 3);
     return null;
-  }
-
-  private static String singular(String value) {
-    if (value.endsWith("ies") && value.length() > 3) return value.substring(0, value.length() - 3) + "y";
-    if (value.endsWith("ses") && value.length() > 3) return value.substring(0, value.length() - 2);
-    if (value.endsWith("s") && value.length() > 1) return value.substring(0, value.length() - 1);
-    return value;
   }
 
   private static boolean compatible(int left, int right) {

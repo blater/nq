@@ -1,143 +1,101 @@
 package blater.nq.runner.inference;
 
 import blater.nq.domain.HierarchyPath;
+import blater.nq.domain.RepetitionPlacement;
+import blater.nq.parser.script.QueryShape;
 import blater.nq.parser.script.SelectBlueprint;
 import blater.nq.util.Log;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /** Applies a cached database graph to one parsed DQL SELECT. */
 public final class KeyInferencePlanner {
-  private static final Pattern RELATION = Pattern.compile(
-      "(?i)\\b(?:from|join)\\s+((?:\\\"[^\\\"]+\\\"|[a-z0-9_$]+)(?:\\.(?:\\\"[^\\\"]+\\\"|[a-z0-9_$]+))*)"
-          + "(?:\\s+(?:as\\s+)?(\\\"[^\\\"]+\\\"|[a-z_][a-z0-9_$]*))?");
-  private static final Pattern COLUMN = Pattern.compile(
-      "^\\s*(\\\"[^\\\"]+\\\"|[a-zA-Z_][a-zA-Z0-9_$]*)\\s*\\.\\s*"
-          + "(\\\"[^\\\"]+\\\"|[a-zA-Z_][a-zA-Z0-9_$]*)\\s*$");
-  private static final Pattern UNQUALIFIED_COLUMN = Pattern.compile(
-      "^\\s*(\\\"[^\\\"]+\\\"|[a-zA-Z_][a-zA-Z0-9_$]*)\\s*$");
-  private static final Pattern COMMA_RELATION = Pattern.compile(
-      "^\\s*((?:\\\"[^\\\"]+\\\"|[a-zA-Z0-9_$]+)(?:\\.(?:\\\"[^\\\"]+\\\"|[a-zA-Z0-9_$]+))*)"
-          + "(?:\\s+(?:as\\s+)?(\\\"[^\\\"]+\\\"|[a-zA-Z_][a-zA-Z0-9_$]*))?.*$",
-      Pattern.CASE_INSENSITIVE);
-  private static final Set<String> SQL_KEYWORDS = Set.of(
-      "where", "inner", "left", "right", "full", "cross", "join", "on", "group", "having",
-      "order", "union", "limit", "offset", "fetch");
 
   public CompiledSelect compile(SelectBlueprint blueprint, DatabaseStructure structure) {
     if (blueprint == null) {
       throw new IllegalArgumentException("A SELECT blueprint is required for key inference.");
     }
-    if (isDistinct(blueprint) || isAggregateWithoutGroup(blueprint)) {
-      SelectBlueprint.Compiled existing = blueprint.compile(List.of());
-      Log.debug("DQL key inference: no inferred relationships used (DISTINCT or ungrouped aggregate query).");
-      return new CompiledSelect(existing.sql(), existing.plan());
-    }
 
-    Map<Integer, List<RelationOccurrence>> occurrencesByBranch = new LinkedHashMap<>();
-    for (int branchIndex = 0; branchIndex < blueprint.branches().size(); branchIndex++) {
-      occurrencesByBranch.put(branchIndex, relationOccurrences(
-          blueprint.branches().get(branchIndex).sqlTail(), structure));
-    }
-    if (occurrencesByBranch.values().stream().allMatch(List::isEmpty)) {
-      SelectBlueprint.Compiled existing = blueprint.compile(List.of());
-      Log.debug("DQL key inference: no inferred relationships used (no metadata relations were bound).");
-      return new CompiledSelect(existing.sql(), existing.plan());
-    }
-
-    Set<HierarchyPath> explicitPaths = new HashSet<>();
+    Set<HierarchyPath> explicitPaths = new LinkedHashSet<>();
     blueprint.explicitKeys().forEach(key -> explicitPaths.add(key.path()));
-    List<HierarchyPath> paths = blueprint.objectPaths().stream()
+    Set<HierarchyPath> planningPaths = new LinkedHashSet<>(blueprint.objectPaths());
+    planningPaths.addAll(explicitPaths);
+    List<HierarchyPath> paths = planningPaths.stream()
         .sorted(Comparator.comparingInt(path -> path.getPathParts().size()))
         .toList();
 
+    Map<Integer, List<RelationOccurrence>> occurrencesByBranch = bindOccurrences(blueprint, structure);
+    Map<Integer, Map<HierarchyPath, RelationOccurrence>> ownersByBranch = bindOwners(
+        blueprint, structure, paths, occurrencesByBranch);
+
     List<SelectBlueprint.StructureKey> inferred = new ArrayList<>();
     List<String> inferenceUsage = new ArrayList<>();
-    Map<Integer, Map<HierarchyPath, RelationOccurrence>> ownersByBranch = new HashMap<>();
+    Set<HierarchyPath> effectiveKeyPaths = new LinkedHashSet<>(explicitPaths);
+
     for (HierarchyPath path : paths) {
-      if (explicitPaths.contains(path)) {
-        continue;
-      }
-      Map<Integer, List<String>> expressionsByBranch = new LinkedHashMap<>();
-      Map<Integer, String> usageByBranch = new LinkedHashMap<>();
+      if (explicitPaths.contains(path)) continue;
+
+      Map<Integer, IdentityDecision> decisions = new LinkedHashMap<>();
       for (int branchIndex = 0; branchIndex < blueprint.branches().size(); branchIndex++) {
         SelectBlueprint.Branch branch = blueprint.branches().get(branchIndex);
         if (!branch.mapsPath(path)) continue;
-        List<String> grouping = groupingExpressions(branch.sqlTail());
-        if (!grouping.isEmpty()) {
-          expressionsByBranch.put(branchIndex, grouping);
-          usageByBranch.put(branchIndex, formatGroupingUsage(
-              path, branchIndex, blueprint.branches().size(), grouping));
-          continue;
-        }
-        List<RelationOccurrence> occurrences = occurrencesByBranch.get(branchIndex);
-        List<BoundItem> boundItems = boundItemsFor(path, branch.items(), occurrences);
-        RelationOccurrence parent = ownersByBranch
-            .computeIfAbsent(branchIndex, ignored -> new HashMap<>())
-            .get(path.parent());
-        List<ScoredOccurrence> candidates = scoreCandidates(
-            path, boundItems, occurrences, parent, structure);
-        if (candidates.isEmpty()) continue;
-        ScoredOccurrence winner = candidates.getFirst();
-        if (candidates.size() > 1 && winner.score() == candidates.get(1).score()) {
-          Log.warn(
-              "Ambiguous key inference for output path [{}] branch [{}]; selected [{}] over [{}]. Possible data loss; add an explicit structure key or use --no-key-inference.",
-              dotted(path), branchIndex + 1, winner.occurrence().alias(), candidates.get(1).occurrence().alias());
-        }
-        DatabaseStructure.CandidateKey key = winner.occurrence().relation().preferredKey().orElse(null);
-        if (key == null || key.columns().isEmpty()) continue;
-        ownersByBranch.get(branchIndex).put(path, winner.occurrence());
-        expressionsByBranch.put(branchIndex, key.columns().stream()
-            .map(column -> winner.occurrence().sqlAlias() + "." + column)
-            .toList());
-        usageByBranch.put(branchIndex, formatMetadataUsage(
+        IdentityDecision decision = identityFor(
             path,
             branchIndex,
             blueprint.branches().size(),
-            winner.occurrence(),
-            key,
-            parent,
-            relationshipsBetween(parent, winner.occurrence(), structure)));
+            branch,
+            occurrencesByBranch.getOrDefault(branchIndex, List.of()),
+            ownersByBranch.getOrDefault(branchIndex, Map.of()),
+            structure);
+        if (decision != null) decisions.put(branchIndex, decision);
       }
-      if (expressionsByBranch.isEmpty()) continue;
+
       long mappedBranches = blueprint.branches().stream().filter(branch -> branch.mapsPath(path)).count();
-      if (expressionsByBranch.size() != mappedBranches) {
+      if (decisions.isEmpty()) continue;
+      if (decisions.size() != mappedBranches) {
         Log.warn(
             "Could not infer a key for every hierarchy-union branch at output path [{}]; preserving row-first behavior for that path.",
             dotted(path));
         continue;
       }
-      int arity = expressionsByBranch.values().iterator().next().size();
-      if (expressionsByBranch.values().stream().anyMatch(expressions -> expressions.size() != arity)) {
+      int arity = decisions.values().iterator().next().expressions().size();
+      if (decisions.values().stream().anyMatch(decision -> decision.expressions().size() != arity)) {
         Log.warn(
             "Could not infer a compatible hierarchy-union key for output path [{}]; preserving row-first behavior for that path.",
             dotted(path));
         continue;
       }
+
+      Map<Integer, RepetitionPlacement> placements = new LinkedHashMap<>();
+      decisions.forEach((branchIndex, decision) -> placements.put(
+          branchIndex,
+          OutputPlacementPolicy.inferred(path, decision.owner(), effectiveKeyPaths)));
+      RepetitionPlacement placement = placements.values().iterator().next();
+      if (placements.values().stream().anyMatch(candidate -> !candidate.equals(placement))) {
+        Log.warn(
+            "Could not infer compatible hierarchy-union placement for output path [{}]; preserving row-first behavior for that path.",
+            dotted(path));
+        continue;
+      }
+
       if (blueprint.branches().size() == 1) {
         inferred.add(SelectBlueprint.StructureKey.inferred(
-            path, expressionsByBranch.values().iterator().next()));
+            path, placement, decisions.values().iterator().next().expressions()));
       } else {
-        Map<Integer, List<String>> branchLocalKeys = new LinkedHashMap<>();
-        expressionsByBranch.forEach((branch, expressions) -> {
-          List<String> values = new ArrayList<>();
-          values.add("'select_branch_" + branch + "'");
-          values.addAll(expressions);
-          branchLocalKeys.put(branch, values);
-        });
-        inferred.add(SelectBlueprint.StructureKey.inferredBranches(path, branchLocalKeys));
+        Map<Integer, List<String>> branchExpressions = new LinkedHashMap<>();
+        decisions.forEach((branch, decision) -> branchExpressions.put(branch, decision.expressions()));
+        inferred.add(SelectBlueprint.StructureKey.inferredBranches(path, placement, branchExpressions));
       }
-      inferenceUsage.addAll(usageByBranch.values());
+      effectiveKeyPaths.add(path);
+      decisions.values().stream().map(IdentityDecision::usage).forEach(inferenceUsage::add);
     }
 
     SelectBlueprint.Compiled compiled = blueprint.compile(inferred);
@@ -145,29 +103,289 @@ public final class KeyInferencePlanner {
     return new CompiledSelect(compiled.sql(), compiled.plan());
   }
 
-  public static List<String> referencedRelations(SelectBlueprint blueprint) {
-    if (blueprint == null) return List.of();
-    Set<String> names = new java.util.LinkedHashSet<>();
-    for (SelectBlueprint.Branch branch : blueprint.branches()) {
-      if (branch.sqlTail() == null) continue;
-      Matcher matcher = RELATION.matcher(branch.sqlTail());
-      while (matcher.find()) names.add(unquoteQualified(matcher.group(1)));
-      String lower = branch.sqlTail().toLowerCase(Locale.ROOT);
-      int from = lower.indexOf("from ");
-      if (from >= 0) {
-        int end = branch.sqlTail().length();
-        for (String terminator : List.of(" where ", " group ", " having ", " order ", " limit ", " offset ")) {
-          int found = lower.indexOf(terminator, from + 5);
-          if (found >= 0) end = Math.min(end, found);
+  public static QueryShape.ReferencedRelations referencedRelations(SelectBlueprint blueprint) {
+    if (blueprint == null) return QueryShape.ReferencedRelations.none();
+    return QueryShape.referencedRelations(
+        blueprint.branches().stream().map(SelectBlueprint.Branch::queryShape).toList());
+  }
+
+  private static Map<Integer, List<RelationOccurrence>> bindOccurrences(
+      SelectBlueprint blueprint,
+      DatabaseStructure structure) {
+    Map<Integer, List<RelationOccurrence>> result = new LinkedHashMap<>();
+    for (int branchIndex = 0; branchIndex < blueprint.branches().size(); branchIndex++) {
+      SelectBlueprint.Branch branch = blueprint.branches().get(branchIndex);
+      List<RelationOccurrence> occurrences = new ArrayList<>();
+      for (QueryShape.BaseRelation reference : branch.queryShape().baseRelations()) {
+        resolveRelation(structure, reference.qualifiedName()).ifPresent(relation -> occurrences.add(
+            new RelationOccurrence(reference.effectiveAlias(), reference.effectiveAlias().sql(), relation)));
+      }
+      result.put(branchIndex, List.copyOf(occurrences));
+    }
+    return result;
+  }
+
+  private static Map<Integer, Map<HierarchyPath, RelationOccurrence>> bindOwners(
+      SelectBlueprint blueprint,
+      DatabaseStructure structure,
+      List<HierarchyPath> paths,
+      Map<Integer, List<RelationOccurrence>> occurrencesByBranch) {
+    Map<Integer, Map<HierarchyPath, RelationOccurrence>> ownersByBranch = new HashMap<>();
+    for (HierarchyPath path : paths) {
+      for (int branchIndex = 0; branchIndex < blueprint.branches().size(); branchIndex++) {
+        SelectBlueprint.Branch branch = blueprint.branches().get(branchIndex);
+        if (!branch.mapsPath(path)) continue;
+        List<RelationOccurrence> occurrences = occurrencesByBranch.getOrDefault(branchIndex, List.of());
+        SelectBlueprint.StructureKey explicitKey = blueprint.explicitKeys().stream()
+            .filter(key -> key.path().equals(path))
+            .findFirst()
+            .orElse(null);
+        List<BoundItem> boundItems = boundItemsFor(path, branch, occurrences, explicitKey);
+        Map<HierarchyPath, RelationOccurrence> owners = ownersByBranch.computeIfAbsent(
+            branchIndex, ignored -> new HashMap<>());
+        RelationOccurrence parent = owners.get(path.parent());
+        List<ScoredOccurrence> candidates = scoreCandidates(path, boundItems, occurrences, parent, structure);
+        if (candidates.isEmpty()) continue;
+        ScoredOccurrence winner = candidates.getFirst();
+        if (candidates.size() > 1 && winner.score() == candidates.get(1).score()) {
+          Log.warn(
+              "Ambiguous key inference for output path [{}] branch [{}]; selected [{}] over [{}]. Possible data loss; add an explicit structure key or use --no-key-inference.",
+              dotted(path), branchIndex + 1, winner.occurrence().alias().text(),
+              candidates.get(1).occurrence().alias().text());
         }
-        List<String> chunks = splitTopLevel(branch.sqlTail().substring(from + 5, end));
-        for (int idx = 1; idx < chunks.size(); idx++) {
-          Matcher comma = COMMA_RELATION.matcher(chunks.get(idx));
-          if (comma.matches()) names.add(unquoteQualified(comma.group(1)));
-        }
+        owners.put(path, winner.occurrence());
       }
     }
-    return List.copyOf(names);
+    return ownersByBranch;
+  }
+
+  private static IdentityDecision identityFor(
+      HierarchyPath path,
+      int branchIndex,
+      int branchCount,
+      SelectBlueprint.Branch branch,
+      List<RelationOccurrence> occurrences,
+      Map<HierarchyPath, RelationOccurrence> owners,
+      DatabaseStructure structure) {
+    QueryShape shape = branch.queryShape();
+    if (shape.characteristics().distinct() == QueryShape.TruthValue.YES) return null;
+
+    RelationOccurrence owner = owners.get(path);
+    RelationOccurrence parent = owners.get(path.parent());
+    if (shape.grouping() instanceof QueryShape.KnownGrouping grouping) {
+      List<ResolvedColumn> groupedColumns = grouping.expressions().stream()
+          .map(expression -> resolveColumn(expression.directColumn(), occurrences, shape.hasUnsupportedSource()))
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .toList();
+      DatabaseStructure.CandidateKey key = eligibleGroupedKey(owner, groupedColumns);
+      if (key != null) {
+        List<String> expressions = keyExpressions(owner, key, branch, occurrences);
+        return new IdentityDecision(
+            expressions,
+            owner.relation(),
+            formatMetadataUsage(
+                path, branchIndex, branchCount, owner, key, parent,
+                relationshipsBetween(parent, owner, structure)));
+      }
+      List<String> summary = summaryIdentity(path, branch, grouping, occurrences);
+      if (!summary.isEmpty()) {
+        return new IdentityDecision(
+            summary,
+            owner == null ? null : owner.relation(),
+            formatGroupingUsage(path, branchIndex, branchCount, summary));
+      }
+      return null;
+    }
+    if (shape.grouping() instanceof QueryShape.UnsupportedGrouping) return null;
+    if (shape.characteristics().containsAggregate() != QueryShape.TruthValue.NO) return null;
+    if (owner == null) return null;
+    DatabaseStructure.CandidateKey key = owner.relation().preferredKey().orElse(null);
+    if (key == null || key.columns().isEmpty()) return null;
+    return new IdentityDecision(
+        keyExpressions(owner, key, branch, occurrences),
+        owner.relation(),
+        formatMetadataUsage(
+            path, branchIndex, branchCount, owner, key, parent,
+            relationshipsBetween(parent, owner, structure)));
+  }
+
+  private static DatabaseStructure.CandidateKey eligibleGroupedKey(
+      RelationOccurrence owner,
+      List<ResolvedColumn> groupedColumns) {
+    if (owner == null) return null;
+    return owner.relation().candidateKeys().stream()
+        .filter(key -> key.columns().stream().allMatch(column -> groupedColumns.stream().anyMatch(grouped ->
+            grouped.occurrence().equals(owner) && grouped.column().equalsIgnoreCase(column))))
+        .findFirst()
+        .orElse(null);
+  }
+
+  private static List<String> summaryIdentity(
+      HierarchyPath path,
+      SelectBlueprint.Branch branch,
+      QueryShape.KnownGrouping grouping,
+      List<RelationOccurrence> occurrences) {
+    List<SelectBlueprint.SelectItem> items = itemsAt(path, branch.items());
+    if (items.stream().noneMatch(item ->
+        item.expressionFacts().aggregate() == QueryShape.TruthValue.YES)) return List.of();
+    if (items.stream().anyMatch(item ->
+        item.expressionFacts().aggregate() == QueryShape.TruthValue.UNKNOWN)) return List.of();
+
+    for (SelectBlueprint.SelectItem item : items) {
+      QueryShape.ExpressionFacts facts = item.expressionFacts();
+      if (facts.aggregate() == QueryShape.TruthValue.YES) continue;
+      if (facts.directColumn().isPresent()
+          && resolveColumn(facts.directColumn(), occurrences, branch.queryShape().hasUnsupportedSource()).isEmpty()) {
+        return List.of();
+      }
+      boolean grouped = grouping.expressions().stream().anyMatch(facts::structurallyEquals);
+      if (!grouped) {
+        Optional<ResolvedColumn> mapped = resolveColumn(
+            facts.directColumn(), occurrences, branch.queryShape().hasUnsupportedSource());
+        grouped = mapped.isPresent() && grouping.expressions().stream()
+            .map(expression -> resolveColumn(
+                expression.directColumn(), occurrences, branch.queryShape().hasUnsupportedSource()))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .anyMatch(mapped.get()::equals);
+      }
+      if (!grouped) return List.of();
+    }
+    return grouping.expressions().stream().map(QueryShape.ExpressionFacts::originalSql).toList();
+  }
+
+  private static List<SelectBlueprint.SelectItem> itemsAt(
+      HierarchyPath path,
+      List<SelectBlueprint.SelectItem> items) {
+    return items.stream()
+        .filter(item -> item.outputPath() != null && path.equals(item.outputPath().parent()))
+        .toList();
+  }
+
+  private static List<String> keyExpressions(
+      RelationOccurrence occurrence,
+      DatabaseStructure.CandidateKey key,
+      SelectBlueprint.Branch branch,
+      List<RelationOccurrence> occurrences) {
+    List<QueryShape.ExpressionFacts> available = new ArrayList<>();
+    branch.items().stream().map(SelectBlueprint.SelectItem::expressionFacts).forEach(available::add);
+    if (branch.queryShape().grouping() instanceof QueryShape.KnownGrouping grouping) {
+      available.addAll(grouping.expressions());
+    }
+    return key.columns().stream()
+        .map(column -> available.stream()
+            .filter(facts -> resolveColumn(
+                facts.directColumn(), occurrences, branch.queryShape().hasUnsupportedSource())
+                .filter(resolved -> resolved.occurrence().equals(occurrence)
+                    && resolved.column().equalsIgnoreCase(column))
+                .isPresent())
+            .map(QueryShape.ExpressionFacts::originalSql)
+            .findFirst()
+            .orElseGet(() -> occurrence.sqlAlias() + "." + renderColumn(column)))
+        .toList();
+  }
+
+  private static String renderColumn(String column) {
+    if (simpleIdentifier(column)) return column;
+    return "\"" + column.replace("\"", "\"\"") + "\"";
+  }
+
+  private static boolean simpleIdentifier(String value) {
+    if (value == null || value.isEmpty()) return false;
+    char first = value.charAt(0);
+    if (!Character.isLetter(first) && first != '_' && first != '$') return false;
+    for (int index = 1; index < value.length(); index++) {
+      char character = value.charAt(index);
+      if (!Character.isLetterOrDigit(character) && character != '_' && character != '$') return false;
+    }
+    return true;
+  }
+
+  private static Optional<ResolvedColumn> resolveColumn(
+      Optional<QueryShape.DirectColumnReference> reference,
+      List<RelationOccurrence> occurrences,
+      boolean hasUnsupportedSource) {
+    if (reference.isEmpty()) return Optional.empty();
+    QueryShape.DirectColumnReference column = reference.get();
+    if (column.qualifier().isPresent()) {
+      QueryShape.SqlIdentifier qualifier = column.qualifier().get();
+      List<RelationOccurrence> matches = occurrences.stream()
+          .filter(occurrence -> qualifierMatches(qualifier, occurrence.alias()))
+          .filter(occurrence -> columnIn(occurrence.relation(), column.column()).isPresent())
+          .toList();
+      if (matches.size() != 1) return Optional.empty();
+      String name = columnIn(matches.getFirst().relation(), column.column()).orElseThrow().name();
+      return Optional.of(new ResolvedColumn(matches.getFirst(), name));
+    }
+    if (hasUnsupportedSource) return Optional.empty();
+    List<ResolvedColumn> matches = occurrences.stream()
+        .map(occurrence -> columnIn(occurrence.relation(), column.column())
+            .map(found -> new ResolvedColumn(occurrence, found.name())))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .toList();
+    return matches.size() == 1 ? Optional.of(matches.getFirst()) : Optional.empty();
+  }
+
+  private static boolean qualifierMatches(
+      QueryShape.SqlIdentifier qualifier,
+      QueryShape.IdentifierPart alias) {
+    return qualifier.parts().size() == 1 && qualifier.parts().getFirst().matches(alias.text());
+  }
+
+  private static Optional<DatabaseStructure.Column> columnIn(
+      DatabaseStructure.Relation relation,
+      QueryShape.IdentifierPart column) {
+    return relation.columns().stream().filter(candidate -> column.matches(candidate.name())).findFirst();
+  }
+
+  private static Optional<DatabaseStructure.Relation> resolveRelation(
+      DatabaseStructure structure,
+      QueryShape.SqlIdentifier identifier) {
+    List<DatabaseStructure.Relation> matches = structure.relations().stream()
+        .filter(relation -> relationMatches(relation.id(), identifier.parts()))
+        .toList();
+    return matches.size() == 1 ? Optional.of(matches.getFirst()) : Optional.empty();
+  }
+
+  private static boolean relationMatches(
+      DatabaseStructure.RelationId id,
+      List<QueryShape.IdentifierPart> parts) {
+    if (parts.size() == 1) return parts.getFirst().matches(id.name());
+    if (parts.size() == 2) {
+      return id.schema() != null && parts.get(0).matches(id.schema()) && parts.get(1).matches(id.name());
+    }
+    if (parts.size() == 3) {
+      return id.catalog() != null && id.schema() != null
+          && parts.get(0).matches(id.catalog())
+          && parts.get(1).matches(id.schema())
+          && parts.get(2).matches(id.name());
+    }
+    return false;
+  }
+
+  private static List<BoundItem> boundItemsFor(
+      HierarchyPath path,
+      SelectBlueprint.Branch branch,
+      List<RelationOccurrence> occurrences,
+      SelectBlueprint.StructureKey explicitKey) {
+    List<BoundItem> result = new ArrayList<>();
+    for (SelectBlueprint.SelectItem item : itemsAt(path, branch.items())) {
+      resolveColumn(
+          item.expressionFacts().directColumn(), occurrences, branch.queryShape().hasUnsupportedSource())
+          .ifPresent(column -> result.add(new BoundItem(
+              column.occurrence(), column.column(), item.outputPath().getTerminalNodeName())));
+    }
+    if (explicitKey != null
+        && explicitKey.keyExpressions() instanceof SelectBlueprint.CommonKeyExpressions common) {
+      for (QueryShape.ExpressionFacts facts : common.expressionFacts()) {
+        resolveColumn(facts.directColumn(), occurrences, branch.queryShape().hasUnsupportedSource())
+            .ifPresent(column -> result.add(new BoundItem(
+                column.occurrence(), column.column(), path.getTerminalNodeName())));
+      }
+    }
+    return result;
   }
 
   private static List<ScoredOccurrence> scoreCandidates(
@@ -185,26 +403,21 @@ public final class KeyInferencePlanner {
       if ("id".equalsIgnoreCase(item.outputTerminal())) score += 25;
       scores.put(item.occurrence(), score);
     }
-    if (scores.isEmpty() && occurrences.size() == 1) {
-      scores.put(occurrences.getFirst(), 1);
-    }
+    if (scores.isEmpty() && occurrences.size() == 1) scores.put(occurrences.getFirst(), 1);
     for (RelationOccurrence occurrence : new ArrayList<>(scores.keySet())) {
       int score = scores.get(occurrence);
       String terminal = DatabaseStructure.normalize(path.getTerminalNodeName());
-      if (terminal.equals(DatabaseStructure.normalize(occurrence.alias()))) score += 100;
+      if (terminal.equals(DatabaseStructure.normalize(occurrence.alias().text()))) score += 100;
       if (terminal.equals(DatabaseStructure.normalize(occurrence.relation().name()))) score += 80;
-      // The relation directly below the already-selected parent defines the repeated row grain;
-      // joined lookup tables merely enrich that object.
       if (parent != null && related(parent, occurrence, structure)) score += 200;
       DatabaseStructure.CandidateKey key = occurrence.relation().preferredKey().orElse(null);
       if (key != null) score += 10 - Math.min(9, key.evidence().rank() * 2);
       scores.put(occurrence, score);
     }
     return scores.entrySet().stream()
-        .filter(entry -> entry.getKey().relation().preferredKey().isPresent())
         .map(entry -> new ScoredOccurrence(entry.getKey(), entry.getValue()))
         .sorted(Comparator.comparingInt(ScoredOccurrence::score).reversed()
-            .thenComparing(item -> item.occurrence().alias(), String.CASE_INSENSITIVE_ORDER))
+            .thenComparing(item -> item.occurrence().alias().text(), String.CASE_INSENSITIVE_ORDER))
         .toList();
   }
 
@@ -237,12 +450,12 @@ public final class KeyInferencePlanner {
     StringBuilder result = new StringBuilder("  {")
         .append(dotted(path)).append("}")
         .append(branchLabel(branchIndex, branchCount))
-        .append(" -> ").append(occurrence.alias())
+        .append(" -> ").append(occurrence.alias().text())
         .append(" [").append(occurrence.relation().id().qualifiedName()).append("]")
         .append(", key (").append(String.join(", ", key.columns())).append(")")
         .append(" [").append(key.evidence()).append("]");
     if (parent != null && !relationships.isEmpty()) {
-      result.append(", parent ").append(parent.alias()).append(" via ");
+      result.append(", parent ").append(parent.alias().text()).append(" via ");
       for (int index = 0; index < relationships.size(); index++) {
         if (index > 0) result.append("; ");
         DatabaseStructure.Relationship relationship = relationships.get(index);
@@ -277,164 +490,31 @@ public final class KeyInferencePlanner {
     Log.debug("Inferred DQL structure relationships used:\n{}", String.join("\n", usage));
   }
 
-  private static List<BoundItem> boundItemsFor(
-      HierarchyPath path,
-      List<SelectBlueprint.SelectItem> items,
-      List<RelationOccurrence> occurrences) {
-    List<BoundItem> result = new ArrayList<>();
-    for (SelectBlueprint.SelectItem item : items) {
-      if (item.outputPath() == null || !path.equals(item.outputPath().parent())) continue;
-      Matcher qualified = COLUMN.matcher(item.expression());
-      if (qualified.matches()) {
-        String alias = unquote(qualified.group(1));
-        String column = unquote(qualified.group(2));
-        occurrences.stream()
-            .filter(occurrence -> occurrence.alias().equalsIgnoreCase(alias))
-            .findFirst()
-            .ifPresent(occurrence -> result.add(new BoundItem(
-                occurrence, column, item.outputPath().getTerminalNodeName())));
-        continue;
-      }
-      Matcher unqualified = UNQUALIFIED_COLUMN.matcher(item.expression());
-      if (unqualified.matches()) {
-        String column = unquote(unqualified.group(1));
-        List<RelationOccurrence> matches = occurrences.stream()
-            .filter(occurrence -> occurrence.relation().column(column).isPresent())
-            .toList();
-        if (matches.size() == 1) {
-          result.add(new BoundItem(matches.getFirst(), column, item.outputPath().getTerminalNodeName()));
-        }
-      }
-    }
-    return result;
-  }
-
-  private static List<RelationOccurrence> relationOccurrences(
-      String sqlTail,
-      DatabaseStructure structure) {
-    if (sqlTail == null) return List.of();
-    List<RelationOccurrence> result = new ArrayList<>();
-    Matcher matcher = RELATION.matcher(sqlTail);
-    while (matcher.find()) {
-      String tableToken = matcher.group(1);
-      String aliasToken = matcher.group(2);
-      if (aliasToken != null && SQL_KEYWORDS.contains(unquote(aliasToken).toLowerCase(Locale.ROOT))) {
-        aliasToken = null;
-      }
-      DatabaseStructure.Relation relation = structure.relation(unquoteQualified(tableToken)).orElse(null);
-      if (relation == null) continue;
-      String sqlAlias = aliasToken == null ? lastPart(tableToken) : aliasToken;
-      result.add(new RelationOccurrence(unquote(sqlAlias), sqlAlias, relation));
-    }
-    addCommaRelations(sqlTail, structure, result);
-    return result;
-  }
-
-  private static void addCommaRelations(
-      String sqlTail,
-      DatabaseStructure structure,
-      List<RelationOccurrence> result) {
-    String lower = sqlTail.toLowerCase(Locale.ROOT);
-    int from = lower.indexOf("from ");
-    if (from < 0) return;
-    int end = sqlTail.length();
-    for (String terminator : List.of(" where ", " group ", " having ", " order ", " limit ", " offset ")) {
-      int found = lower.indexOf(terminator, from + 5);
-      if (found >= 0) end = Math.min(end, found);
-    }
-    List<String> chunks = splitTopLevel(sqlTail.substring(from + 5, end));
-    for (int idx = 1; idx < chunks.size(); idx++) {
-      Matcher comma = COMMA_RELATION.matcher(chunks.get(idx));
-      if (!comma.matches()) continue;
-      String tableToken = comma.group(1);
-      String aliasToken = comma.group(2);
-      DatabaseStructure.Relation relation = structure.relation(unquoteQualified(tableToken)).orElse(null);
-      if (relation == null) continue;
-      String sqlAlias = aliasToken == null ? lastPart(tableToken) : aliasToken;
-      String alias = unquote(sqlAlias);
-      if (result.stream().noneMatch(existing -> existing.alias().equalsIgnoreCase(alias))) {
-        result.add(new RelationOccurrence(alias, sqlAlias, relation));
-      }
-    }
-  }
-
-  private static List<String> groupingExpressions(String sqlTail) {
-    if (sqlTail == null) return List.of();
-    String lower = sqlTail.toLowerCase(Locale.ROOT);
-    int group = lower.indexOf(" group by ");
-    if (group < 0) return List.of();
-    int start = group + " group by ".length();
-    int end = lower.length();
-    for (String terminator : List.of(" having ", " limit ", " offset ", " fetch ")) {
-      int found = lower.indexOf(terminator, start);
-      if (found >= 0) end = Math.min(end, found);
-    }
-    return splitTopLevel(sqlTail.substring(start, end));
-  }
-
-  private static List<String> splitTopLevel(String text) {
-    List<String> result = new ArrayList<>();
-    int depth = 0;
-    int start = 0;
-    for (int idx = 0; idx < text.length(); idx++) {
-      char ch = text.charAt(idx);
-      if (ch == '(') depth++;
-      if (ch == ')') depth--;
-      if (ch == ',' && depth == 0) {
-        result.add(text.substring(start, idx).trim());
-        start = idx + 1;
-      }
-    }
-    String last = text.substring(start).trim();
-    if (!last.isEmpty()) result.add(last);
-    return result;
-  }
-
-  private static boolean isDistinct(SelectBlueprint blueprint) {
-    return blueprint.branches().stream().anyMatch(branch -> !branch.items().isEmpty()
-        && branch.items().getFirst().expression().stripLeading().toLowerCase(Locale.ROOT).startsWith("distinct "));
-  }
-
-  private static boolean isAggregateWithoutGroup(SelectBlueprint blueprint) {
-    for (SelectBlueprint.Branch branch : blueprint.branches()) {
-      String tail = branch.sqlTail() == null ? "" : branch.sqlTail().toLowerCase(Locale.ROOT);
-      if (tail.contains(" group by ")) return false;
-      boolean aggregate = branch.items().stream().anyMatch(item -> item.expression().toLowerCase(Locale.ROOT)
-          .matches(".*\\b(count|sum|avg|min|max)\\s*\\(.*"));
-      if (aggregate) return true;
-    }
-    return false;
-  }
-
-  private static String lastPart(String qualified) {
-    int dot = qualified.lastIndexOf('.');
-    return dot < 0 ? qualified : qualified.substring(dot + 1);
-  }
-
-  private static String unquoteQualified(String value) {
-    return value.replace("\"", "");
-  }
-
-  private static String unquote(String value) {
-    if (value != null && value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
-      return value.substring(1, value.length() - 1);
-    }
-    return value;
-  }
-
   private static String dotted(HierarchyPath path) {
     return String.join(".", path.getPathParts());
   }
 
   private record RelationOccurrence(
-      String alias,
+      QueryShape.IdentifierPart alias,
       String sqlAlias,
       DatabaseStructure.Relation relation) {
+  }
+
+  private record ResolvedColumn(RelationOccurrence occurrence, String column) {
   }
 
   private record BoundItem(RelationOccurrence occurrence, String column, String outputTerminal) {
   }
 
   private record ScoredOccurrence(RelationOccurrence occurrence, int score) {
+  }
+
+  private record IdentityDecision(
+      List<String> expressions,
+      DatabaseStructure.Relation owner,
+      String usage) {
+    private IdentityDecision {
+      expressions = List.copyOf(expressions);
+    }
   }
 }
