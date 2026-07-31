@@ -1,0 +1,607 @@
+{
+  "identity_data": {
+    "source": "retail-onboarding-example",
+    "generated_at": "2026-07-06T10:30:00Z",
+    "auth": {
+      "id": "AUTH1",
+      "realm": "retail",
+      "issuer": "https://auth.example.test",
+      "auth_user": [
+        {
+          "id": "U1001",
+          "username": "ada.lovelace",
+          "status": "active",
+          "mfa_enabled": true,
+          "created_at": "2024-02-10T09:15:00Z",
+          "last_authenticated_at": "2026-07-01T08:11:32Z",
+          "login": [
+            {
+              "id": "L9001",
+              "provider": "password",
+              "identifier": "ada@example.test",
+              "status": "enabled",
+              "last_success_at": "2026-07-01T08:11:32Z",
+              "scope": ["profile", "email", "customer"]
+            },
+            {
+              "id": "L9002",
+              "provider": "oauth-google",
+              "identifier": "ada@gmail.example",
+              "status": "enabled",
+              "last_success_at": "2026-06-28T17:44:03Z",
+              "scope": ["profile", "email"]
+            }
+          ]
+        },
+        {
+          "id": "U1002",
+          "username": "grace.hopper",
+          "status": "active",
+          "mfa_enabled": false,
+          "created_at": "2024-05-14T13:01:42Z",
+          "last_authenticated_at": "2026-06-30T20:04:18Z",
+          "login": [
+            {
+              "id": "L9003",
+              "provider": "password",
+              "identifier": "grace@example.test",
+              "status": "enabled",
+              "last_success_at": "2026-06-30T20:04:18Z",
+              "scope": ["profile", "email", "customer"]
+            }
+          ]
+        },
+        {
+          "id": "U1003",
+          "username": "alan.turing",
+          "status": "locked",
+          "mfa_enabled": true,
+          "created_at": "2023-11-02T07:40:12Z",
+          "last_authenticated_at": "2026-05-21T06:13:00Z",
+          "login": [
+            {
+              "id": "L9004",
+              "provider": "password",
+              "identifier": "alan@example.test",
+              "status": "locked",
+              "last_success_at": "2026-05-21T06:13:00Z",
+              "scope": ["profile"]
+            }
+          ]
+        },
+        {
+          "id": "U1004",
+          "username": "tim.bernerslee",
+          "status": "active",
+          "mfa_enabled": true,
+          "created_at": "2025-01-18T10:03:11Z",
+          "last_authenticated_at": "2026-07-05T09:44:20Z",
+          "login": [
+            {
+              "id": "L9005",
+              "provider": "password",
+              "identifier": "tim@example.test",
+              "status": "enabled",
+              "last_success_at": "2026-07-05T09:44:20Z",
+              "scope": ["profile", "email", "customer"]
+            },
+            {
+              "id": "L9006",
+              "provider": "webauthn",
+              "identifier": "tim-device-key",
+              "status": "enabled",
+              "last_success_at": "2026-07-05T09:44:22Z",
+              "scope": ["profile", "customer"]
+            }
+          ]
+        },
+        {
+          "id": "U1005",
+          "username": "margaret.hamilton",
+          "status": "active",
+          "mfa_enabled": true,
+          "created_at": "2024-08-03T16:28:00Z",
+          "last_authenticated_at": "2026-07-02T12:05:44Z",
+          "login": [
+            {
+              "id": "L9007",
+              "provider": "password",
+              "identifier": "margaret@example.test",
+              "status": "enabled",
+              "last_success_at": "2026-07-02T12:05:44Z",
+              "scope": ["profile", "email", "customer"]
+            }
+          ]
+        },
+        {
+          "id": "U1006",
+          "username": "dorothy.vaughan",
+          "status": "suspended",
+          "mfa_enabled": false,
+          "created_at": "2025-09-22T08:12:09Z",
+          "last_authenticated_at": "2026-06-01T14:32:09Z",
+          "login": [
+            {
+              "id": "L9008",
+              "provider": "password",
+              "identifier": "dorothy@example.test",
+              "status": "disabled",
+              "last_success_at": "2026-06-01T14:32:09Z",
+              "scope": ["profile", "email"]
+            }
+          ]
+        },
+        {
+          "id": "U1007",
+          "username": "mary.jackson",
+          "status": "active",
+          "mfa_enabled": false,
+          "created_at": "2026-01-11T11:41:57Z",
+          "last_authenticated_at": "2026-07-03T19:01:03Z",
+          "login": [
+            {
+              "id": "L9009",
+              "provider": "oauth-github",
+              "identifier": "mary-gh.example",
+              "status": "enabled",
+              "last_success_at": "2026-07-03T19:01:03Z",
+              "scope": ["profile", "email", "customer"]
+            }
+          ]
+        }
+      ]
+    },
+    "customer": [
+      {
+        "id": "C2001",
+        "auth_user_id": "U1001",
+        "display_name": "Ada Lovelace",
+        "customer_type": "individual",
+        "lifecycle_status": "active",
+        "created_at": "2024-02-10T09:22:11Z",
+        "email_address": [
+          {
+            "id": "E3001",
+            "address": "ada@example.test",
+            "kind": "primary",
+            "is_primary": true,
+            "verification_status": "verified",
+            "verified_at": "2024-02-10T09:23:09Z"
+          },
+          {
+            "id": "E3002",
+            "address": "finance.ada@example.test",
+            "kind": "billing",
+            "is_primary": false,
+            "verification_status": "verified",
+            "verified_at": "2024-02-11T11:02:00Z"
+          }
+        ],
+        "address": [
+          {
+            "id": "A4001",
+            "kind": "residential",
+            "line1": "12 Analytical Engine Lane",
+            "city": "London",
+            "region": "Greater London",
+            "postal_code": "SW1A 1AA",
+            "country_code": "GB"
+          },
+          {
+            "id": "A4002",
+            "kind": "billing",
+            "line1": "PO Box 1843",
+            "city": "London",
+            "region": "Greater London",
+            "postal_code": "EC1A 1BB",
+            "country_code": "GB"
+          }
+        ],
+        "kyc": {
+          "id": "K5001",
+          "status": "approved",
+          "current_step": "complete",
+          "risk_level": "low",
+          "submitted_at": "2024-02-10T09:30:00Z",
+          "decided_at": "2024-02-10T09:36:45Z",
+          "status_event": [
+            {
+              "id": "KS6001",
+              "status": "created",
+              "actor": "system",
+              "happened_at": "2024-02-10T09:22:12Z"
+            },
+            {
+              "id": "KS6002",
+              "status": "document_verified",
+              "actor": "vendor",
+              "happened_at": "2024-02-10T09:35:41Z"
+            },
+            {
+              "id": "KS6003",
+              "status": "approved",
+              "actor": "rules_engine",
+              "happened_at": "2024-02-10T09:36:45Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "C2002",
+        "auth_user_id": "U1002",
+        "display_name": "Grace Hopper",
+        "customer_type": "individual",
+        "lifecycle_status": "onboarding",
+        "created_at": "2024-05-14T13:07:10Z",
+        "email_address": [
+          {
+            "id": "E3003",
+            "address": "grace@example.test",
+            "kind": "primary",
+            "is_primary": true,
+            "verification_status": "verified",
+            "verified_at": "2024-05-14T13:09:19Z"
+          }
+        ],
+        "address": [
+          {
+            "id": "A4003",
+            "kind": "residential",
+            "line1": "9 Compiler Court",
+            "city": "Arlington",
+            "region": "VA",
+            "postal_code": "22201",
+            "country_code": "US"
+          }
+        ],
+        "kyc": {
+          "id": "K5002",
+          "status": "in_review",
+          "current_step": "manual_review",
+          "risk_level": "medium",
+          "submitted_at": "2024-05-14T13:20:00Z",
+          "status_event": [
+            {
+              "id": "KS6004",
+              "status": "created",
+              "actor": "system",
+              "happened_at": "2024-05-14T13:07:11Z"
+            },
+            {
+              "id": "KS6005",
+              "status": "document_uploaded",
+              "actor": "customer",
+              "happened_at": "2024-05-14T13:18:24Z"
+            },
+            {
+              "id": "KS6006",
+              "status": "manual_review_opened",
+              "actor": "rules_engine",
+              "happened_at": "2024-05-14T13:21:03Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "C2003",
+        "display_name": "Katherine Johnson",
+        "customer_type": "individual",
+        "lifecycle_status": "prospect",
+        "created_at": "2026-06-12T15:12:44Z",
+        "email_address": [
+          {
+            "id": "E3004",
+            "address": "katherine@example.test",
+            "kind": "primary",
+            "is_primary": true,
+            "verification_status": "pending"
+          }
+        ],
+        "address": [
+          {
+            "id": "A4004",
+            "kind": "correspondence",
+            "line1": "44 Orbital Way",
+            "city": "Hampton",
+            "region": "VA",
+            "postal_code": "23666",
+            "country_code": "US"
+          }
+        ],
+        "kyc": {
+          "id": "K5003",
+          "status": "not_started",
+          "current_step": "collect_identity",
+          "risk_level": "unknown",
+          "status_event": [
+            {
+              "id": "KS6007",
+              "status": "invited",
+              "actor": "agent",
+              "happened_at": "2026-06-12T15:14:00Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "C2004",
+        "auth_user_id": "U1004",
+        "display_name": "Tim Berners-Lee",
+        "customer_type": "individual",
+        "lifecycle_status": "active",
+        "created_at": "2025-01-18T10:09:31Z",
+        "email_address": [
+          {
+            "id": "E3005",
+            "address": "tim@example.test",
+            "kind": "primary",
+            "is_primary": true,
+            "verification_status": "verified",
+            "verified_at": "2025-01-18T10:10:02Z"
+          },
+          {
+            "id": "E3006",
+            "address": "research.tim@example.test",
+            "kind": "work",
+            "is_primary": false,
+            "verification_status": "verified",
+            "verified_at": "2025-01-19T09:01:18Z"
+          }
+        ],
+        "address": [
+          {
+            "id": "A4005",
+            "kind": "residential",
+            "line1": "1 Web Foundation Walk",
+            "city": "Oxford",
+            "region": "Oxfordshire",
+            "postal_code": "OX1 1AA",
+            "country_code": "GB"
+          },
+          {
+            "id": "A4006",
+            "kind": "correspondence",
+            "line1": "77 Protocol Street",
+            "city": "Cambridge",
+            "region": "MA",
+            "postal_code": "02139",
+            "country_code": "US"
+          }
+        ],
+        "kyc": {
+          "id": "K5004",
+          "status": "approved",
+          "current_step": "complete",
+          "risk_level": "low",
+          "submitted_at": "2025-01-18T10:14:00Z",
+          "decided_at": "2025-01-18T10:20:11Z",
+          "status_event": [
+            {
+              "id": "KS6008",
+              "status": "created",
+              "actor": "system",
+              "happened_at": "2025-01-18T10:09:32Z"
+            },
+            {
+              "id": "KS6009",
+              "status": "document_verified",
+              "actor": "vendor",
+              "happened_at": "2025-01-18T10:19:04Z"
+            },
+            {
+              "id": "KS6010",
+              "status": "approved",
+              "actor": "rules_engine",
+              "happened_at": "2025-01-18T10:20:11Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "C2005",
+        "auth_user_id": "U1005",
+        "display_name": "Margaret Hamilton",
+        "customer_type": "individual",
+        "lifecycle_status": "active",
+        "created_at": "2024-08-03T16:34:27Z",
+        "email_address": [
+          {
+            "id": "E3007",
+            "address": "margaret@example.test",
+            "kind": "primary",
+            "is_primary": true,
+            "verification_status": "verified",
+            "verified_at": "2024-08-03T16:35:01Z"
+          }
+        ],
+        "address": [
+          {
+            "id": "A4007",
+            "kind": "residential",
+            "line1": "1969 Guidance Avenue",
+            "city": "Boston",
+            "region": "MA",
+            "postal_code": "02108",
+            "country_code": "US"
+          }
+        ],
+        "kyc": {
+          "id": "K5005",
+          "status": "approved",
+          "current_step": "complete",
+          "risk_level": "medium",
+          "submitted_at": "2024-08-03T16:42:00Z",
+          "decided_at": "2024-08-03T17:04:18Z",
+          "status_event": [
+            {
+              "id": "KS6011",
+              "status": "created",
+              "actor": "system",
+              "happened_at": "2024-08-03T16:34:28Z"
+            },
+            {
+              "id": "KS6012",
+              "status": "manual_review_opened",
+              "actor": "rules_engine",
+              "happened_at": "2024-08-03T16:43:20Z"
+            },
+            {
+              "id": "KS6013",
+              "status": "approved",
+              "actor": "analyst",
+              "happened_at": "2024-08-03T17:04:18Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "C2006",
+        "auth_user_id": "U1006",
+        "display_name": "Dorothy Vaughan",
+        "customer_type": "individual",
+        "lifecycle_status": "suspended",
+        "created_at": "2025-09-22T08:18:51Z",
+        "email_address": [
+          {
+            "id": "E3008",
+            "address": "dorothy@example.test",
+            "kind": "primary",
+            "is_primary": true,
+            "verification_status": "verified",
+            "verified_at": "2025-09-22T08:20:05Z"
+          }
+        ],
+        "address": [
+          {
+            "id": "A4008",
+            "kind": "residential",
+            "line1": "5 Trajectory Place",
+            "city": "Newport News",
+            "region": "VA",
+            "postal_code": "23606",
+            "country_code": "US"
+          }
+        ],
+        "kyc": {
+          "id": "K5006",
+          "status": "rejected",
+          "current_step": "closed",
+          "risk_level": "high",
+          "submitted_at": "2025-09-22T08:25:00Z",
+          "decided_at": "2025-09-22T10:14:33Z",
+          "status_event": [
+            {
+              "id": "KS6014",
+              "status": "created",
+              "actor": "system",
+              "happened_at": "2025-09-22T08:18:52Z"
+            },
+            {
+              "id": "KS6015",
+              "status": "manual_review_opened",
+              "actor": "rules_engine",
+              "happened_at": "2025-09-22T08:26:11Z"
+            },
+            {
+              "id": "KS6016",
+              "status": "rejected",
+              "actor": "analyst",
+              "happened_at": "2025-09-22T10:14:33Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "C2007",
+        "auth_user_id": "U1007",
+        "display_name": "Mary Jackson",
+        "customer_type": "individual",
+        "lifecycle_status": "onboarding",
+        "created_at": "2026-01-11T11:49:00Z",
+        "email_address": [
+          {
+            "id": "E3009",
+            "address": "mary@example.test",
+            "kind": "primary",
+            "is_primary": true,
+            "verification_status": "verified",
+            "verified_at": "2026-01-11T11:51:44Z"
+          }
+        ],
+        "address": [
+          {
+            "id": "A4009",
+            "kind": "residential",
+            "line1": "88 Wind Tunnel Road",
+            "city": "Hampton",
+            "region": "VA",
+            "postal_code": "23669",
+            "country_code": "US"
+          }
+        ],
+        "kyc": {
+          "id": "K5007",
+          "status": "pending_documents",
+          "current_step": "collect_address_proof",
+          "risk_level": "medium",
+          "submitted_at": "2026-01-11T12:02:00Z",
+          "status_event": [
+            {
+              "id": "KS6017",
+              "status": "created",
+              "actor": "system",
+              "happened_at": "2026-01-11T11:49:01Z"
+            },
+            {
+              "id": "KS6018",
+              "status": "document_requested",
+              "actor": "rules_engine",
+              "happened_at": "2026-01-11T12:03:33Z"
+            }
+          ]
+        }
+      },
+      {
+        "id": "C2008",
+        "display_name": "Sally Ride",
+        "customer_type": "individual",
+        "lifecycle_status": "prospect",
+        "created_at": "2026-03-04T10:21:19Z",
+        "email_address": [
+          {
+            "id": "E3010",
+            "address": "sally@example.test",
+            "kind": "primary",
+            "is_primary": true,
+            "verification_status": "unverified"
+          }
+        ],
+        "address": [
+          {
+            "id": "A4010",
+            "kind": "correspondence",
+            "line1": "7 Mission Control Crescent",
+            "city": "San Diego",
+            "region": "CA",
+            "postal_code": "92101",
+            "country_code": "US"
+          }
+        ],
+        "kyc": {
+          "id": "K5008",
+          "status": "not_started",
+          "current_step": "collect_identity",
+          "risk_level": "unknown",
+          "status_event": [
+            {
+              "id": "KS6019",
+              "status": "invited",
+              "actor": "agent",
+              "happened_at": "2026-03-04T10:24:00Z"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

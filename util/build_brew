@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+# note - required for git release workflow
+
+set -euo pipefail
+
+source_repository="blater/nq"
+tap_repository="blater/homebrew-tap"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dist_dir="$script_dir/dist"
+formula_path="$dist_dir/Formula/nq.rb"
+local_mode=false
+
+usage() {
+  cat <<'USAGE'
+Usage: ./brewdist [local]
+
+Create and publish the Homebrew formula for the current NQ version.
+
+With "local", create a formula for target/nq under dist/ without publishing
+or installing anything.
+USAGE
+}
+
+log() {
+  printf '==> %s\n' "$*"
+}
+
+die() {
+  printf 'Error: %s\n' "$*" >&2
+  exit 1
+}
+
+case "${1:-}" in
+  "") ;;
+  local) local_mode=true ;;
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
+
+if (($# > 1)); then
+  usage >&2
+  exit 2
+fi
+
+cd "$script_dir"
+
+version="${NQ_RELEASE_VERSION:-}"
+if [[ -z "$version" ]]; then
+  version="$(awk -F '[<>]' '/^[[:space:]]*<version>/ { print $3; exit }' pom.xml)"
+fi
+[[ -n "$version" ]] || die "Could not read the project version from pom.xml."
+
+mkdir -p "$(dirname "$formula_path")"
+
+write_formula() {
+  local url="$1"
+  local checksum="$2"
+  local download_options="${3:-}"
+
+  cat > "$formula_path" <<FORMULA
+class Nq < Formula
+  desc "SQL-like language for querying and transforming structured files"
+  homepage "https://github.com/$source_repository"
+  url "$url"$download_options
+  version "$version"
+  sha256 "$checksum"
+  license "AGPL-3.0-only"
+
+  depends_on arch: :arm64
+  depends_on macos: :tahoe
+
+  def install
+    bin.install "nq"
+  end
+
+  test do
+    output = shell_output("#{bin}/nq --list-caches --cache-dir #{testpath}/cache 2>&1")
+    assert_match "No caches found", output
+  end
+end
+FORMULA
+}
+
+if [[ "$local_mode" == true ]]; then
+  binary_path="$script_dir/target/nq"
+  [[ -x "$binary_path" ]] || die "Build target/nq first; it does not exist."
+
+  checksum="$(shasum -a 256 "$binary_path" | awk '{ print $1 }')"
+  binary_url="file://${binary_path// /%20}"
+  write_formula "$binary_url" "$checksum" ", using: :nounzip"
+
+  log "Local Homebrew formula created"
+  printf 'Formula: %s\n' "$formula_path"
+  printf 'Install: brew install --formula %s\n' "$formula_path"
+  exit 0
+fi
+
+archive_name="nq-${version}-darwin-arm64.tar.gz"
+archive_path="$dist_dir/$archive_name"
+[[ -f "$archive_path" ]] || die "Run ./release first; $archive_path does not exist."
+
+checksum="$(shasum -a 256 "$archive_path" | awk '{ print $1 }')"
+release_url="https://github.com/$source_repository/releases/download/v$version/$archive_name"
+write_formula "$release_url" "$checksum"
+
+log "Checking Homebrew formula style"
+brew style "$formula_path"
+
+temporary_dir="$(mktemp -d "${TMPDIR:-/tmp}/nq-brewdist.XXXXXX")"
+cleanup() {
+  rm -rf "$temporary_dir"
+}
+trap cleanup EXIT
+
+tap_worktree="$temporary_dir/homebrew-tap"
+if gh repo view "$tap_repository" >/dev/null 2>&1; then
+  log "Updating $tap_repository"
+  gh repo clone "$tap_repository" "$tap_worktree"
+else
+  log "Creating $tap_repository"
+  mkdir -p "$tap_worktree/Formula"
+  git -C "$tap_worktree" init -b main
+fi
+
+mkdir -p "$tap_worktree/Formula"
+cp "$formula_path" "$tap_worktree/Formula/nq.rb"
+git -C "$tap_worktree" add Formula/nq.rb
+
+if git -C "$tap_worktree" diff --cached --quiet; then
+  log "Tap formula is already current"
+else
+  github_login="$(gh api user --jq .login)"
+  git -C "$tap_worktree" \
+    -c user.name="${GIT_AUTHOR_NAME:-$github_login}" \
+    -c user.email="${GIT_AUTHOR_EMAIL:-$github_login@users.noreply.github.com}" \
+    commit -m "nq $version"
+
+  if git -C "$tap_worktree" remote get-url origin >/dev/null 2>&1; then
+    git -C "$tap_worktree" push origin HEAD
+  else
+    gh repo create "$tap_repository" --public --source "$tap_worktree" --remote origin --push
+  fi
+fi
+
+log "Homebrew distribution published"
+printf 'Formula: %s\n' "$formula_path"
+printf 'Install: brew install blater/tap/nq\n'

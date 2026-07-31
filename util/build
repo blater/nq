@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+set -euo pipefail
+name=nq
+
+[[ -d /Library/Java/JavaVirtualMachines/graalvm-25.jdk ]] || util/graal_install.sh
+export GRAALVM_HOME="/Library/Java/JavaVirtualMachines/graalvm-25.jdk/Contents/Home"
+
+
+usage() {
+  cat <<'USAGE'
+Usage: ./build [--skip-tests] [--] [extra Maven args...]
+
+Builds the native nq executable with GraalVM Native Image.
+
+Options:
+  --drivers SET      Build driver set: common, enterprise, all, or comma-separated list.
+                    Default: common.
+  --skip-tests       Pass -DskipTests to Maven.
+  -h, --help         Show this help.
+
+Examples:
+  ./build
+  ./build --drivers enterprise
+  ./build --drivers common,enterprise --skip-tests
+  ./build --skip-tests
+  ./build --skip-tests -- -Dnative.maven.plugin.verbose=true
+USAGE
+}
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$script_dir"
+
+driver_sets=("common")
+skip_tests=false
+extra_maven_args=()
+
+while (($#)); do
+  case "$1" in
+    --drivers)
+      if (($# < 2)); then
+        echo "Error: --drivers requires a value: common, enterprise, all, or comma-separated list." >&2
+        exit 1
+      fi
+      IFS=',' read -r -a driver_sets <<< "$2"
+      shift 2
+      ;;
+    --drivers=*)
+      IFS=',' read -r -a driver_sets <<< "${1#--drivers=}"
+      shift
+      ;;
+    --skip-tests)
+      skip_tests=true
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      while (($#)); do
+        extra_maven_args+=("$1")
+        shift
+      done
+      ;;
+    *)
+      extra_maven_args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+validate_driver_set() {
+  case "$1" in
+    common|enterprise|all)
+      ;;
+    *)
+      echo "Error: unsupported driver set [$1]. Use common, enterprise, all, or a comma-separated list." >&2
+      exit 1
+      ;;
+  esac
+}
+
+for driver_set in "${driver_sets[@]}"; do
+  validate_driver_set "$driver_set"
+done
+
+if ! command -v mvn >/dev/null 2>&1; then
+  echo "Error: mvn is not on PATH." >&2
+  exit 1
+fi
+
+candidate_homes=()
+if [[ -n "${GRAALVM_HOME:-}" ]]; then
+  candidate_homes+=("$GRAALVM_HOME")
+fi
+if [[ -n "${JAVA_HOME:-}" ]]; then
+  candidate_homes+=("$JAVA_HOME")
+fi
+candidate_homes+=("/Library/Java/JavaVirtualMachines/graalvm-25.jdk/Contents/Home")
+for home in /Library/Java/JavaVirtualMachines/graalvm*.jdk/Contents/Home; do
+  if [[ -d "$home" ]]; then
+    candidate_homes+=("$home")
+  fi
+done
+
+if ! command -v native-image >/dev/null 2>&1; then
+  for home in "${candidate_homes[@]}"; do
+    if [[ -x "$home/bin/native-image" ]]; then
+      export GRAALVM_HOME="$home"
+      export JAVA_HOME="$home"
+      export PATH="$home/bin:$PATH"
+      break
+    fi
+  done
+fi
+
+if ! command -v native-image >/dev/null 2>&1; then
+  cat >&2 <<'ERROR'
+Error: native-image is not on PATH.
+
+Install a GraalVM JDK with Native Image and make it active before running this script.
+JAVA_HOME or GRAALVM_HOME should point at the GraalVM distribution.
+ERROR
+  exit 1
+fi
+
+echo "Using native-image: $(command -v native-image)"
+
+for driver_set in "${driver_sets[@]}"; do
+  maven_args=("-Pnative,jdbc-${driver_set}")
+  if [[ "$skip_tests" == true ]]; then
+    maven_args+=("-DskipTests")
+  fi
+  maven_args+=("package")
+  maven_args+=("${extra_maven_args[@]}")
+
+  echo "Building ${driver_set} native executable with Maven: mvn ${maven_args[*]}"
+  mvn "${maven_args[@]}"
+
+  case "$driver_set" in
+    common) executable="target/${name}" ;;
+    *) executable="target/${name}-${driver_set}" ;;
+  esac
+  if [[ "${OS:-}" == "Windows_NT" ]]; then
+    executable="${executable}.exe"
+  fi
+
+  if [[ -f "$executable" ]]; then
+    echo "Built executable: $executable"
+  else
+    echo "Build finished, but expected executable was not found at: $executable" >&2
+    exit 1
+  fi
+done

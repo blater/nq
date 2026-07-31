@@ -1,0 +1,19 @@
+-- The role identity is a composite typed key, nested below its company.
+output json;
+
+select
+  c.company_id into {companies.company.id},
+  c.company_label into {companies.company.label},
+  r.record_id into {companies.company.roles.role.recordId},
+  r.person_id into {companies.company.roles.role.personId},
+  r.person_label into {companies.company.roles.role.person},
+  r.role into {companies.company.roles.role.title},
+  r.role_start into {companies.company.roles.role.start} absent on null,
+  r.role_end into {companies.company.roles.role.end} absent on null
+from company c
+join company_roles r on r.company_id = c.company_id
+where c.company_id = 'Q312'
+order by c.company_label, c.company_id, r.role, r.person_label, r.record_id
+structure
+  {companies.company} key (c.company_id),
+  {companies.company.roles.role} key (r.company_id, r.record_id);

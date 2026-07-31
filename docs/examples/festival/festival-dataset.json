@@ -1,0 +1,344 @@
+{
+  "organisation": {
+    "id": "ORG100",
+    "name": "Northstar Engineering",
+    "department": [
+      {
+        "id": "DEP110",
+        "name": "Research",
+        "manager_person_id": "PER001",
+        "team": [
+          {
+            "id": "TEAM111",
+            "name": "Applied Computing",
+            "lead_person_id": "PER002",
+            "member_person_ids": ["PER001", "PER005"]
+          },
+          {
+            "id": "TEAM112",
+            "name": "Materials Lab",
+            "lead_person_id": "PER003",
+            "member_person_ids": ["PER004"]
+          }
+        ]
+      },
+      {
+        "id": "DEP120",
+        "name": "Operations",
+        "manager_person_id": "PER004",
+        "team": [
+          {
+            "id": "TEAM121",
+            "name": "North Rigging",
+            "team_type": "rigging",
+            "lead_person_id": "PER005",
+            "member_person_ids": ["PER003"]
+          },
+          {
+            "id": "TEAM122",
+            "name": "North Catering",
+            "team_type": "catering",
+            "lead_person_id": "PER003",
+            "member_person_ids": ["PER001", "PER002"]
+          },
+          {
+            "id": "TEAM123",
+            "name": "South Rigging",
+            "team_type": "rigging",
+            "lead_person_id": "PER002",
+            "member_person_ids": ["PER004"]
+          },
+          {
+            "id": "TEAM124",
+            "name": "South Catering",
+            "team_type": "catering",
+            "lead_person_id": "PER001",
+            "member_person_ids": ["PER005"]
+          }
+        ]
+      }
+    ]
+  },
+  "festival": [
+    {
+      "id": "FEST200",
+      "name": "Riverside Arts Weekend",
+      "date-from": "2026-07-11",
+      "date-to": "2026-07-12",
+      "event_manager_person_id": "PER004",
+      "event_team": [
+        {
+          "id": "FTEAM201",
+          "team_type": "rigging",
+          "team_id": "TEAM121"
+        },
+        {
+          "id": "FTEAM202",
+          "team_type": "catering",
+          "team_id": "TEAM122"
+        }
+      ],
+      "venue": [
+        {
+          "id": "VEN210",
+          "name": "Grand Hall",
+          "contact_person_id": "PER003",
+          "session": [
+            {
+              "id": "SES211",
+              "title": "Opening Concert",
+              "host_person_id": "PER001",
+              "performer_person_ids": ["PER002", "PER005"]
+            },
+            {
+              "id": "SES212",
+              "title": "Late-Night Stories",
+              "host_person_id": "PER004",
+              "performer_person_ids": ["PER003"]
+            }
+          ]
+        },
+        {
+          "id": "VEN220",
+          "name": "Garden Stage",
+          "contact_person_id": "PER005",
+          "session": [
+            {
+              "id": "SES221",
+              "title": "Sunday Poetry",
+              "host_person_id": "PER002",
+              "performer_person_ids": ["PER001", "PER004"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FEST201",
+      "name": "Harbour Lights Festival",
+      "event_manager_person_id": "PER001",
+      "date-from": "2026-09-07",
+      "date-to": "2026-09-13",
+      "event_team": [
+        {
+          "id": "FTEAM211",
+          "team_type": "rigging",
+          "team_id": "TEAM123"
+        },
+        {
+          "id": "FTEAM212",
+          "team_type": "catering",
+          "team_id": "TEAM124"
+        }
+      ],
+      "venue": [
+        {
+          "id": "VEN230",
+          "name": "Dockside Pavilion",
+          "contact_person_id": "PER002",
+          "session": [
+            {
+              "id": "SES231",
+              "title": "Lantern Parade",
+              "host_person_id": "PER005",
+              "performer_person_ids": ["PER003"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FEST202",
+      "name": "Hilltop Food Fair",
+      "date-from": "2026-08-08",
+      "date-to": "2026-08-08",
+      "event_manager_person_id": "PER004",
+      "event_team": [
+        {
+          "id": "FTEAM221",
+          "team_type": "rigging",
+          "team_id": "TEAM121"
+        },
+        {
+          "id": "FTEAM222",
+          "team_type": "catering",
+          "team_id": "TEAM124"
+        }
+      ],
+      "venue": [
+        {
+          "id": "VEN240",
+          "name": "Summit Marquee",
+          "contact_person_id": "PER001",
+          "session": [
+            {
+              "id": "SES241",
+              "title": "Regional Tasting",
+              "host_person_id": "PER003",
+              "performer_person_ids": ["PER002"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FEST203",
+      "name": "Old Town Theatre Festival",
+      "date-from": "2026-07-28",
+      "date-to": "2026-07-30",
+      "event_manager_person_id": "PER001",
+      "event_team": [
+        {
+          "id": "FTEAM231",
+          "team_type": "rigging",
+          "team_id": "TEAM123"
+        },
+        {
+          "id": "FTEAM232",
+          "team_type": "catering",
+          "team_id": "TEAM122"
+        }
+      ],
+      "venue": [
+        {
+          "id": "VEN250",
+          "name": "Civic Playhouse",
+          "contact_person_id": "PER004",
+          "session": [
+            {
+              "id": "SES251",
+              "title": "New Writers Showcase",
+              "host_person_id": "PER002",
+              "performer_person_ids": ["PER001", "PER005"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "FEST204",
+      "name": "Summer Jazz Gardens",
+      "date-from": "2026-08-22",
+      "date-to": "2026-08-22",
+      "event_manager_person_id": "PER004",
+      "event_team": [
+        {
+          "id": "FTEAM241",
+          "team_type": "rigging",
+          "team_id": "TEAM121"
+        },
+        {
+          "id": "FTEAM242",
+          "team_type": "catering",
+          "team_id": "TEAM124"
+        }
+      ],
+      "venue": [
+        {
+          "id": "VEN260",
+          "name": "Rose Garden Stage",
+          "contact_person_id": "PER005",
+          "session": [
+            {
+              "id": "SES261",
+              "title": "Twilight Quartet",
+              "host_person_id": "PER003",
+              "performer_person_ids": ["PER002", "PER004"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "people": {
+    "id": "PEOPLE300",
+    "person": [
+      {
+        "id": "PER001",
+        "name": "Ada Lovelace",
+        "email": "ada@example.test",
+        "address": [
+          {
+            "id": "ADDR301",
+            "kind": "home",
+            "line1": "12 Analytical Engine Lane",
+            "city": "London",
+            "postal_code": "SW1A 1AA",
+            "country_code": "GB"
+          }
+        ]
+      },
+      {
+        "id": "PER002",
+        "name": "Grace Hopper",
+        "email": "grace@example.test",
+        "address": [
+          {
+            "id": "ADDR302",
+            "kind": "home",
+            "line1": "85 Compiler Court",
+            "city": "Arlington",
+            "region": "VA",
+            "postal_code": "22201",
+            "country_code": "US"
+          }
+        ]
+      },
+      {
+        "id": "PER003",
+        "name": "Alan Turing",
+        "email": "alan@example.test",
+        "address": [
+          {
+            "id": "ADDR303",
+            "kind": "home",
+            "line1": "23 Enigma Road",
+            "city": "Manchester",
+            "postal_code": "M1 1AE",
+            "country_code": "GB"
+          },
+          {
+            "id": "ADDR304",
+            "kind": "studio",
+            "line1": "4 Gallery Mews",
+            "city": "Manchester",
+            "postal_code": "M4 2AD",
+            "country_code": "GB"
+          }
+        ]
+      },
+      {
+        "id": "PER004",
+        "name": "Katherine Johnson",
+        "email": "katherine@example.test",
+        "address": [
+          {
+            "id": "ADDR305",
+            "kind": "home",
+            "line1": "101 Orbital Avenue",
+            "city": "Hampton",
+            "region": "VA",
+            "postal_code": "23666",
+            "country_code": "US"
+          }
+        ]
+      },
+      {
+        "id": "PER005",
+        "name": "Margaret Hamilton",
+        "email": "margaret@example.test",
+        "address": [
+          {
+            "id": "ADDR306",
+            "kind": "home",
+            "line1": "7 Lunar Module Way",
+            "city": "Cambridge",
+            "region": "MA",
+            "postal_code": "02139",
+            "country_code": "US"
+          }
+        ]
+      }
+    ]
+  }
+}

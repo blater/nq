@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>name</key><string>Statement Handler</string>
+  <key>scope</key><string>source.nq</string>
+  <key>tabTrigger</key><string>nhandler</string>
+  <key>content</key><string>on${1:Error}('${2:statement failed}', ${3:abort}, ${4:rollback});${0}</string>
+  <key>uuid</key><string>98F21C0F-35FB-44FA-A6BE-D7255A12833B</string>
+</dict>
+</plist>

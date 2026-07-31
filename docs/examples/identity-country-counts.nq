@@ -1,0 +1,14 @@
+output json;
+
+select
+  a.country_code as country_key,
+  a.country_code into {result.region.country},
+  count(distinct c.id) into {result.region.customerCount}
+from customer c
+inner join address a on a.customer_id = c.id
+inner join kyc k on k.customer_id = c.id
+where a.kind = 'residential'
+  and k.status <> 'not_started'
+group by a.country_code
+order by country_key asc
+structure {result.region} key (country_key);

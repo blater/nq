@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>name</key><string>Hierarchy Union</string>
+  <key>scope</key><string>source.nq</string>
+  <key>tabTrigger</key><string>nunion</string>
+  <key>content</key><string>select
+  ${1:id} into {${2:items.item.id}}
+from ${3:first_source}
+
+hierarchy union
+
+select
+  ${4:id} into {${2:items.item}.${5:children.child.id}}
+from ${6:second_source}
+structure
+  {${2:items.item}} key (${1:id}),
+  {${2:items.item}.${5:children.child}} key (${4:id});${0}</string>
+  <key>uuid</key><string>0A728389-4A24-4DE9-8FEB-3C710E43B641</string>
+</dict>
+</plist>

@@ -1,0 +1,302 @@
+{
+  "festivalSummary": {
+    "festival": [
+      {
+        "id": "FEST201",
+        "name": "Harbour Lights Festival",
+        "eventManagerPersonId": "PER001",
+        "eventManagerName": "Ada Lovelace",
+        "team": [
+          {
+            "id": "TEAM124",
+            "name": "South Catering",
+            "type": "catering",
+            "leadPersonId": "PER001",
+            "leadPersonName": "Ada Lovelace",
+            "member": {
+              "id": "PER005",
+              "name": "Margaret Hamilton"
+            }
+          },
+          {
+            "id": "TEAM123",
+            "name": "South Rigging",
+            "type": "rigging",
+            "leadPersonId": "PER002",
+            "leadPersonName": "Grace Hopper",
+            "member": {
+              "id": "PER004",
+              "name": "Katherine Johnson"
+            }
+          }
+        ],
+        "venue": {
+          "id": "VEN230",
+          "name": "Dockside Pavilion",
+          "contactPersonId": "PER002",
+          "contactPersonName": "Grace Hopper",
+          "session": {
+            "id": "SES231",
+            "title": "Lantern Parade",
+            "hostPersonId": "PER005",
+            "hostPersonName": "Margaret Hamilton",
+            "performer": {
+              "id": "PER003",
+              "name": "Alan Turing"
+            }
+          }
+        }
+      },
+      {
+        "id": "FEST202",
+        "name": "Hilltop Food Fair",
+        "eventManagerPersonId": "PER004",
+        "eventManagerName": "Katherine Johnson",
+        "team": [
+          {
+            "id": "TEAM124",
+            "name": "South Catering",
+            "type": "catering",
+            "leadPersonId": "PER001",
+            "leadPersonName": "Ada Lovelace",
+            "member": {
+              "id": "PER005",
+              "name": "Margaret Hamilton"
+            }
+          },
+          {
+            "id": "TEAM121",
+            "name": "North Rigging",
+            "type": "rigging",
+            "leadPersonId": "PER005",
+            "leadPersonName": "Margaret Hamilton",
+            "member": {
+              "id": "PER003",
+              "name": "Alan Turing"
+            }
+          }
+        ],
+        "venue": {
+          "id": "VEN240",
+          "name": "Summit Marquee",
+          "contactPersonId": "PER001",
+          "contactPersonName": "Ada Lovelace",
+          "session": {
+            "id": "SES241",
+            "title": "Regional Tasting",
+            "hostPersonId": "PER003",
+            "hostPersonName": "Alan Turing",
+            "performer": {
+              "id": "PER002",
+              "name": "Grace Hopper"
+            }
+          }
+        }
+      },
+      {
+        "id": "FEST203",
+        "name": "Old Town Theatre Festival",
+        "eventManagerPersonId": "PER001",
+        "eventManagerName": "Ada Lovelace",
+        "team": [
+          {
+            "id": "TEAM122",
+            "name": "North Catering",
+            "type": "catering",
+            "leadPersonId": "PER003",
+            "leadPersonName": "Alan Turing",
+            "member": [
+              {
+                "id": "PER001",
+                "name": "Ada Lovelace"
+              },
+              {
+                "id": "PER002",
+                "name": "Grace Hopper"
+              }
+            ]
+          },
+          {
+            "id": "TEAM123",
+            "name": "South Rigging",
+            "type": "rigging",
+            "leadPersonId": "PER002",
+            "leadPersonName": "Grace Hopper",
+            "member": {
+              "id": "PER004",
+              "name": "Katherine Johnson"
+            }
+          }
+        ],
+        "venue": {
+          "id": "VEN250",
+          "name": "Civic Playhouse",
+          "contactPersonId": "PER004",
+          "contactPersonName": "Katherine Johnson",
+          "session": {
+            "id": "SES251",
+            "title": "New Writers Showcase",
+            "hostPersonId": "PER002",
+            "hostPersonName": "Grace Hopper",
+            "performer": [
+              {
+                "id": "PER001",
+                "name": "Ada Lovelace"
+              },
+              {
+                "id": "PER005",
+                "name": "Margaret Hamilton"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "FEST200",
+        "name": "Riverside Arts Weekend",
+        "eventManagerPersonId": "PER004",
+        "eventManagerName": "Katherine Johnson",
+        "team": [
+          {
+            "id": "TEAM122",
+            "name": "North Catering",
+            "type": "catering",
+            "leadPersonId": "PER003",
+            "leadPersonName": "Alan Turing",
+            "member": [
+              {
+                "id": "PER001",
+                "name": "Ada Lovelace"
+              },
+              {
+                "id": "PER002",
+                "name": "Grace Hopper"
+              }
+            ]
+          },
+          {
+            "id": "TEAM121",
+            "name": "North Rigging",
+            "type": "rigging",
+            "leadPersonId": "PER005",
+            "leadPersonName": "Margaret Hamilton",
+            "member": {
+              "id": "PER003",
+              "name": "Alan Turing"
+            }
+          }
+        ],
+        "venue": [
+          {
+            "id": "VEN220",
+            "name": "Garden Stage",
+            "contactPersonId": "PER005",
+            "contactPersonName": "Margaret Hamilton",
+            "session": {
+              "id": "SES221",
+              "title": "Sunday Poetry",
+              "hostPersonId": "PER002",
+              "hostPersonName": "Grace Hopper",
+              "performer": [
+                {
+                  "id": "PER001",
+                  "name": "Ada Lovelace"
+                },
+                {
+                  "id": "PER004",
+                  "name": "Katherine Johnson"
+                }
+              ]
+            }
+          },
+          {
+            "id": "VEN210",
+            "name": "Grand Hall",
+            "contactPersonId": "PER003",
+            "contactPersonName": "Alan Turing",
+            "session": [
+              {
+                "id": "SES212",
+                "title": "Late-Night Stories",
+                "hostPersonId": "PER004",
+                "hostPersonName": "Katherine Johnson",
+                "performer": {
+                  "id": "PER003",
+                  "name": "Alan Turing"
+                }
+              },
+              {
+                "id": "SES211",
+                "title": "Opening Concert",
+                "hostPersonId": "PER001",
+                "hostPersonName": "Ada Lovelace",
+                "performer": [
+                  {
+                    "id": "PER002",
+                    "name": "Grace Hopper"
+                  },
+                  {
+                    "id": "PER005",
+                    "name": "Margaret Hamilton"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "FEST204",
+        "name": "Summer Jazz Gardens",
+        "eventManagerPersonId": "PER004",
+        "eventManagerName": "Katherine Johnson",
+        "team": [
+          {
+            "id": "TEAM124",
+            "name": "South Catering",
+            "type": "catering",
+            "leadPersonId": "PER001",
+            "leadPersonName": "Ada Lovelace",
+            "member": {
+              "id": "PER005",
+              "name": "Margaret Hamilton"
+            }
+          },
+          {
+            "id": "TEAM121",
+            "name": "North Rigging",
+            "type": "rigging",
+            "leadPersonId": "PER005",
+            "leadPersonName": "Margaret Hamilton",
+            "member": {
+              "id": "PER003",
+              "name": "Alan Turing"
+            }
+          }
+        ],
+        "venue": {
+          "id": "VEN260",
+          "name": "Rose Garden Stage",
+          "contactPersonId": "PER005",
+          "contactPersonName": "Margaret Hamilton",
+          "session": {
+            "id": "SES261",
+            "title": "Twilight Quartet",
+            "hostPersonId": "PER003",
+            "hostPersonName": "Alan Turing",
+            "performer": [
+              {
+                "id": "PER002",
+                "name": "Grace Hopper"
+              },
+              {
+                "id": "PER004",
+                "name": "Katherine Johnson"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

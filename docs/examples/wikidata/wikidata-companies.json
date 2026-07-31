@@ -1,0 +1,4929 @@
+{
+  "wikidata": {
+    "source": "wikidata-query-service",
+    "endpoint": "https://query.wikidata.org/sparql",
+    "query_file": "getData.sparql",
+    "generated_at": "2026-07-09T12:57:43Z",
+    "record_count": 339,
+    "company_count": 229,
+    "company_industry_count": 250,
+    "company_role_count": 110,
+    "company": [
+      {
+        "record_id": 1,
+        "company_uri": "http://www.wikidata.org/entity/Q4545554",
+        "company_id": "Q4545554",
+        "company_label": "01 Communique",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 2,
+        "company_uri": "http://www.wikidata.org/entity/Q77202",
+        "company_id": "Q77202",
+        "company_label": "1C Company",
+        "country_uri": "http://www.wikidata.org/entity/Q159",
+        "country_id": "Q159",
+        "country_label": "Russia"
+      },
+      {
+        "record_id": 3,
+        "company_uri": "http://www.wikidata.org/entity/Q14920510",
+        "company_id": "Q14920510",
+        "company_label": "1C-Rarus",
+        "country_uri": "http://www.wikidata.org/entity/Q159",
+        "country_id": "Q159",
+        "country_label": "Russia"
+      },
+      {
+        "record_id": 4,
+        "company_uri": "http://www.wikidata.org/entity/Q4634000",
+        "company_id": "Q4634000",
+        "company_label": "2the Max",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 5,
+        "company_uri": "http://www.wikidata.org/entity/Q4636301",
+        "company_id": "Q4636301",
+        "company_label": "3D Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 6,
+        "company_uri": "http://www.wikidata.org/entity/Q229401",
+        "company_id": "Q229401",
+        "company_label": "3Dlabs",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 7,
+        "company_uri": "http://www.wikidata.org/entity/Q229698",
+        "company_id": "Q229698",
+        "company_label": "3dfx Interactive",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 8,
+        "company_uri": "http://www.wikidata.org/entity/Q280218",
+        "company_id": "Q280218",
+        "company_label": "A4Tech",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 9,
+        "company_uri": "http://www.wikidata.org/entity/Q300784",
+        "company_id": "Q300784",
+        "company_label": "AAEON",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 10,
+        "company_uri": "http://www.wikidata.org/entity/Q286774",
+        "company_id": "Q286774",
+        "company_label": "ABBYY",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 11,
+        "company_uri": "http://www.wikidata.org/entity/Q290316",
+        "company_id": "Q290316",
+        "company_label": "ADINA",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 12,
+        "company_uri": "http://www.wikidata.org/entity/Q2660973",
+        "company_id": "Q2660973",
+        "company_label": "AIM alliance",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 13,
+        "company_uri": "http://www.wikidata.org/entity/Q136431060",
+        "company_id": "Q136431060",
+        "company_label": "AKANEA",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 14,
+        "company_uri": "http://www.wikidata.org/entity/Q27585",
+        "company_id": "Q27585",
+        "company_label": "AOL",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 15,
+        "company_uri": "http://www.wikidata.org/entity/Q4653609",
+        "company_id": "Q4653609",
+        "company_label": "ARCOS, Inc.",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 16,
+        "company_uri": "http://www.wikidata.org/entity/Q50359906",
+        "company_id": "Q50359906",
+        "company_label": "ARKANCE CZ (CAD Studio)",
+        "country_uri": "http://www.wikidata.org/entity/Q213",
+        "country_id": "Q213",
+        "country_label": "Czech Republic"
+      },
+      {
+        "record_id": 17,
+        "company_uri": "http://www.wikidata.org/entity/Q19600248",
+        "company_id": "Q19600248",
+        "company_label": "ARX",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 18,
+        "company_uri": "http://www.wikidata.org/entity/Q16830261",
+        "company_id": "Q16830261",
+        "company_label": "ASCON",
+        "country_uri": "http://www.wikidata.org/entity/Q159",
+        "country_id": "Q159",
+        "country_label": "Russia"
+      },
+      {
+        "record_id": 19,
+        "company_uri": "http://www.wikidata.org/entity/Q152864",
+        "company_id": "Q152864",
+        "company_label": "ASUS",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 20,
+        "company_uri": "http://www.wikidata.org/entity/Q213849",
+        "company_id": "Q213849",
+        "company_label": "ATI Technologies",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 21,
+        "company_uri": "http://www.wikidata.org/entity/Q25108621",
+        "company_id": "Q25108621",
+        "company_label": "ATP Electronics",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 22,
+        "company_uri": "http://www.wikidata.org/entity/Q4654924",
+        "company_id": "Q4654924",
+        "company_label": "ATTO Technology",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 23,
+        "company_uri": "http://www.wikidata.org/entity/Q2266483",
+        "company_id": "Q2266483",
+        "company_label": "AVG Technologies",
+        "country_uri": "http://www.wikidata.org/entity/Q213",
+        "country_id": "Q213",
+        "country_label": "Czech Republic"
+      },
+      {
+        "record_id": 24,
+        "company_uri": "http://www.wikidata.org/entity/Q27150207",
+        "company_id": "Q27150207",
+        "company_label": "Abacus Data Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 25,
+        "company_uri": "http://www.wikidata.org/entity/Q3600443",
+        "company_id": "Q3600443",
+        "company_label": "Abas Software AG",
+        "country_uri": "http://www.wikidata.org/entity/Q183",
+        "country_id": "Q183",
+        "country_label": "Germany"
+      },
+      {
+        "record_id": 26,
+        "company_uri": "http://www.wikidata.org/entity/Q4667794",
+        "company_id": "Q4667794",
+        "company_label": "Ability Plus Software",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 27,
+        "company_uri": "http://www.wikidata.org/entity/Q17080237",
+        "company_id": "Q17080237",
+        "company_label": "Absoft Fortran Compilers",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 28,
+        "company_uri": "http://www.wikidata.org/entity/Q22906139",
+        "company_id": "Q22906139",
+        "company_label": "Absolute Software Corporation",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 29,
+        "company_uri": "http://www.wikidata.org/entity/Q60784987",
+        "company_id": "Q60784987",
+        "company_label": "Academa",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 30,
+        "company_uri": "http://www.wikidata.org/entity/Q338906",
+        "company_id": "Q338906",
+        "company_label": "Access",
+        "country_uri": "http://www.wikidata.org/entity/Q17",
+        "country_id": "Q17",
+        "country_label": "Japan"
+      },
+      {
+        "record_id": 31,
+        "company_uri": "http://www.wikidata.org/entity/Q481778",
+        "company_id": "Q481778",
+        "company_label": "Acer",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 32,
+        "company_uri": "http://www.wikidata.org/entity/Q50362991",
+        "company_id": "Q50362991",
+        "company_label": "Acer (United States)",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 33,
+        "company_uri": "http://www.wikidata.org/entity/Q342149",
+        "company_id": "Q342149",
+        "company_label": "Acorn Computers",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 34,
+        "company_uri": "http://www.wikidata.org/entity/Q3604604",
+        "company_id": "Q3604604",
+        "company_label": "Acornsoft",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 35,
+        "company_uri": "http://www.wikidata.org/entity/Q4033318",
+        "company_id": "Q4033318",
+        "company_label": "Acorp",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 36,
+        "company_uri": "http://www.wikidata.org/entity/Q4676588",
+        "company_id": "Q4676588",
+        "company_label": "Act3animation",
+        "country_uri": "http://www.wikidata.org/entity/Q408",
+        "country_id": "Q408",
+        "country_label": "Australia"
+      },
+      {
+        "record_id": 37,
+        "company_uri": "http://www.wikidata.org/entity/Q497419",
+        "company_id": "Q497419",
+        "company_label": "Actuate Corporation",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 38,
+        "company_uri": "http://www.wikidata.org/entity/Q345410",
+        "company_id": "Q345410",
+        "company_label": "Ad Lib, Inc.",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 39,
+        "company_uri": "http://www.wikidata.org/entity/Q4678335",
+        "company_id": "Q4678335",
+        "company_label": "Adacel",
+        "country_uri": "http://www.wikidata.org/entity/Q408",
+        "country_id": "Q408",
+        "country_label": "Australia"
+      },
+      {
+        "record_id": 40,
+        "company_uri": "http://www.wikidata.org/entity/Q352390",
+        "company_id": "Q352390",
+        "company_label": "Adaptec",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 41,
+        "company_uri": "http://www.wikidata.org/entity/Q4681014",
+        "company_id": "Q4681014",
+        "company_label": "Addamax",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 42,
+        "company_uri": "http://www.wikidata.org/entity/Q113164422",
+        "company_id": "Q113164422",
+        "company_label": "Addeo",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 43,
+        "company_uri": "http://www.wikidata.org/entity/Q11463",
+        "company_id": "Q11463",
+        "company_label": "Adobe",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 44,
+        "company_uri": "http://www.wikidata.org/entity/Q4686289",
+        "company_id": "Q4686289",
+        "company_label": "Advanced Systems Concepts, Inc.",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 45,
+        "company_uri": "http://www.wikidata.org/entity/Q55858229",
+        "company_id": "Q55858229",
+        "company_label": "Advanced Visual Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 46,
+        "company_uri": "http://www.wikidata.org/entity/Q26954687",
+        "company_id": "Q26954687",
+        "company_label": "Advantech",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 47,
+        "company_uri": "http://www.wikidata.org/entity/Q4698852",
+        "company_id": "Q4698852",
+        "company_label": "Aironet Wireless Communications",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 48,
+        "company_uri": "http://www.wikidata.org/entity/Q2916067",
+        "company_id": "Q2916067",
+        "company_label": "Aladdin Knowledge Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 49,
+        "company_uri": "http://www.wikidata.org/entity/Q125631323",
+        "company_id": "Q125631323",
+        "company_label": "Alba-LTD",
+        "country_uri": "http://www.wikidata.org/entity/Q211",
+        "country_id": "Q211",
+        "country_label": "Latvia"
+      },
+      {
+        "record_id": 50,
+        "company_uri": "http://www.wikidata.org/entity/Q1287954",
+        "company_id": "Q1287954",
+        "company_label": "Albatron Technology",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 51,
+        "company_uri": "http://www.wikidata.org/entity/Q4033684",
+        "company_id": "Q4033684",
+        "company_label": "Aldec",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 52,
+        "company_uri": "http://www.wikidata.org/entity/Q4713940",
+        "company_id": "Q4713940",
+        "company_label": "Aldon Inc.",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 53,
+        "company_uri": "http://www.wikidata.org/entity/Q1339044",
+        "company_id": "Q1339044",
+        "company_label": "Aldus",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 54,
+        "company_uri": "http://www.wikidata.org/entity/Q2093858",
+        "company_id": "Q2093858",
+        "company_label": "Allied Telesis K.K.",
+        "country_uri": "http://www.wikidata.org/entity/Q17",
+        "country_id": "Q17",
+        "country_label": "Japan"
+      },
+      {
+        "record_id": 55,
+        "company_uri": "http://www.wikidata.org/entity/Q124817800",
+        "company_id": "Q124817800",
+        "company_label": "Alma",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 56,
+        "company_uri": "http://www.wikidata.org/entity/Q4735081",
+        "company_id": "Q4735081",
+        "company_label": "Alpha Microsystems",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 57,
+        "company_uri": "http://www.wikidata.org/entity/Q434017",
+        "company_id": "Q434017",
+        "company_label": "Altair Engineering",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 58,
+        "company_uri": "http://www.wikidata.org/entity/Q294520",
+        "company_id": "Q294520",
+        "company_label": "Alten",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 59,
+        "company_uri": "http://www.wikidata.org/entity/Q1066620",
+        "company_id": "Q1066620",
+        "company_label": "Altium Limited",
+        "country_uri": "http://www.wikidata.org/entity/Q408",
+        "country_id": "Q408",
+        "country_label": "Australia"
+      },
+      {
+        "record_id": 60,
+        "company_uri": "http://www.wikidata.org/entity/Q4736965",
+        "company_id": "Q4736965",
+        "company_label": "Altos Computer Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 61,
+        "company_uri": "http://www.wikidata.org/entity/Q4033839",
+        "company_id": "Q4033839",
+        "company_label": "Altova",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 62,
+        "company_uri": "http://www.wikidata.org/entity/Q4737020",
+        "company_id": "Q4737020",
+        "company_label": "Altsys",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 63,
+        "company_uri": "http://www.wikidata.org/entity/Q696061",
+        "company_id": "Q696061",
+        "company_label": "Amadeus IT Group",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 64,
+        "company_uri": "http://www.wikidata.org/entity/Q41522717",
+        "company_id": "Q41522717",
+        "company_label": "Amber Road, Inc.",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 65,
+        "company_uri": "http://www.wikidata.org/entity/Q465692",
+        "company_id": "Q465692",
+        "company_label": "American Megatrends",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 66,
+        "company_uri": "http://www.wikidata.org/entity/Q2843137",
+        "company_id": "Q2843137",
+        "company_label": "Amesys",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 67,
+        "company_uri": "http://www.wikidata.org/entity/Q1967101",
+        "company_id": "Q1967101",
+        "company_label": "Amiga Corporation",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 68,
+        "company_uri": "http://www.wikidata.org/entity/Q4748798",
+        "company_id": "Q4748798",
+        "company_label": "Amsoft",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 69,
+        "company_uri": "http://www.wikidata.org/entity/Q112943287",
+        "company_id": "Q112943287",
+        "company_label": "Anderson Robotics",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 70,
+        "company_uri": "http://www.wikidata.org/entity/Q4763862",
+        "company_id": "Q4763862",
+        "company_label": "Angoss",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 71,
+        "company_uri": "http://www.wikidata.org/entity/Q1192617",
+        "company_id": "Q1192617",
+        "company_label": "Antec",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 72,
+        "company_uri": "http://www.wikidata.org/entity/Q134630977",
+        "company_id": "Q134630977",
+        "company_label": "Apacabar",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 73,
+        "company_uri": "http://www.wikidata.org/entity/Q312",
+        "company_id": "Q312",
+        "company_label": "Apple Inc.",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 74,
+        "company_uri": "http://www.wikidata.org/entity/Q4781586",
+        "company_id": "Q4781586",
+        "company_label": "Applied Technology",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 75,
+        "company_uri": "http://www.wikidata.org/entity/Q652537",
+        "company_id": "Q652537",
+        "company_label": "Applix",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 76,
+        "company_uri": "http://www.wikidata.org/entity/Q114740236",
+        "company_id": "Q114740236",
+        "company_label": "Appriss",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 77,
+        "company_uri": "http://www.wikidata.org/entity/Q4785002",
+        "company_id": "Q4785002",
+        "company_label": "ArcSoft",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 78,
+        "company_uri": "http://www.wikidata.org/entity/Q4785048",
+        "company_id": "Q4785048",
+        "company_label": "Arcada Software",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 79,
+        "company_uri": "http://www.wikidata.org/entity/Q636211",
+        "company_id": "Q636211",
+        "company_label": "Archos",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 80,
+        "company_uri": "http://www.wikidata.org/entity/Q4787953",
+        "company_id": "Q4787953",
+        "company_label": "Ardence",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 81,
+        "company_uri": "http://www.wikidata.org/entity/Q54815866",
+        "company_id": "Q54815866",
+        "company_label": "Artificial Life, Inc.",
+        "country_uri": "http://www.wikidata.org/entity/Q148",
+        "country_id": "Q148",
+        "country_label": "People's Republic of China"
+      },
+      {
+        "record_id": 82,
+        "company_uri": "http://www.wikidata.org/entity/Q3624634",
+        "company_id": "Q3624634",
+        "company_label": "Aruba",
+        "country_uri": "http://www.wikidata.org/entity/Q38",
+        "country_id": "Q38",
+        "country_label": "Italy"
+      },
+      {
+        "record_id": 83,
+        "company_uri": "http://www.wikidata.org/entity/Q726342",
+        "company_id": "Q726342",
+        "company_label": "Ashton-Tate",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 84,
+        "company_uri": "http://www.wikidata.org/entity/Q4806942",
+        "company_id": "Q4806942",
+        "company_label": "Asigra",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 85,
+        "company_uri": "http://www.wikidata.org/entity/Q736091",
+        "company_id": "Q736091",
+        "company_label": "AspenTech Corp.",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 86,
+        "company_uri": "http://www.wikidata.org/entity/Q57695998",
+        "company_id": "Q57695998",
+        "company_label": "Asseco Solutions AG",
+        "country_uri": "http://www.wikidata.org/entity/Q183",
+        "country_id": "Q183",
+        "country_label": "Germany"
+      },
+      {
+        "record_id": 87,
+        "company_uri": "http://www.wikidata.org/entity/Q129262449",
+        "company_id": "Q129262449",
+        "company_label": "Aster International",
+        "country_uri": "http://www.wikidata.org/entity/Q17",
+        "country_id": "Q17",
+        "country_label": "Japan"
+      },
+      {
+        "record_id": 88,
+        "company_uri": "http://www.wikidata.org/entity/Q4811929",
+        "company_id": "Q4811929",
+        "company_label": "Asure Software",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 89,
+        "company_uri": "http://www.wikidata.org/entity/Q753684",
+        "company_id": "Q753684",
+        "company_label": "Atari SA",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 90,
+        "company_uri": "http://www.wikidata.org/entity/Q2819537",
+        "company_id": "Q2819537",
+        "company_label": "Ateme",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 91,
+        "company_uri": "http://www.wikidata.org/entity/Q2868948",
+        "company_id": "Q2868948",
+        "company_label": "Atempo",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 92,
+        "company_uri": "http://www.wikidata.org/entity/Q117222635",
+        "company_id": "Q117222635",
+        "company_label": "Atlas Business Solutions, Inc.",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 93,
+        "company_uri": "http://www.wikidata.org/entity/Q4034578",
+        "company_id": "Q4034578",
+        "company_label": "Auriga",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 94,
+        "company_uri": "http://www.wikidata.org/entity/Q4822791",
+        "company_id": "Q4822791",
+        "company_label": "Auspex Systems",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 95,
+        "company_uri": "http://www.wikidata.org/entity/Q628051",
+        "company_id": "Q628051",
+        "company_label": "Autodesk",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 96,
+        "company_uri": "http://www.wikidata.org/entity/Q7863908",
+        "company_id": "Q7863908",
+        "company_label": "Automic Software",
+        "country_uri": "http://www.wikidata.org/entity/Q40",
+        "country_id": "Q40",
+        "country_label": "Austria"
+      },
+      {
+        "record_id": 97,
+        "company_uri": "http://www.wikidata.org/entity/Q790110",
+        "company_id": "Q790110",
+        "company_label": "Avaloq",
+        "country_uri": "http://www.wikidata.org/entity/Q39",
+        "country_id": "Q39",
+        "country_label": "Switzerland"
+      },
+      {
+        "record_id": 98,
+        "company_uri": "http://www.wikidata.org/entity/Q4828292",
+        "company_id": "Q4828292",
+        "company_label": "Averatec",
+        "country_uri": "http://www.wikidata.org/entity/Q884",
+        "country_id": "Q884",
+        "country_label": "South Korea"
+      },
+      {
+        "record_id": 99,
+        "company_uri": "http://www.wikidata.org/entity/Q385452",
+        "company_id": "Q385452",
+        "company_label": "Avid Technology",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 100,
+        "company_uri": "http://www.wikidata.org/entity/Q468381",
+        "company_id": "Q468381",
+        "company_label": "Avira",
+        "country_uri": "http://www.wikidata.org/entity/Q183",
+        "country_id": "Q183",
+        "country_label": "Germany"
+      },
+      {
+        "record_id": 101,
+        "company_uri": "http://www.wikidata.org/entity/Q2874669",
+        "company_id": "Q2874669",
+        "company_label": "Award Software",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 102,
+        "company_uri": "http://www.wikidata.org/entity/Q4830194",
+        "company_id": "Q4830194",
+        "company_label": "Axceler",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 103,
+        "company_uri": "http://www.wikidata.org/entity/Q792539",
+        "company_id": "Q792539",
+        "company_label": "Axiomtek",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 104,
+        "company_uri": "http://www.wikidata.org/entity/Q4830575",
+        "company_id": "Q4830575",
+        "company_label": "Axios Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 105,
+        "company_uri": "http://www.wikidata.org/entity/Q4830634",
+        "company_id": "Q4830634",
+        "company_label": "Axium",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 106,
+        "company_uri": "http://www.wikidata.org/entity/Q16497314",
+        "company_id": "Q16497314",
+        "company_label": "BB Tecnologia e Serviços",
+        "country_uri": "http://www.wikidata.org/entity/Q155",
+        "country_id": "Q155",
+        "country_label": "Brazil"
+      },
+      {
+        "record_id": 107,
+        "company_uri": "http://www.wikidata.org/entity/Q796309",
+        "company_id": "Q796309",
+        "company_label": "BMC Software",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 108,
+        "company_uri": "http://www.wikidata.org/entity/Q4836174",
+        "company_id": "Q4836174",
+        "company_label": "BOARD International",
+        "country_uri": "http://www.wikidata.org/entity/Q39",
+        "country_id": "Q39",
+        "country_label": "Switzerland"
+      },
+      {
+        "record_id": 109,
+        "company_uri": "http://www.wikidata.org/entity/Q336478",
+        "company_id": "Q336478",
+        "company_label": "Baan Corporation",
+        "country_uri": "http://www.wikidata.org/entity/Q55",
+        "country_id": "Q55",
+        "country_label": "Netherlands"
+      },
+      {
+        "record_id": 110,
+        "company_uri": "http://www.wikidata.org/entity/Q126921335",
+        "company_id": "Q126921335",
+        "company_label": "Baltic Data",
+        "country_uri": "http://www.wikidata.org/entity/Q211",
+        "country_id": "Q211",
+        "country_label": "Latvia"
+      },
+      {
+        "record_id": 111,
+        "company_uri": "http://www.wikidata.org/entity/Q126288085",
+        "company_id": "Q126288085",
+        "company_label": "Baltijas Informācijas Tehnoloģijas",
+        "country_uri": "http://www.wikidata.org/entity/Q211",
+        "country_id": "Q211",
+        "country_label": "Latvia"
+      },
+      {
+        "record_id": 112,
+        "company_uri": "http://www.wikidata.org/entity/Q29577212",
+        "company_id": "Q29577212",
+        "company_label": "Banana.ch",
+        "country_uri": "http://www.wikidata.org/entity/Q39",
+        "country_id": "Q39",
+        "country_label": "Switzerland"
+      },
+      {
+        "record_id": 113,
+        "company_uri": "http://www.wikidata.org/entity/Q17749859",
+        "company_id": "Q17749859",
+        "company_label": "BankAxept",
+        "country_uri": "http://www.wikidata.org/entity/Q20",
+        "country_id": "Q20",
+        "country_label": "Norway"
+      },
+      {
+        "record_id": 114,
+        "company_uri": "http://www.wikidata.org/entity/Q4860280",
+        "company_id": "Q4860280",
+        "company_label": "Bare Bones Software",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 115,
+        "company_uri": "http://www.wikidata.org/entity/Q4866375",
+        "company_id": "Q4866375",
+        "company_label": "Base One International",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 116,
+        "company_uri": "http://www.wikidata.org/entity/Q4876088",
+        "company_id": "Q4876088",
+        "company_label": "Beagle Bros",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 117,
+        "company_uri": "http://www.wikidata.org/entity/Q4081470",
+        "company_id": "Q4081470",
+        "company_label": "BelHard",
+        "country_uri": "http://www.wikidata.org/entity/Q184",
+        "country_id": "Q184",
+        "country_label": "Belarus"
+      },
+      {
+        "record_id": 118,
+        "company_uri": "http://www.wikidata.org/entity/Q16948412",
+        "company_id": "Q16948412",
+        "company_label": "Bell ID",
+        "country_uri": "http://www.wikidata.org/entity/Q55",
+        "country_id": "Q55",
+        "country_label": "Netherlands"
+      },
+      {
+        "record_id": 119,
+        "company_uri": "http://www.wikidata.org/entity/Q818314",
+        "company_id": "Q818314",
+        "company_label": "Bentley Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 120,
+        "company_uri": "http://www.wikidata.org/entity/Q629470",
+        "company_id": "Q629470",
+        "company_label": "Berkeley Software Design",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 121,
+        "company_uri": "http://www.wikidata.org/entity/Q108029316",
+        "company_id": "Q108029316",
+        "company_label": "Best Service GmbH",
+        "country_uri": "http://www.wikidata.org/entity/Q183",
+        "country_id": "Q183",
+        "country_label": "Germany"
+      },
+      {
+        "record_id": 122,
+        "company_uri": "http://www.wikidata.org/entity/Q4899911",
+        "company_id": "Q4899911",
+        "company_label": "BeyondTrust",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 123,
+        "company_uri": "http://www.wikidata.org/entity/Q700446",
+        "company_id": "Q700446",
+        "company_label": "Biostar Microtech International",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 124,
+        "company_uri": "http://www.wikidata.org/entity/Q4922539",
+        "company_id": "Q4922539",
+        "company_label": "Blackbaud",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 125,
+        "company_uri": "http://www.wikidata.org/entity/Q116327862",
+        "company_id": "Q116327862",
+        "company_label": "Blue Mantis",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 126,
+        "company_uri": "http://www.wikidata.org/entity/Q4929405",
+        "company_id": "Q4929405",
+        "company_label": "Blue Marble Geographics",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 127,
+        "company_uri": "http://www.wikidata.org/entity/Q885885",
+        "company_id": "Q885885",
+        "company_label": "Blue Sky Studios",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 128,
+        "company_uri": "http://www.wikidata.org/entity/Q6107934",
+        "company_id": "Q6107934",
+        "company_label": "Blue Yonder",
+        "country_uri": "http://www.wikidata.org/entity/Q13780930",
+        "country_id": "Q13780930",
+        "country_label": "worldwide"
+      },
+      {
+        "record_id": 129,
+        "company_uri": "http://www.wikidata.org/entity/Q4941462",
+        "company_id": "Q4941462",
+        "company_label": "Bondwell",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 130,
+        "company_uri": "http://www.wikidata.org/entity/Q210075",
+        "company_id": "Q210075",
+        "company_label": "Borland",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 131,
+        "company_uri": "http://www.wikidata.org/entity/Q105106371",
+        "company_id": "Q105106371",
+        "company_label": "Braingame Publishing",
+        "country_uri": "http://www.wikidata.org/entity/Q183",
+        "country_id": "Q183",
+        "country_label": "Germany"
+      },
+      {
+        "record_id": 132,
+        "company_uri": "http://www.wikidata.org/entity/Q1002639",
+        "company_id": "Q1002639",
+        "company_label": "Buhl Data Service",
+        "country_uri": "http://www.wikidata.org/entity/Q183",
+        "country_id": "Q183",
+        "country_label": "Germany"
+      },
+      {
+        "record_id": 133,
+        "company_uri": "http://www.wikidata.org/entity/Q55864434",
+        "company_id": "Q55864434",
+        "company_label": "BusLogic",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 134,
+        "company_uri": "http://www.wikidata.org/entity/Q1017587",
+        "company_id": "Q1017587",
+        "company_label": "Business Objects",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 135,
+        "company_uri": "http://www.wikidata.org/entity/Q702213",
+        "company_id": "Q702213",
+        "company_label": "C-Media",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 136,
+        "company_uri": "http://www.wikidata.org/entity/Q422260",
+        "company_id": "Q422260",
+        "company_label": "C.O.R.E.",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 137,
+        "company_uri": "http://www.wikidata.org/entity/Q600624",
+        "company_id": "Q600624",
+        "company_label": "CA Technologies",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 138,
+        "company_uri": "http://www.wikidata.org/entity/Q2930895",
+        "company_id": "Q2930895",
+        "company_label": "CADENASCADENAS GmbH",
+        "country_uri": "http://www.wikidata.org/entity/Q183",
+        "country_id": "Q183",
+        "country_label": "Germany"
+      },
+      {
+        "record_id": 139,
+        "company_uri": "http://www.wikidata.org/entity/Q5008775",
+        "company_id": "Q5008775",
+        "company_label": "CAP Scientific",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 140,
+        "company_uri": "http://www.wikidata.org/entity/Q30252828",
+        "company_id": "Q30252828",
+        "company_label": "CAS Software AG",
+        "country_uri": "http://www.wikidata.org/entity/Q183",
+        "country_id": "Q183",
+        "country_label": "Germany"
+      },
+      {
+        "record_id": 141,
+        "company_uri": "http://www.wikidata.org/entity/Q97197296",
+        "company_id": "Q97197296",
+        "company_label": "CGI Finland",
+        "country_uri": "http://www.wikidata.org/entity/Q33",
+        "country_id": "Q33",
+        "country_label": "Finland"
+      },
+      {
+        "record_id": 142,
+        "company_uri": "http://www.wikidata.org/entity/Q5011013",
+        "company_id": "Q5011013",
+        "company_label": "CGram Software",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 143,
+        "company_uri": "http://www.wikidata.org/entity/Q5011377",
+        "company_id": "Q5011377",
+        "company_label": "CHS Electronics",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 144,
+        "company_uri": "http://www.wikidata.org/entity/Q138702188",
+        "company_id": "Q138702188",
+        "company_label": "CIMTOPS Corporation.",
+        "country_uri": "http://www.wikidata.org/entity/Q17",
+        "country_id": "Q17",
+        "country_label": "Japan"
+      },
+      {
+        "record_id": 145,
+        "company_uri": "http://www.wikidata.org/entity/Q5013276",
+        "company_id": "Q5013276",
+        "company_label": "CODA",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 146,
+        "company_uri": "http://www.wikidata.org/entity/Q106509342",
+        "company_id": "Q106509342",
+        "company_label": "COMSOL, Inc.",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 147,
+        "company_uri": "http://www.wikidata.org/entity/Q128229903",
+        "company_id": "Q128229903",
+        "company_label": "CT LAB",
+        "country_uri": "http://www.wikidata.org/entity/Q258",
+        "country_id": "Q258",
+        "country_label": "South Africa"
+      },
+      {
+        "record_id": 148,
+        "company_uri": "http://www.wikidata.org/entity/Q134640768",
+        "company_id": "Q134640768",
+        "company_label": "CUC",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 149,
+        "company_uri": "http://www.wikidata.org/entity/Q856905",
+        "company_id": "Q856905",
+        "company_label": "CadLine",
+        "country_uri": "http://www.wikidata.org/entity/Q28",
+        "country_id": "Q28",
+        "country_label": "Hungary"
+      },
+      {
+        "record_id": 150,
+        "company_uri": "http://www.wikidata.org/entity/Q5016289",
+        "company_id": "Q5016289",
+        "company_label": "Cadcorp",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 151,
+        "company_uri": "http://www.wikidata.org/entity/Q608776",
+        "company_id": "Q608776",
+        "company_label": "Cadence Design Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 152,
+        "company_uri": "http://www.wikidata.org/entity/Q5018086",
+        "company_id": "Q5018086",
+        "company_label": "Cakewalk",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 153,
+        "company_uri": "http://www.wikidata.org/entity/Q60742568",
+        "company_id": "Q60742568",
+        "company_label": "CalAmp",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 154,
+        "company_uri": "http://www.wikidata.org/entity/Q5019031",
+        "company_id": "Q5019031",
+        "company_label": "Caldera",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 155,
+        "company_uri": "http://www.wikidata.org/entity/Q5021336",
+        "company_id": "Q5021336",
+        "company_label": "Caligari Corporation",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 156,
+        "company_uri": "http://www.wikidata.org/entity/Q5023002",
+        "company_id": "Q5023002",
+        "company_label": "Callware",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 157,
+        "company_uri": "http://www.wikidata.org/entity/Q5043914",
+        "company_id": "Q5043914",
+        "company_label": "Carnegie Learning",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 158,
+        "company_uri": "http://www.wikidata.org/entity/Q5050308",
+        "company_id": "Q5050308",
+        "company_label": "Castle Technology",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 159,
+        "company_uri": "http://www.wikidata.org/entity/Q1052684",
+        "company_id": "Q1052684",
+        "company_label": "Cegid",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 160,
+        "company_uri": "http://www.wikidata.org/entity/Q5057820",
+        "company_id": "Q5057820",
+        "company_label": "Celeris",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 161,
+        "company_uri": "http://www.wikidata.org/entity/Q1053951",
+        "company_id": "Q1053951",
+        "company_label": "Central Point Software",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 162,
+        "company_uri": "http://www.wikidata.org/entity/Q5062410",
+        "company_id": "Q5062410",
+        "company_label": "Centre for Development of Imaging Technology",
+        "country_uri": "http://www.wikidata.org/entity/Q668",
+        "country_id": "Q668",
+        "country_label": "India"
+      },
+      {
+        "record_id": 163,
+        "company_uri": "http://www.wikidata.org/entity/Q709190",
+        "company_id": "Q709190",
+        "company_label": "Chaintech",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 164,
+        "company_uri": "http://www.wikidata.org/entity/Q16986884",
+        "company_id": "Q16986884",
+        "company_label": "CheapAir",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 165,
+        "company_uri": "http://www.wikidata.org/entity/Q176587",
+        "company_id": "Q176587",
+        "company_label": "Check Point",
+        "country_uri": "http://www.wikidata.org/entity/Q801",
+        "country_id": "Q801",
+        "country_label": "Israel"
+      },
+      {
+        "record_id": 166,
+        "company_uri": "http://www.wikidata.org/entity/Q5119888",
+        "company_id": "Q5119888",
+        "company_label": "Cigital",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 167,
+        "company_uri": "http://www.wikidata.org/entity/Q642372",
+        "company_id": "Q642372",
+        "company_label": "Cimatron",
+        "country_uri": "http://www.wikidata.org/entity/Q801",
+        "country_id": "Q801",
+        "country_label": "Israel"
+      },
+      {
+        "record_id": 168,
+        "company_uri": "http://www.wikidata.org/entity/Q21188166",
+        "company_id": "Q21188166",
+        "company_label": "Circle Commerce",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 169,
+        "company_uri": "http://www.wikidata.org/entity/Q916196",
+        "company_id": "Q916196",
+        "company_label": "Citrix Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 170,
+        "company_uri": "http://www.wikidata.org/entity/Q1095605",
+        "company_id": "Q1095605",
+        "company_label": "Claris",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 171,
+        "company_uri": "http://www.wikidata.org/entity/Q5130896",
+        "company_id": "Q5130896",
+        "company_label": "Clearswift",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 172,
+        "company_uri": "http://www.wikidata.org/entity/Q5132401",
+        "company_id": "Q5132401",
+        "company_label": "ClickSoftware Technologies",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 173,
+        "company_uri": "http://www.wikidata.org/entity/Q2294659",
+        "company_id": "Q2294659",
+        "company_label": "Clickteam",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 174,
+        "company_uri": "http://www.wikidata.org/entity/Q5145789",
+        "company_id": "Q5145789",
+        "company_label": "Collabera",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 175,
+        "company_uri": "http://www.wikidata.org/entity/Q5149685",
+        "company_id": "Q5149685",
+        "company_label": "Columbia Data Products",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 176,
+        "company_uri": "http://www.wikidata.org/entity/Q5150454",
+        "company_id": "Q5150454",
+        "company_label": "Com One group",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 177,
+        "company_uri": "http://www.wikidata.org/entity/Q2300605",
+        "company_id": "Q2300605",
+        "company_label": "Com21",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 178,
+        "company_uri": "http://www.wikidata.org/entity/Q655966",
+        "company_id": "Q655966",
+        "company_label": "Comarch",
+        "country_uri": "http://www.wikidata.org/entity/Q36",
+        "country_id": "Q36",
+        "country_label": "Poland"
+      },
+      {
+        "record_id": 179,
+        "company_uri": "http://www.wikidata.org/entity/Q114959508",
+        "company_id": "Q114959508",
+        "company_label": "CombinedX",
+        "country_uri": "http://www.wikidata.org/entity/Q20",
+        "country_id": "Q20",
+        "country_label": "Norway"
+      },
+      {
+        "record_id": 180,
+        "company_uri": "http://www.wikidata.org/entity/Q2895160",
+        "company_id": "Q2895160",
+        "company_label": "Commtouch",
+        "country_uri": "http://www.wikidata.org/entity/Q801",
+        "country_id": "Q801",
+        "country_label": "Israel"
+      },
+      {
+        "record_id": 181,
+        "company_uri": "http://www.wikidata.org/entity/Q705272",
+        "company_id": "Q705272",
+        "company_label": "Compal Electronics",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 182,
+        "company_uri": "http://www.wikidata.org/entity/Q324603",
+        "company_id": "Q324603",
+        "company_label": "Compaq",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 183,
+        "company_uri": "http://www.wikidata.org/entity/Q5157089",
+        "company_id": "Q5157089",
+        "company_label": "Compsoft",
+        "country_uri": "http://www.wikidata.org/entity/Q145",
+        "country_id": "Q145",
+        "country_label": "United Kingdom"
+      },
+      {
+        "record_id": 184,
+        "company_uri": "http://www.wikidata.org/entity/Q5157121",
+        "company_id": "Q5157121",
+        "company_label": "Comptel Corporation",
+        "country_uri": "http://www.wikidata.org/entity/Q33",
+        "country_id": "Q33",
+        "country_label": "Finland"
+      },
+      {
+        "record_id": 185,
+        "company_uri": "http://www.wikidata.org/entity/Q5157270",
+        "company_id": "Q5157270",
+        "company_label": "Computaris",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 186,
+        "company_uri": "http://www.wikidata.org/entity/Q11964030",
+        "company_id": "Q11964030",
+        "company_label": "Computas AS",
+        "country_uri": "http://www.wikidata.org/entity/Q20",
+        "country_id": "Q20",
+        "country_label": "Norway"
+      },
+      {
+        "record_id": 187,
+        "company_uri": "http://www.wikidata.org/entity/Q5013503",
+        "company_id": "Q5013503",
+        "company_label": "Computer Security and Industrial Cryptography",
+        "country_uri": "http://www.wikidata.org/entity/Q31",
+        "country_id": "Q31",
+        "country_label": "Belgium"
+      },
+      {
+        "record_id": 188,
+        "company_uri": "http://www.wikidata.org/entity/Q3459192",
+        "company_id": "Q3459192",
+        "company_label": "Computers and Structures",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 189,
+        "company_uri": "http://www.wikidata.org/entity/Q2388717",
+        "company_id": "Q2388717",
+        "company_label": "Comverse",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 190,
+        "company_uri": "http://www.wikidata.org/entity/Q5159097",
+        "company_id": "Q5159097",
+        "company_label": "Concurrent Computer Corporation",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 191,
+        "company_uri": "http://www.wikidata.org/entity/Q1228778",
+        "company_id": "Q1228778",
+        "company_label": "Condusiv Technologies",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 192,
+        "company_uri": "http://www.wikidata.org/entity/Q5160221",
+        "company_id": "Q5160221",
+        "company_label": "Confluence",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 193,
+        "company_uri": "http://www.wikidata.org/entity/Q825991",
+        "company_id": "Q825991",
+        "company_label": "Connectix",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 194,
+        "company_uri": "http://www.wikidata.org/entity/Q442001",
+        "company_id": "Q442001",
+        "company_label": "Conner Peripherals",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 195,
+        "company_uri": "http://www.wikidata.org/entity/Q1129419",
+        "company_id": "Q1129419",
+        "company_label": "Convergent Technologies",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 196,
+        "company_uri": "http://www.wikidata.org/entity/Q5166513",
+        "company_id": "Q5166513",
+        "company_label": "Convex Computer",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 197,
+        "company_uri": "http://www.wikidata.org/entity/Q5170169",
+        "company_id": "Q5170169",
+        "company_label": "Core International",
+        "country_uri": null,
+        "country_id": null,
+        "country_label": null
+      },
+      {
+        "record_id": 198,
+        "company_uri": "http://www.wikidata.org/entity/Q835702",
+        "company_id": "Q835702",
+        "company_label": "Corel",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 199,
+        "company_uri": "http://www.wikidata.org/entity/Q5172124",
+        "company_id": "Q5172124",
+        "company_label": "Corona Data Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 200,
+        "company_uri": "http://www.wikidata.org/entity/Q477016",
+        "company_id": "Q477016",
+        "company_label": "Creative Technology",
+        "country_uri": "http://www.wikidata.org/entity/Q334",
+        "country_id": "Q334",
+        "country_label": "Singapore"
+      },
+      {
+        "record_id": 201,
+        "company_uri": "http://www.wikidata.org/entity/Q5190757",
+        "company_id": "Q5190757",
+        "company_label": "Cryptek",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 202,
+        "company_uri": "http://www.wikidata.org/entity/Q2074158",
+        "company_id": "Q2074158",
+        "company_label": "Cygnus Solutions",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 203,
+        "company_uri": "http://www.wikidata.org/entity/Q16953288",
+        "company_id": "Q16953288",
+        "company_label": "Cúram Software",
+        "country_uri": "http://www.wikidata.org/entity/Q27",
+        "country_id": "Q27",
+        "country_label": "Ireland"
+      },
+      {
+        "record_id": 204,
+        "company_uri": "http://www.wikidata.org/entity/Q11320941",
+        "company_id": "Q11320941",
+        "company_label": "DATA WEST",
+        "country_uri": "http://www.wikidata.org/entity/Q17",
+        "country_id": "Q17",
+        "country_label": "Japan"
+      },
+      {
+        "record_id": 205,
+        "company_uri": "http://www.wikidata.org/entity/Q102112931",
+        "company_id": "Q102112931",
+        "company_label": "DATI Group",
+        "country_uri": "http://www.wikidata.org/entity/Q211",
+        "country_id": "Q211",
+        "country_label": "Latvia"
+      },
+      {
+        "record_id": 206,
+        "company_uri": "http://www.wikidata.org/entity/Q734447",
+        "company_id": "Q734447",
+        "company_label": "DFI Inc.",
+        "country_uri": "http://www.wikidata.org/entity/Q865",
+        "country_id": "Q865",
+        "country_label": "Taiwan"
+      },
+      {
+        "record_id": 207,
+        "company_uri": "http://www.wikidata.org/entity/Q125417758",
+        "company_id": "Q125417758",
+        "company_label": "DTK Systems",
+        "country_uri": "http://www.wikidata.org/entity/Q211",
+        "country_id": "Q211",
+        "country_label": "Latvia"
+      },
+      {
+        "record_id": 208,
+        "company_uri": "http://www.wikidata.org/entity/Q1158005",
+        "company_id": "Q1158005",
+        "company_label": "Dallas Semiconductor",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 209,
+        "company_uri": "http://www.wikidata.org/entity/Q3013439",
+        "company_id": "Q3013439",
+        "company_label": "Dane-Elec",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 210,
+        "company_uri": "http://www.wikidata.org/entity/Q1172038",
+        "company_id": "Q1172038",
+        "company_label": "Dassault Systèmes",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 211,
+        "company_uri": "http://www.wikidata.org/entity/Q5227157",
+        "company_id": "Q5227157",
+        "company_label": "Data Design System",
+        "country_uri": "http://www.wikidata.org/entity/Q20",
+        "country_id": "Q20",
+        "country_label": "Norway"
+      },
+      {
+        "record_id": 212,
+        "company_uri": "http://www.wikidata.org/entity/Q5227118",
+        "company_id": "Q5227118",
+        "company_label": "DataMirror",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 213,
+        "company_uri": "http://www.wikidata.org/entity/Q16954582",
+        "company_id": "Q16954582",
+        "company_label": "DataViz",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 214,
+        "company_uri": "http://www.wikidata.org/entity/Q5227424",
+        "company_id": "Q5227424",
+        "company_label": "Datacap",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 215,
+        "company_uri": "http://www.wikidata.org/entity/Q126032518",
+        "company_id": "Q126032518",
+        "company_label": "Datakom",
+        "country_uri": "http://www.wikidata.org/entity/Q211",
+        "country_id": "Q211",
+        "country_label": "Latvia"
+      },
+      {
+        "record_id": 216,
+        "company_uri": "http://www.wikidata.org/entity/Q5227441",
+        "company_id": "Q5227441",
+        "company_label": "Datalight",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 217,
+        "company_uri": "http://www.wikidata.org/entity/Q18206352",
+        "company_id": "Q18206352",
+        "company_label": "Datawatch Corporation",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 218,
+        "company_uri": "http://www.wikidata.org/entity/Q575990",
+        "company_id": "Q575990",
+        "company_label": "Day Software",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 219,
+        "company_uri": "http://www.wikidata.org/entity/Q1179564",
+        "company_id": "Q1179564",
+        "company_label": "DeLorme",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 220,
+        "company_uri": "http://www.wikidata.org/entity/Q30873",
+        "company_id": "Q30873",
+        "company_label": "Dell",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 221,
+        "company_uri": "http://www.wikidata.org/entity/Q877536",
+        "company_id": "Q877536",
+        "company_label": "Dell EMC",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 222,
+        "company_uri": "http://www.wikidata.org/entity/Q2595760",
+        "company_id": "Q2595760",
+        "company_label": "Dell Wyse",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 223,
+        "company_uri": "http://www.wikidata.org/entity/Q4037168",
+        "company_id": "Q4037168",
+        "company_label": "Delrina",
+        "country_uri": "http://www.wikidata.org/entity/Q16",
+        "country_id": "Q16",
+        "country_label": "Canada"
+      },
+      {
+        "record_id": 224,
+        "company_uri": "http://www.wikidata.org/entity/Q5264297",
+        "company_id": "Q5264297",
+        "company_label": "Design Science",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 225,
+        "company_uri": "http://www.wikidata.org/entity/Q5275716",
+        "company_id": "Q5275716",
+        "company_label": "Digi International",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 226,
+        "company_uri": "http://www.wikidata.org/entity/Q185608",
+        "company_id": "Q185608",
+        "company_label": "Digital Research",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 227,
+        "company_uri": "http://www.wikidata.org/entity/Q3027819",
+        "company_id": "Q3027819",
+        "company_label": "Digital Surf",
+        "country_uri": "http://www.wikidata.org/entity/Q142",
+        "country_id": "Q142",
+        "country_label": "France"
+      },
+      {
+        "record_id": 228,
+        "company_uri": "http://www.wikidata.org/entity/Q22907813",
+        "company_id": "Q22907813",
+        "company_label": "Diligent Corporation",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      },
+      {
+        "record_id": 229,
+        "company_uri": "http://www.wikidata.org/entity/Q2081339",
+        "company_id": "Q2081339",
+        "company_label": "Disneytoon Studios",
+        "country_uri": "http://www.wikidata.org/entity/Q30",
+        "country_id": "Q30",
+        "country_label": "United States"
+      }
+    ],
+    "company_industries": [
+      {
+        "record_id": 1,
+        "company_id": "Q1002639",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 2,
+        "company_id": "Q1017587",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 3,
+        "company_id": "Q102112931",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585681",
+        "industry_id": "Q29585681",
+        "industry_label": "Other information technology and computer service activities"
+      },
+      {
+        "record_id": 4,
+        "company_id": "Q102112931",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585531",
+        "industry_id": "Q29585531",
+        "industry_label": "Wholesale of computers, computer peripheral equipment and software"
+      },
+      {
+        "record_id": 5,
+        "company_id": "Q102112931",
+        "industry_uri": "http://www.wikidata.org/entity/Q112122389",
+        "industry_id": "Q112122389",
+        "industry_label": "computer programming, consultancy and related activities"
+      },
+      {
+        "record_id": 6,
+        "company_id": "Q105106371",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 7,
+        "company_id": "Q1052684",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 8,
+        "company_id": "Q1053951",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 9,
+        "company_id": "Q106509342",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 10,
+        "company_id": "Q1066620",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 11,
+        "company_id": "Q108029316",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 12,
+        "company_id": "Q1095605",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 13,
+        "company_id": "Q1129419",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 14,
+        "company_id": "Q112943287",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 15,
+        "company_id": "Q113164422",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165968",
+        "industry_id": "Q112165968",
+        "industry_label": "computer programming"
+      },
+      {
+        "record_id": 16,
+        "company_id": "Q11320941",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 17,
+        "company_id": "Q11463",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 18,
+        "company_id": "Q11463",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 19,
+        "company_id": "Q114740236",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 20,
+        "company_id": "Q114959508",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 21,
+        "company_id": "Q1158005",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 22,
+        "company_id": "Q116327862",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 23,
+        "company_id": "Q1172038",
+        "industry_uri": "http://www.wikidata.org/entity/Q1318054",
+        "industry_id": "Q1318054",
+        "industry_label": "enterprise software"
+      },
+      {
+        "record_id": 24,
+        "company_id": "Q1172038",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165934",
+        "industry_id": "Q112165934",
+        "industry_label": "publishing of application software"
+      },
+      {
+        "record_id": 25,
+        "company_id": "Q1172038",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 26,
+        "company_id": "Q117222635",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 27,
+        "company_id": "Q1179564",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 28,
+        "company_id": "Q1192617",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 29,
+        "company_id": "Q11964030",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585678",
+        "industry_id": "Q29585678",
+        "industry_label": "computer programming activities"
+      },
+      {
+        "record_id": 30,
+        "company_id": "Q1228778",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 31,
+        "company_id": "Q124817800",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165968",
+        "industry_id": "Q112165968",
+        "industry_label": "computer programming"
+      },
+      {
+        "record_id": 32,
+        "company_id": "Q125417758",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585680",
+        "industry_id": "Q29585680",
+        "industry_label": "Computer facilities management activities"
+      },
+      {
+        "record_id": 33,
+        "company_id": "Q125417758",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585531",
+        "industry_id": "Q29585531",
+        "industry_label": "Wholesale of computers, computer peripheral equipment and software"
+      },
+      {
+        "record_id": 34,
+        "company_id": "Q125631323",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585319",
+        "industry_id": "Q29585319",
+        "industry_label": "manufacture of office machinery and equipment (except computers and peripheral equipment)"
+      },
+      {
+        "record_id": 35,
+        "company_id": "Q126032518",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585681",
+        "industry_id": "Q29585681",
+        "industry_label": "Other information technology and computer service activities"
+      },
+      {
+        "record_id": 36,
+        "company_id": "Q126032518",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585531",
+        "industry_id": "Q29585531",
+        "industry_label": "Wholesale of computers, computer peripheral equipment and software"
+      },
+      {
+        "record_id": 37,
+        "company_id": "Q126032518",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585678",
+        "industry_id": "Q29585678",
+        "industry_label": "computer programming activities"
+      },
+      {
+        "record_id": 38,
+        "company_id": "Q126288085",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585681",
+        "industry_id": "Q29585681",
+        "industry_label": "Other information technology and computer service activities"
+      },
+      {
+        "record_id": 39,
+        "company_id": "Q126288085",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585531",
+        "industry_id": "Q29585531",
+        "industry_label": "Wholesale of computers, computer peripheral equipment and software"
+      },
+      {
+        "record_id": 40,
+        "company_id": "Q126288085",
+        "industry_uri": "http://www.wikidata.org/entity/Q29586085",
+        "industry_id": "Q29586085",
+        "industry_label": "repair of computers and peripheral equipment"
+      },
+      {
+        "record_id": 41,
+        "company_id": "Q126921335",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585577",
+        "industry_id": "Q29585577",
+        "industry_label": "Retail sale of computers, peripheral units and software in specialised stores"
+      },
+      {
+        "record_id": 42,
+        "company_id": "Q128229903",
+        "industry_uri": "http://www.wikidata.org/entity/Q1254596",
+        "industry_id": "Q1254596",
+        "industry_label": "software as a service"
+      },
+      {
+        "record_id": 43,
+        "company_id": "Q1287954",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 44,
+        "company_id": "Q129262449",
+        "industry_uri": "http://www.wikidata.org/entity/Q1067601",
+        "industry_id": "Q1067601",
+        "industry_label": "computer industry"
+      },
+      {
+        "record_id": 45,
+        "company_id": "Q1339044",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 46,
+        "company_id": "Q134630977",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165709",
+        "industry_id": "Q112165709",
+        "industry_label": "wholesale (business-to-business) of computers, computer peripheral equipment and software"
+      },
+      {
+        "record_id": 47,
+        "company_id": "Q134640768",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165709",
+        "industry_id": "Q112165709",
+        "industry_label": "wholesale (business-to-business) of computers, computer peripheral equipment and software"
+      },
+      {
+        "record_id": 48,
+        "company_id": "Q136431060",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165934",
+        "industry_id": "Q112165934",
+        "industry_label": "publishing of application software"
+      },
+      {
+        "record_id": 49,
+        "company_id": "Q138702188",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 50,
+        "company_id": "Q14920510",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 51,
+        "company_id": "Q152864",
+        "industry_uri": "http://www.wikidata.org/entity/Q1067601",
+        "industry_id": "Q1067601",
+        "industry_label": "computer industry"
+      },
+      {
+        "record_id": 52,
+        "company_id": "Q16497314",
+        "industry_uri": "http://www.wikidata.org/entity/Q68",
+        "industry_id": "Q68",
+        "industry_label": "computer"
+      },
+      {
+        "record_id": 53,
+        "company_id": "Q16830261",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 54,
+        "company_id": "Q16948412",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 55,
+        "company_id": "Q16953288",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 56,
+        "company_id": "Q16954582",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 57,
+        "company_id": "Q16986884",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 58,
+        "company_id": "Q17080237",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 59,
+        "company_id": "Q176587",
+        "industry_uri": "http://www.wikidata.org/entity/Q870898",
+        "industry_id": "Q870898",
+        "industry_label": "computer security software"
+      },
+      {
+        "record_id": 60,
+        "company_id": "Q17749859",
+        "industry_uri": "http://www.wikidata.org/entity/Q29585678",
+        "industry_id": "Q29585678",
+        "industry_label": "computer programming activities"
+      },
+      {
+        "record_id": 61,
+        "company_id": "Q18206352",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 62,
+        "company_id": "Q185608",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 63,
+        "company_id": "Q19600248",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 64,
+        "company_id": "Q1967101",
+        "industry_uri": "http://www.wikidata.org/entity/Q68",
+        "industry_id": "Q68",
+        "industry_label": "computer"
+      },
+      {
+        "record_id": 65,
+        "company_id": "Q2074158",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 66,
+        "company_id": "Q2081339",
+        "industry_uri": "http://www.wikidata.org/entity/Q1401416",
+        "industry_id": "Q1401416",
+        "industry_label": "computer animation"
+      },
+      {
+        "record_id": 67,
+        "company_id": "Q2093858",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 68,
+        "company_id": "Q210075",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 69,
+        "company_id": "Q21188166",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 70,
+        "company_id": "Q213849",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 71,
+        "company_id": "Q2266483",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 72,
+        "company_id": "Q2266483",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 73,
+        "company_id": "Q22906139",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 74,
+        "company_id": "Q22907813",
+        "industry_uri": "http://www.wikidata.org/entity/Q1254596",
+        "industry_id": "Q1254596",
+        "industry_label": "software as a service"
+      },
+      {
+        "record_id": 75,
+        "company_id": "Q229401",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 76,
+        "company_id": "Q2294659",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 77,
+        "company_id": "Q229698",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 78,
+        "company_id": "Q2300605",
+        "industry_uri": "http://www.wikidata.org/entity/Q1301371",
+        "industry_id": "Q1301371",
+        "industry_label": "computer network"
+      },
+      {
+        "record_id": 79,
+        "company_id": "Q2388717",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 80,
+        "company_id": "Q25108621",
+        "industry_uri": "http://www.wikidata.org/entity/Q66221",
+        "industry_id": "Q66221",
+        "industry_label": "computer storage media"
+      },
+      {
+        "record_id": 81,
+        "company_id": "Q2595760",
+        "industry_uri": "http://www.wikidata.org/entity/Q68",
+        "industry_id": "Q68",
+        "industry_label": "computer"
+      },
+      {
+        "record_id": 82,
+        "company_id": "Q2660973",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 83,
+        "company_id": "Q26954687",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 84,
+        "company_id": "Q27150207",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 85,
+        "company_id": "Q27585",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 86,
+        "company_id": "Q280218",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 87,
+        "company_id": "Q2819537",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165934",
+        "industry_id": "Q112165934",
+        "industry_label": "publishing of application software"
+      },
+      {
+        "record_id": 88,
+        "company_id": "Q2843137",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165970",
+        "industry_id": "Q112165970",
+        "industry_label": "IT systems and software consulting"
+      },
+      {
+        "record_id": 89,
+        "company_id": "Q286774",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 90,
+        "company_id": "Q2868948",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165968",
+        "industry_id": "Q112165968",
+        "industry_label": "computer programming"
+      },
+      {
+        "record_id": 91,
+        "company_id": "Q2868948",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 92,
+        "company_id": "Q2874669",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 93,
+        "company_id": "Q2895160",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 94,
+        "company_id": "Q290316",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 95,
+        "company_id": "Q2916067",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 96,
+        "company_id": "Q2930895",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 97,
+        "company_id": "Q294520",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165970",
+        "industry_id": "Q112165970",
+        "industry_label": "IT systems and software consulting"
+      },
+      {
+        "record_id": 98,
+        "company_id": "Q29577212",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 99,
+        "company_id": "Q300784",
+        "industry_uri": "http://www.wikidata.org/entity/Q1067601",
+        "industry_id": "Q1067601",
+        "industry_label": "computer industry"
+      },
+      {
+        "record_id": 100,
+        "company_id": "Q3013439",
+        "industry_uri": "http://www.wikidata.org/entity/Q68",
+        "industry_id": "Q68",
+        "industry_label": "computer"
+      },
+      {
+        "record_id": 101,
+        "company_id": "Q30252828",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 102,
+        "company_id": "Q3027819",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 103,
+        "company_id": "Q30873",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 104,
+        "company_id": "Q30873",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 105,
+        "company_id": "Q312",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 106,
+        "company_id": "Q312",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 107,
+        "company_id": "Q324603",
+        "industry_uri": "http://www.wikidata.org/entity/Q1067601",
+        "industry_id": "Q1067601",
+        "industry_label": "computer industry"
+      },
+      {
+        "record_id": 108,
+        "company_id": "Q336478",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 109,
+        "company_id": "Q338906",
+        "industry_uri": "http://www.wikidata.org/entity/Q4826753",
+        "industry_id": "Q4826753",
+        "industry_label": "automotive software"
+      },
+      {
+        "record_id": 110,
+        "company_id": "Q342149",
+        "industry_uri": "http://www.wikidata.org/entity/Q7144664",
+        "industry_id": "Q7144664",
+        "industry_label": "personal computer hardware"
+      },
+      {
+        "record_id": 111,
+        "company_id": "Q345410",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 112,
+        "company_id": "Q3459192",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 113,
+        "company_id": "Q352390",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 114,
+        "company_id": "Q3600443",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 115,
+        "company_id": "Q3604604",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 116,
+        "company_id": "Q3624634",
+        "industry_uri": "http://www.wikidata.org/entity/Q21198",
+        "industry_id": "Q21198",
+        "industry_label": "computer science"
+      },
+      {
+        "record_id": 117,
+        "company_id": "Q385452",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 118,
+        "company_id": "Q4033318",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 119,
+        "company_id": "Q4033684",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 120,
+        "company_id": "Q4033839",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 121,
+        "company_id": "Q4034578",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 122,
+        "company_id": "Q4037168",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 123,
+        "company_id": "Q4081470",
+        "industry_uri": "http://www.wikidata.org/entity/Q15939426",
+        "industry_id": "Q15939426",
+        "industry_label": "software outsourcing industry"
+      },
+      {
+        "record_id": 124,
+        "company_id": "Q41522717",
+        "industry_uri": "http://www.wikidata.org/entity/Q1318054",
+        "industry_id": "Q1318054",
+        "industry_label": "enterprise software"
+      },
+      {
+        "record_id": 125,
+        "company_id": "Q422260",
+        "industry_uri": "http://www.wikidata.org/entity/Q6002306",
+        "industry_id": "Q6002306",
+        "industry_label": "computer-generated imagery"
+      },
+      {
+        "record_id": 126,
+        "company_id": "Q434017",
+        "industry_uri": "http://www.wikidata.org/entity/Q1050567",
+        "industry_id": "Q1050567",
+        "industry_label": "computer-aided engineering"
+      },
+      {
+        "record_id": 127,
+        "company_id": "Q434017",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 128,
+        "company_id": "Q442001",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 129,
+        "company_id": "Q4545554",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 130,
+        "company_id": "Q4634000",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 131,
+        "company_id": "Q4636301",
+        "industry_uri": "http://www.wikidata.org/entity/Q184793",
+        "industry_id": "Q184793",
+        "industry_label": "computer-aided design"
+      },
+      {
+        "record_id": 132,
+        "company_id": "Q4653609",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 133,
+        "company_id": "Q4654924",
+        "industry_uri": "http://www.wikidata.org/entity/Q66221",
+        "industry_id": "Q66221",
+        "industry_label": "computer storage media"
+      },
+      {
+        "record_id": 134,
+        "company_id": "Q465692",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 135,
+        "company_id": "Q465692",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 136,
+        "company_id": "Q4667794",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 137,
+        "company_id": "Q4676588",
+        "industry_uri": "http://www.wikidata.org/entity/Q6002306",
+        "industry_id": "Q6002306",
+        "industry_label": "computer-generated imagery"
+      },
+      {
+        "record_id": 138,
+        "company_id": "Q4678335",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 139,
+        "company_id": "Q4681014",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 140,
+        "company_id": "Q468381",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 141,
+        "company_id": "Q468381",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 142,
+        "company_id": "Q4686289",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 143,
+        "company_id": "Q4698852",
+        "industry_uri": "http://www.wikidata.org/entity/Q1301371",
+        "industry_id": "Q1301371",
+        "industry_label": "computer network"
+      },
+      {
+        "record_id": 144,
+        "company_id": "Q4713940",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 145,
+        "company_id": "Q4735081",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 146,
+        "company_id": "Q4736965",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 147,
+        "company_id": "Q4737020",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 148,
+        "company_id": "Q4748798",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 149,
+        "company_id": "Q4763862",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 150,
+        "company_id": "Q477016",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 151,
+        "company_id": "Q4781586",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 152,
+        "company_id": "Q4785002",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 153,
+        "company_id": "Q4785048",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 154,
+        "company_id": "Q4787953",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 155,
+        "company_id": "Q4806942",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 156,
+        "company_id": "Q4811929",
+        "industry_uri": "http://www.wikidata.org/entity/Q1254596",
+        "industry_id": "Q1254596",
+        "industry_label": "software as a service"
+      },
+      {
+        "record_id": 157,
+        "company_id": "Q481778",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 158,
+        "company_id": "Q4822791",
+        "industry_uri": "http://www.wikidata.org/entity/Q66221",
+        "industry_id": "Q66221",
+        "industry_label": "computer storage media"
+      },
+      {
+        "record_id": 159,
+        "company_id": "Q4828292",
+        "industry_uri": "http://www.wikidata.org/entity/Q68",
+        "industry_id": "Q68",
+        "industry_label": "computer"
+      },
+      {
+        "record_id": 160,
+        "company_id": "Q4830194",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 161,
+        "company_id": "Q4830575",
+        "industry_uri": "http://www.wikidata.org/entity/Q1318054",
+        "industry_id": "Q1318054",
+        "industry_label": "enterprise software"
+      },
+      {
+        "record_id": 162,
+        "company_id": "Q4830634",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 163,
+        "company_id": "Q4836174",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 164,
+        "company_id": "Q4860280",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 165,
+        "company_id": "Q4866375",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 166,
+        "company_id": "Q4876088",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 167,
+        "company_id": "Q4899911",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 168,
+        "company_id": "Q4922539",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 169,
+        "company_id": "Q4929405",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 170,
+        "company_id": "Q4941462",
+        "industry_uri": "http://www.wikidata.org/entity/Q473708",
+        "industry_id": "Q473708",
+        "industry_label": "home computer"
+      },
+      {
+        "record_id": 171,
+        "company_id": "Q497419",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 172,
+        "company_id": "Q5008775",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 173,
+        "company_id": "Q5011013",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 174,
+        "company_id": "Q5011377",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 175,
+        "company_id": "Q5013276",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 176,
+        "company_id": "Q5013503",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 177,
+        "company_id": "Q5016289",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 178,
+        "company_id": "Q5018086",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 179,
+        "company_id": "Q5019031",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 180,
+        "company_id": "Q5021336",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 181,
+        "company_id": "Q5023002",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 182,
+        "company_id": "Q50359906",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 183,
+        "company_id": "Q50359906",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 184,
+        "company_id": "Q50362991",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 185,
+        "company_id": "Q5043914",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 186,
+        "company_id": "Q5050308",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 187,
+        "company_id": "Q5057820",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 188,
+        "company_id": "Q5062410",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 189,
+        "company_id": "Q5119888",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 190,
+        "company_id": "Q5130896",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 191,
+        "company_id": "Q5132401",
+        "industry_uri": "http://www.wikidata.org/entity/Q1391080",
+        "industry_id": "Q1391080",
+        "industry_label": "business software"
+      },
+      {
+        "record_id": 192,
+        "company_id": "Q5145789",
+        "industry_uri": "http://www.wikidata.org/entity/Q1318054",
+        "industry_id": "Q1318054",
+        "industry_label": "enterprise software"
+      },
+      {
+        "record_id": 193,
+        "company_id": "Q5149685",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 194,
+        "company_id": "Q5150454",
+        "industry_uri": "http://www.wikidata.org/entity/Q1301371",
+        "industry_id": "Q1301371",
+        "industry_label": "computer network"
+      },
+      {
+        "record_id": 195,
+        "company_id": "Q5157089",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 196,
+        "company_id": "Q5157121",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 197,
+        "company_id": "Q5157270",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 198,
+        "company_id": "Q5159097",
+        "industry_uri": "http://www.wikidata.org/entity/Q1067601",
+        "industry_id": "Q1067601",
+        "industry_label": "computer industry"
+      },
+      {
+        "record_id": 199,
+        "company_id": "Q5160221",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 200,
+        "company_id": "Q5166513",
+        "industry_uri": "http://www.wikidata.org/entity/Q1067601",
+        "industry_id": "Q1067601",
+        "industry_label": "computer industry"
+      },
+      {
+        "record_id": 201,
+        "company_id": "Q5170169",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 202,
+        "company_id": "Q5172124",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 203,
+        "company_id": "Q5190757",
+        "industry_uri": "http://www.wikidata.org/entity/Q3510521",
+        "industry_id": "Q3510521",
+        "industry_label": "computer security"
+      },
+      {
+        "record_id": 204,
+        "company_id": "Q5227118",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 205,
+        "company_id": "Q5227157",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 206,
+        "company_id": "Q5227424",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 207,
+        "company_id": "Q5227441",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 208,
+        "company_id": "Q5264297",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 209,
+        "company_id": "Q5275716",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 210,
+        "company_id": "Q54815866",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 211,
+        "company_id": "Q55858229",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 212,
+        "company_id": "Q55864434",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 213,
+        "company_id": "Q575990",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 214,
+        "company_id": "Q57695998",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 215,
+        "company_id": "Q600624",
+        "industry_uri": "http://www.wikidata.org/entity/Q1318054",
+        "industry_id": "Q1318054",
+        "industry_label": "enterprise software"
+      },
+      {
+        "record_id": 216,
+        "company_id": "Q60742568",
+        "industry_uri": "http://www.wikidata.org/entity/Q1254596",
+        "industry_id": "Q1254596",
+        "industry_label": "software as a service"
+      },
+      {
+        "record_id": 217,
+        "company_id": "Q60784987",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 218,
+        "company_id": "Q608776",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 219,
+        "company_id": "Q6107934",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 220,
+        "company_id": "Q6107934",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 221,
+        "company_id": "Q628051",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 222,
+        "company_id": "Q629470",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 223,
+        "company_id": "Q636211",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165709",
+        "industry_id": "Q112165709",
+        "industry_label": "wholesale (business-to-business) of computers, computer peripheral equipment and software"
+      },
+      {
+        "record_id": 224,
+        "company_id": "Q642372",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 225,
+        "company_id": "Q652537",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 226,
+        "company_id": "Q655966",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 227,
+        "company_id": "Q696061",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165968",
+        "industry_id": "Q112165968",
+        "industry_label": "computer programming"
+      },
+      {
+        "record_id": 228,
+        "company_id": "Q696061",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 229,
+        "company_id": "Q700446",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 230,
+        "company_id": "Q702213",
+        "industry_uri": "http://www.wikidata.org/entity/Q1067601",
+        "industry_id": "Q1067601",
+        "industry_label": "computer industry"
+      },
+      {
+        "record_id": 231,
+        "company_id": "Q705272",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 232,
+        "company_id": "Q709190",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 233,
+        "company_id": "Q726342",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 234,
+        "company_id": "Q734447",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 235,
+        "company_id": "Q736091",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 236,
+        "company_id": "Q753684",
+        "industry_uri": "http://www.wikidata.org/entity/Q112165934",
+        "industry_id": "Q112165934",
+        "industry_label": "publishing of application software"
+      },
+      {
+        "record_id": 237,
+        "company_id": "Q77202",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 238,
+        "company_id": "Q7863908",
+        "industry_uri": "http://www.wikidata.org/entity/Q1391080",
+        "industry_id": "Q1391080",
+        "industry_label": "business software"
+      },
+      {
+        "record_id": 239,
+        "company_id": "Q790110",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 240,
+        "company_id": "Q792539",
+        "industry_uri": "http://www.wikidata.org/entity/Q132898730",
+        "industry_id": "Q132898730",
+        "industry_label": "computer hardware industry"
+      },
+      {
+        "record_id": 241,
+        "company_id": "Q796309",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 242,
+        "company_id": "Q818314",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 243,
+        "company_id": "Q825991",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 244,
+        "company_id": "Q835702",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 245,
+        "company_id": "Q856905",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 246,
+        "company_id": "Q877536",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 247,
+        "company_id": "Q885885",
+        "industry_uri": "http://www.wikidata.org/entity/Q1401416",
+        "industry_id": "Q1401416",
+        "industry_label": "computer animation"
+      },
+      {
+        "record_id": 248,
+        "company_id": "Q916196",
+        "industry_uri": "http://www.wikidata.org/entity/Q880371",
+        "industry_id": "Q880371",
+        "industry_label": "software industry"
+      },
+      {
+        "record_id": 249,
+        "company_id": "Q97197296",
+        "industry_uri": "http://www.wikidata.org/entity/Q638608",
+        "industry_id": "Q638608",
+        "industry_label": "software development"
+      },
+      {
+        "record_id": 250,
+        "company_id": "Q97197296",
+        "industry_uri": "http://www.wikidata.org/entity/Q80993",
+        "industry_id": "Q80993",
+        "industry_label": "software engineering"
+      }
+    ],
+    "company_roles": [
+      {
+        "record_id": 1,
+        "company_id": "Q1002639",
+        "person_uri": "http://www.wikidata.org/entity/Q133321088",
+        "person_id": "Q133321088",
+        "person_label": "Q133321088",
+        "role": "ceo",
+        "role_start": "2019-10-17T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 2,
+        "company_id": "Q1017587",
+        "person_uri": "http://www.wikidata.org/entity/Q2898246",
+        "person_id": "Q2898246",
+        "person_label": "Bernard Liautaud",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 3,
+        "company_id": "Q105106371",
+        "person_uri": "http://www.wikidata.org/entity/Q105107042",
+        "person_id": "Q105107042",
+        "person_label": "Axel Ruske",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 4,
+        "company_id": "Q1052684",
+        "person_uri": "http://www.wikidata.org/entity/Q4245",
+        "person_id": "Q4245",
+        "person_label": "Jean-Michel Aulas",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 5,
+        "company_id": "Q1052684",
+        "person_uri": "http://www.wikidata.org/entity/Q136215476",
+        "person_id": "Q136215476",
+        "person_label": "Q136215476",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 6,
+        "company_id": "Q11463",
+        "person_uri": "http://www.wikidata.org/entity/Q2745626",
+        "person_id": "Q2745626",
+        "person_label": "Bruce Chizen",
+        "role": "ceo",
+        "role_start": "2000-01-01T00:00:00Z",
+        "role_end": "2007-12-01T00:00:00Z"
+      },
+      {
+        "record_id": 7,
+        "company_id": "Q11463",
+        "person_uri": "http://www.wikidata.org/entity/Q1344392",
+        "person_id": "Q1344392",
+        "person_label": "John Warnock",
+        "role": "ceo",
+        "role_start": "1984-01-01T00:00:00Z",
+        "role_end": "2000-01-01T00:00:00Z"
+      },
+      {
+        "record_id": 8,
+        "company_id": "Q11463",
+        "person_uri": "http://www.wikidata.org/entity/Q2622748",
+        "person_id": "Q2622748",
+        "person_label": "Shantanu Narayen",
+        "role": "ceo",
+        "role_start": "2007-12-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 9,
+        "company_id": "Q11463",
+        "person_uri": "http://www.wikidata.org/entity/Q2959209",
+        "person_id": "Q2959209",
+        "person_label": "Charles Geschke",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 10,
+        "company_id": "Q11463",
+        "person_uri": "http://www.wikidata.org/entity/Q1344392",
+        "person_id": "Q1344392",
+        "person_label": "John Warnock",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 11,
+        "company_id": "Q1172038",
+        "person_uri": "http://www.wikidata.org/entity/Q2897681",
+        "person_id": "Q2897681",
+        "person_label": "Bernard Charlès",
+        "role": "ceo",
+        "role_start": "1995-01-01T00:00:00Z",
+        "role_end": "2024-01-01T00:00:00Z"
+      },
+      {
+        "record_id": 12,
+        "company_id": "Q1172038",
+        "person_uri": "http://www.wikidata.org/entity/Q115735422",
+        "person_id": "Q115735422",
+        "person_label": "Pascal Daloz",
+        "role": "ceo",
+        "role_start": "2024-01-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 13,
+        "company_id": "Q1172038",
+        "person_uri": "http://www.wikidata.org/entity/Q160802",
+        "person_id": "Q160802",
+        "person_label": "Marcel Dassault",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 14,
+        "company_id": "Q1339044",
+        "person_uri": "http://www.wikidata.org/entity/Q7149493",
+        "person_id": "Q7149493",
+        "person_label": "Paul Brainerd",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 15,
+        "company_id": "Q16497314",
+        "person_uri": "http://www.wikidata.org/entity/Q5440531",
+        "person_id": "Q5440531",
+        "person_label": "Federal Government of Brazil",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 16,
+        "company_id": "Q176587",
+        "person_uri": "http://www.wikidata.org/entity/Q2909403",
+        "person_id": "Q2909403",
+        "person_label": "Gil Shwed",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 17,
+        "company_id": "Q176587",
+        "person_uri": "http://www.wikidata.org/entity/Q6628738",
+        "person_id": "Q6628738",
+        "person_label": "Marius Nacht",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 18,
+        "company_id": "Q176587",
+        "person_uri": "http://www.wikidata.org/entity/Q27020244",
+        "person_id": "Q27020244",
+        "person_label": "Shlomo Kramer",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 19,
+        "company_id": "Q185608",
+        "person_uri": "http://www.wikidata.org/entity/Q92627",
+        "person_id": "Q92627",
+        "person_label": "Gary Kildall",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 20,
+        "company_id": "Q185608",
+        "person_uri": "http://www.wikidata.org/entity/Q92627",
+        "person_id": "Q92627",
+        "person_label": "Gary Kildall",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 21,
+        "company_id": "Q1967101",
+        "person_uri": "http://www.wikidata.org/entity/Q724175",
+        "person_id": "Q724175",
+        "person_label": "Jay Miner",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 22,
+        "company_id": "Q2074158",
+        "person_uri": "http://www.wikidata.org/entity/Q124259187",
+        "person_id": "Q124259187",
+        "person_label": "David Henkel-Wallace",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 23,
+        "company_id": "Q2074158",
+        "person_uri": "http://www.wikidata.org/entity/Q984246",
+        "person_id": "Q984246",
+        "person_label": "John Gilmore",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 24,
+        "company_id": "Q2074158",
+        "person_uri": "http://www.wikidata.org/entity/Q93017",
+        "person_id": "Q93017",
+        "person_label": "Michael Tiemann",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 25,
+        "company_id": "Q2081339",
+        "person_uri": "http://www.wikidata.org/entity/Q7414",
+        "person_id": "Q7414",
+        "person_label": "The Walt Disney Company",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 26,
+        "company_id": "Q210075",
+        "person_uri": "http://www.wikidata.org/entity/Q1373386",
+        "person_id": "Q1373386",
+        "person_label": "Philippe Kahn",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 27,
+        "company_id": "Q213849",
+        "person_uri": "http://www.wikidata.org/entity/Q3200863",
+        "person_id": "Q3200863",
+        "person_label": "Kwok Yuen Ho",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 28,
+        "company_id": "Q2294659",
+        "person_uri": "http://www.wikidata.org/entity/Q5493329",
+        "person_id": "Q5493329",
+        "person_label": "François Lionet",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 29,
+        "company_id": "Q229698",
+        "person_uri": "http://www.wikidata.org/entity/Q3098621",
+        "person_id": "Q3098621",
+        "person_label": "Q3098621",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 30,
+        "company_id": "Q2388717",
+        "person_uri": "http://www.wikidata.org/entity/Q4687701",
+        "person_id": "Q4687701",
+        "person_label": "Kobi Alexander",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 31,
+        "company_id": "Q27585",
+        "person_uri": "http://www.wikidata.org/entity/Q7292185",
+        "person_id": "Q7292185",
+        "person_label": "Randy Falco",
+        "role": "ceo",
+        "role_start": "2006-11-01T00:00:00Z",
+        "role_end": "2009-01-01T00:00:00Z"
+      },
+      {
+        "record_id": 32,
+        "company_id": "Q27585",
+        "person_uri": "http://www.wikidata.org/entity/Q7803096",
+        "person_id": "Q7803096",
+        "person_label": "Tim Armstrong",
+        "role": "ceo",
+        "role_start": "2009-01-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 33,
+        "company_id": "Q27585",
+        "person_uri": "http://www.wikidata.org/entity/Q6196128",
+        "person_id": "Q6196128",
+        "person_label": "Jim Kimsey",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 34,
+        "company_id": "Q27585",
+        "person_uri": "http://www.wikidata.org/entity/Q16122598",
+        "person_id": "Q16122598",
+        "person_label": "Marc Seriff",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 35,
+        "company_id": "Q27585",
+        "person_uri": "http://www.wikidata.org/entity/Q562917",
+        "person_id": "Q562917",
+        "person_label": "Steve Case",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 36,
+        "company_id": "Q286774",
+        "person_uri": "http://www.wikidata.org/entity/Q116843040",
+        "person_id": "Q116843040",
+        "person_label": "Ulf Persson",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 37,
+        "company_id": "Q286774",
+        "person_uri": "http://www.wikidata.org/entity/Q845401",
+        "person_id": "Q845401",
+        "person_label": "David Yang",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 38,
+        "company_id": "Q2916067",
+        "person_uri": "http://www.wikidata.org/entity/Q2596247",
+        "person_id": "Q2596247",
+        "person_label": "Yanki Margalit",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 39,
+        "company_id": "Q294520",
+        "person_uri": "http://www.wikidata.org/entity/Q3484194",
+        "person_id": "Q3484194",
+        "person_label": "Simon Azoulay",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 40,
+        "company_id": "Q30873",
+        "person_uri": "http://www.wikidata.org/entity/Q218630",
+        "person_id": "Q218630",
+        "person_label": "Michael Dell",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 41,
+        "company_id": "Q30873",
+        "person_uri": "http://www.wikidata.org/entity/Q218630",
+        "person_id": "Q218630",
+        "person_label": "Michael Dell",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 42,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q713588",
+        "person_id": "Q713588",
+        "person_label": "Gil Amelio",
+        "role": "ceo",
+        "role_start": "1996-01-01T00:00:00Z",
+        "role_end": "1997-01-01T00:00:00Z"
+      },
+      {
+        "record_id": 43,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q337024",
+        "person_id": "Q337024",
+        "person_label": "John Sculley",
+        "role": "ceo",
+        "role_start": "1983-01-01T00:00:00Z",
+        "role_end": "1993-01-01T00:00:00Z"
+      },
+      {
+        "record_id": 44,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q926972",
+        "person_id": "Q926972",
+        "person_label": "Michael Scott",
+        "role": "ceo",
+        "role_start": "1977-01-01T00:00:00Z",
+        "role_end": "1981-01-01T00:00:00Z"
+      },
+      {
+        "record_id": 45,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q64088",
+        "person_id": "Q64088",
+        "person_label": "Michael Spindler",
+        "role": "ceo",
+        "role_start": "1993-01-01T00:00:00Z",
+        "role_end": "1996-01-01T00:00:00Z"
+      },
+      {
+        "record_id": 46,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q369783",
+        "person_id": "Q369783",
+        "person_label": "Mike Markkula",
+        "role": "ceo",
+        "role_start": "1981-01-01T00:00:00Z",
+        "role_end": "1983-01-01T00:00:00Z"
+      },
+      {
+        "record_id": 47,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q106028933",
+        "person_id": "Q106028933",
+        "person_label": "Q106028933",
+        "role": "ceo",
+        "role_start": "2026-09-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 48,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q19837",
+        "person_id": "Q19837",
+        "person_label": "Steve Jobs",
+        "role": "ceo",
+        "role_start": "1997-09-01T00:00:00Z",
+        "role_end": "2011-08-23T00:00:00Z"
+      },
+      {
+        "record_id": 49,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q265852",
+        "person_id": "Q265852",
+        "person_label": "Tim Cook",
+        "role": "ceo",
+        "role_start": "2011-08-24T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 50,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q332591",
+        "person_id": "Q332591",
+        "person_label": "Ronald Wayne",
+        "role": "founder",
+        "role_start": "1976-04-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 51,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q19837",
+        "person_id": "Q19837",
+        "person_label": "Steve Jobs",
+        "role": "founder",
+        "role_start": "1976-04-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 52,
+        "company_id": "Q312",
+        "person_uri": "http://www.wikidata.org/entity/Q483382",
+        "person_id": "Q483382",
+        "person_label": "Steve Wozniak",
+        "role": "founder",
+        "role_start": "1976-04-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 53,
+        "company_id": "Q324603",
+        "person_uri": "http://www.wikidata.org/entity/Q6195458",
+        "person_id": "Q6195458",
+        "person_label": "Jim Harris",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 54,
+        "company_id": "Q324603",
+        "person_uri": "http://www.wikidata.org/entity/Q7356151",
+        "person_id": "Q7356151",
+        "person_label": "Rod Canion",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 55,
+        "company_id": "Q342149",
+        "person_uri": "http://www.wikidata.org/entity/Q92694",
+        "person_id": "Q92694",
+        "person_label": "Andy Hopper",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 56,
+        "company_id": "Q342149",
+        "person_uri": "http://www.wikidata.org/entity/Q5112176",
+        "person_id": "Q5112176",
+        "person_label": "Christopher Curry",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 57,
+        "company_id": "Q342149",
+        "person_uri": "http://www.wikidata.org/entity/Q4803761",
+        "person_id": "Q4803761",
+        "person_label": "Hermann Hauser",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 58,
+        "company_id": "Q345410",
+        "person_uri": "http://www.wikidata.org/entity/Q106046603",
+        "person_id": "Q106046603",
+        "person_label": "Martin Prével",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 59,
+        "company_id": "Q4033839",
+        "person_uri": "http://www.wikidata.org/entity/Q1477320",
+        "person_id": "Q1477320",
+        "person_label": "Alexander Falk",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 60,
+        "company_id": "Q4081470",
+        "person_uri": "http://www.wikidata.org/entity/Q111722374",
+        "person_id": "Q111722374",
+        "person_label": "Ihar Mamonenka",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 61,
+        "company_id": "Q422260",
+        "person_uri": "http://www.wikidata.org/entity/Q16297",
+        "person_id": "Q16297",
+        "person_label": "William Shatner",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 62,
+        "company_id": "Q434017",
+        "person_uri": "http://www.wikidata.org/entity/Q111363874",
+        "person_id": "Q111363874",
+        "person_label": "James R. Scapa",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 63,
+        "company_id": "Q442001",
+        "person_uri": "http://www.wikidata.org/entity/Q15809687",
+        "person_id": "Q15809687",
+        "person_label": "Q15809687",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 64,
+        "company_id": "Q4676588",
+        "person_uri": "http://www.wikidata.org/entity/Q6847274",
+        "person_id": "Q6847274",
+        "person_label": "Mike Hollands",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 65,
+        "company_id": "Q468381",
+        "person_uri": "http://www.wikidata.org/entity/Q53403754",
+        "person_id": "Q53403754",
+        "person_label": "Tjark Auerbach",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 66,
+        "company_id": "Q4737020",
+        "person_uri": "http://www.wikidata.org/entity/Q6141748",
+        "person_id": "Q6141748",
+        "person_label": "James R. Von Ehr II",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 67,
+        "company_id": "Q477016",
+        "person_uri": "http://www.wikidata.org/entity/Q135992945",
+        "person_id": "Q135992945",
+        "person_label": "Freddy Sim",
+        "role": "ceo",
+        "role_start": "2025-05-16T00:00:00Z",
+        "role_end": "2025-06-30T00:00:00Z"
+      },
+      {
+        "record_id": 68,
+        "company_id": "Q477016",
+        "person_uri": "http://www.wikidata.org/entity/Q135992947",
+        "person_id": "Q135992947",
+        "person_label": "Tan Jok Tin",
+        "role": "ceo",
+        "role_start": "2025-06-30T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 69,
+        "company_id": "Q477016",
+        "person_uri": "http://www.wikidata.org/entity/Q4419447",
+        "person_id": "Q4419447",
+        "person_label": "Sim Wong Hoo",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 70,
+        "company_id": "Q481778",
+        "person_uri": "http://www.wikidata.org/entity/Q716952",
+        "person_id": "Q716952",
+        "person_label": "Stan Shih",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 71,
+        "company_id": "Q4876088",
+        "person_uri": "http://www.wikidata.org/entity/Q11589914",
+        "person_id": "Q11589914",
+        "person_label": "Bert Kersey",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 72,
+        "company_id": "Q5011377",
+        "person_uri": "http://www.wikidata.org/entity/Q5129389",
+        "person_id": "Q5129389",
+        "person_label": "Claudio Osorio",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 73,
+        "company_id": "Q50362991",
+        "person_uri": "http://www.wikidata.org/entity/Q481778",
+        "person_id": "Q481778",
+        "person_label": "Acer",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 74,
+        "company_id": "Q5057820",
+        "person_uri": "http://www.wikidata.org/entity/Q131758161",
+        "person_id": "Q131758161",
+        "person_label": "Stephen Chaplin",
+        "role": "ceo",
+        "role_start": "http://www.wikidata.org/.well-known/genid/f4772bbb1590e05d20474bf2b8663955",
+        "role_end": null
+      },
+      {
+        "record_id": 75,
+        "company_id": "Q5057820",
+        "person_uri": "http://www.wikidata.org/entity/Q131758161",
+        "person_id": "Q131758161",
+        "person_label": "Stephen Chaplin",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 76,
+        "company_id": "Q5062410",
+        "person_uri": "http://www.wikidata.org/entity/Q3522885",
+        "person_id": "Q3522885",
+        "person_label": "Government of Kerala",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 77,
+        "company_id": "Q5170169",
+        "person_uri": "http://www.wikidata.org/entity/Q5640894",
+        "person_id": "Q5640894",
+        "person_label": "Hal Prewitt",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 78,
+        "company_id": "Q600624",
+        "person_uri": "http://www.wikidata.org/entity/Q832333",
+        "person_id": "Q832333",
+        "person_label": "Charles Wang",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 79,
+        "company_id": "Q608776",
+        "person_uri": "http://www.wikidata.org/entity/Q84747997",
+        "person_id": "Q84747997",
+        "person_label": "Anirudh Devgan",
+        "role": "ceo",
+        "role_start": "2021-01-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 80,
+        "company_id": "Q608776",
+        "person_uri": "http://www.wikidata.org/entity/Q117359407",
+        "person_id": "Q117359407",
+        "person_label": "Jack Harding",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 81,
+        "company_id": "Q608776",
+        "person_uri": "http://www.wikidata.org/entity/Q16205753",
+        "person_id": "Q16205753",
+        "person_label": "Joseph Costello",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 82,
+        "company_id": "Q608776",
+        "person_uri": "http://www.wikidata.org/entity/Q19561225",
+        "person_id": "Q19561225",
+        "person_label": "Lip-Bu Tan",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 83,
+        "company_id": "Q608776",
+        "person_uri": "http://www.wikidata.org/entity/Q117359433",
+        "person_id": "Q117359433",
+        "person_label": "Mike Fister",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 84,
+        "company_id": "Q608776",
+        "person_uri": "http://www.wikidata.org/entity/Q117359419",
+        "person_id": "Q117359419",
+        "person_label": "Ray Bingham",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 85,
+        "company_id": "Q629470",
+        "person_uri": "http://www.wikidata.org/entity/Q3431521",
+        "person_id": "Q3431521",
+        "person_label": "Rick Adams",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 86,
+        "company_id": "Q636211",
+        "person_uri": "http://www.wikidata.org/entity/Q3130898",
+        "person_id": "Q3130898",
+        "person_label": "Henri Crohas",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 87,
+        "company_id": "Q655966",
+        "person_uri": "http://www.wikidata.org/entity/Q11720143",
+        "person_id": "Q11720143",
+        "person_label": "Janusz Filipiak",
+        "role": "ceo",
+        "role_start": "1998-01-01T00:00:00Z",
+        "role_end": "2023-01-01T00:00:00Z"
+      },
+      {
+        "record_id": 88,
+        "company_id": "Q696061",
+        "person_uri": "http://www.wikidata.org/entity/Q130304423",
+        "person_id": "Q130304423",
+        "person_label": "José Antonio Tazón",
+        "role": "ceo",
+        "role_start": "1990-10-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 89,
+        "company_id": "Q696061",
+        "person_uri": "http://www.wikidata.org/entity/Q131005",
+        "person_id": "Q131005",
+        "person_label": "Air France",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 90,
+        "company_id": "Q696061",
+        "person_uri": "http://www.wikidata.org/entity/Q187972",
+        "person_id": "Q187972",
+        "person_label": "Iberia",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 91,
+        "company_id": "Q696061",
+        "person_uri": "http://www.wikidata.org/entity/Q9325",
+        "person_id": "Q9325",
+        "person_label": "Lufthansa",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 92,
+        "company_id": "Q696061",
+        "person_uri": "http://www.wikidata.org/entity/Q187854",
+        "person_id": "Q187854",
+        "person_label": "Scandinavian Airlines",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 93,
+        "company_id": "Q753684",
+        "person_uri": "http://www.wikidata.org/entity/Q23926445",
+        "person_id": "Q23926445",
+        "person_label": "Frédéric Chesnais",
+        "role": "ceo",
+        "role_start": "2013-01-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 94,
+        "company_id": "Q753684",
+        "person_uri": "http://www.wikidata.org/entity/Q2926654",
+        "person_id": "Q2926654",
+        "person_label": "Bruno Bonnell",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 95,
+        "company_id": "Q77202",
+        "person_uri": "http://www.wikidata.org/entity/Q4328055",
+        "person_id": "Q4328055",
+        "person_label": "Boris Nuraliyev",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 96,
+        "company_id": "Q796309",
+        "person_uri": "http://www.wikidata.org/entity/Q6249310",
+        "person_id": "Q6249310",
+        "person_label": "John Moores",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 97,
+        "company_id": "Q835702",
+        "person_uri": "http://www.wikidata.org/entity/Q114837490",
+        "person_id": "Q114837490",
+        "person_label": "Amish Mehta",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 98,
+        "company_id": "Q835702",
+        "person_uri": "http://www.wikidata.org/entity/Q136842416",
+        "person_id": "Q136842416",
+        "person_label": "Christa Quarles",
+        "role": "ceo",
+        "role_start": "2020-01-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 99,
+        "company_id": "Q835702",
+        "person_uri": "http://www.wikidata.org/entity/Q5261863",
+        "person_id": "Q5261863",
+        "person_label": "Derek Burney Jr.",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 100,
+        "company_id": "Q835702",
+        "person_uri": "http://www.wikidata.org/entity/Q116262617",
+        "person_id": "Q116262617",
+        "person_label": "Kris Hagerman",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 101,
+        "company_id": "Q835702",
+        "person_uri": "http://www.wikidata.org/entity/Q3776174",
+        "person_id": "Q3776174",
+        "person_label": "Michael Cowpland",
+        "role": "ceo",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 102,
+        "company_id": "Q835702",
+        "person_uri": "http://www.wikidata.org/entity/Q3776174",
+        "person_id": "Q3776174",
+        "person_label": "Michael Cowpland",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 103,
+        "company_id": "Q877536",
+        "person_uri": "http://www.wikidata.org/entity/Q322724",
+        "person_id": "Q322724",
+        "person_label": "Richard Egan",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 104,
+        "company_id": "Q877536",
+        "person_uri": "http://www.wikidata.org/entity/Q6381635",
+        "person_id": "Q6381635",
+        "person_label": "Roger Marino",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 105,
+        "company_id": "Q885885",
+        "person_uri": "http://www.wikidata.org/entity/Q185655",
+        "person_id": "Q185655",
+        "person_label": "Chris Wedge",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 106,
+        "company_id": "Q916196",
+        "person_uri": "http://www.wikidata.org/entity/Q105394598",
+        "person_id": "Q105394598",
+        "person_label": "David J. Henshall",
+        "role": "ceo",
+        "role_start": "2017-07-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 107,
+        "company_id": "Q916196",
+        "person_uri": "http://www.wikidata.org/entity/Q24049135",
+        "person_id": "Q24049135",
+        "person_label": "Kirill Tatarinov",
+        "role": "ceo",
+        "role_start": "2016-01-01T00:00:00Z",
+        "role_end": "2017-07-01T00:00:00Z"
+      },
+      {
+        "record_id": 108,
+        "company_id": "Q916196",
+        "person_uri": "http://www.wikidata.org/entity/Q5334978",
+        "person_id": "Q5334978",
+        "person_label": "Ed Iacobucci",
+        "role": "founder",
+        "role_start": null,
+        "role_end": null
+      },
+      {
+        "record_id": 109,
+        "company_id": "Q97197296",
+        "person_uri": "http://www.wikidata.org/entity/Q138660356",
+        "person_id": "Q138660356",
+        "person_label": "Q138660356",
+        "role": "ceo",
+        "role_start": "2025-01-01T00:00:00Z",
+        "role_end": null
+      },
+      {
+        "record_id": 110,
+        "company_id": "Q97197296",
+        "person_uri": "http://www.wikidata.org/entity/Q138660381",
+        "person_id": "Q138660381",
+        "person_label": "Q138660381",
+        "role": "ceo",
+        "role_start": "2018-01-01T00:00:00Z",
+        "role_end": "2025-01-01T00:00:00Z"
+      }
+    ]
+  }
+}

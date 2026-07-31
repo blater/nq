@@ -1,0 +1,10 @@
+-- One company output object per row. No structure key means no row coalescing.
+output json;
+
+select
+  c.company_id into {companies.company.id},
+  c.company_label into {companies.company.label},
+  c.country_label into {companies.company.country}
+from company c
+where c.country_label is not null
+order by c.company_label, c.company_id;

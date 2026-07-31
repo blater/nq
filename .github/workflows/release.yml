@@ -1,0 +1,216 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build or rebuild, such as v1.2.3
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Validate release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk -F '[<>]' '/^[[:space:]]*<version>/ { print $3; exit }' pom.xml)"
+          if [[ -z "$version" ]]; then
+            echo "::error title=Missing project version::Could not read the project version from pom.xml."
+            exit 1
+          fi
+          if [[ "$version" == *SNAPSHOT* ]]; then
+            echo "::error title=Snapshot release::Set a non-SNAPSHOT version in pom.xml before releasing."
+            exit 1
+          fi
+          if [[ "$RELEASE_TAG" != "v$version" ]]; then
+            echo "::error title=Version mismatch::Tag $RELEASE_TAG does not match pom.xml version $version."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check Homebrew publication secret
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        shell: bash
+        run: |
+          if [[ -z "$HOMEBREW_TAP_TOKEN" ]]; then
+            echo "::error title=Missing HOMEBREW_TAP_TOKEN::Run HOMEBREW_TAP_TOKEN=... ./setup/github-actions.sh before releasing."
+            exit 1
+          fi
+
+  test:
+    needs: validate
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Run tests
+        run: mvn --batch-mode --no-transfer-progress test
+
+  build:
+    needs:
+      - validate
+      - test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            platform: darwin-arm64
+            executable: target/nq
+            archive: tar
+          - runner: ubuntu-22.04
+            platform: linux-x64
+            executable: target/nq
+            archive: tar
+          - runner: windows-2022
+            platform: windows-x64
+            executable: target/nq.exe
+            archive: zip
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          distribution: graalvm
+          version: "25.0"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: maven
+
+      - name: Build native executable
+        run: mvn --batch-mode --no-transfer-progress "-Pnative,jdbc-common" -DskipTests clean package
+
+      - name: Smoke-test executable
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ${{ matrix.executable }} -h
+
+      - name: Smoke-test Windows executable
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: '& ".\target\nq.exe" -h'
+
+      - name: Package Unix executable
+        if: matrix.archive == 'tar'
+        shell: bash
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          mkdir -p dist
+          tar -C target -czf "dist/nq-${VERSION}-${PLATFORM}.tar.gz" nq
+
+      - name: Package Windows executable
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive `
+            -Path target/nq.exe `
+            -DestinationPath "dist/nq-$env:VERSION-$env:PLATFORM.zip"
+
+      - name: Upload packaged executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    needs:
+      - validate
+      - build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create checksums
+        shell: bash
+        run: |
+          cd dist
+          sha256sum nq-* > SHA256SUMS
+
+      - name: Create or update GitHub release
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" dist/* --clobber
+          else
+            gh release create "$RELEASE_TAG" dist/* \
+              --verify-tag \
+              --title "NQ $VERSION" \
+              --generate-notes
+          fi
+
+  homebrew:
+    needs:
+      - validate
+      - publish
+    runs-on: macos-15
+    steps:
+      - name: Check out release tooling
+        uses: actions/checkout@v6
+
+      - name: Download macOS release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-darwin-arm64
+          path: dist
+
+      - name: Publish Homebrew formula
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          NQ_RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          gh auth setup-git --hostname github.com --force
+          ./util/build_brew

@@ -1,0 +1,57 @@
+-- One person's team roles, inherited festival assignments, and managed festivals.
+-- Override the default with personId=PER002 (or another person ID).
+output json;
+
+select
+  person.id into {personWorkChart.person.id},
+  person.name into {personWorkChart.person.name},
+  person.email into {personWorkChart.person.email},
+  (select count(distinct counted_team.id)
+     from team counted_team
+     left join team_member_person_ids counted_member
+       on counted_member.team_id = counted_team.id
+    where counted_team.lead_person_id = person.id
+       or counted_member.value = person.id)
+    into {personWorkChart.person.teamCount},
+  (select count(distinct counted_assignment.festival_id)
+     from team counted_team
+     left join team_member_person_ids counted_member
+       on counted_member.team_id = counted_team.id
+     inner join event_team counted_assignment
+       on counted_assignment.team_id = counted_team.id
+    where counted_team.lead_person_id = person.id
+       or counted_member.value = person.id)
+    into {personWorkChart.person.assignedFestivalCount},
+  (select count(*)
+     from festival counted_festival
+    where counted_festival.event_manager_person_id = person.id)
+    into {personWorkChart.person.managedFestivalCount},
+  team.id into {personWorkChart.person.team.id} absent on null,
+  team.name into {personWorkChart.person.team.name} absent on null,
+  team.team_type into {personWorkChart.person.team.type} absent on null,
+  case when team.lead_person_id = person.id then 'lead' else 'member' end
+    into {personWorkChart.person.team.role} absent on null,
+  assigned_festival.id into {personWorkChart.person.team.festival.id} absent on null,
+  assigned_festival.name into {personWorkChart.person.team.festival.name} absent on null,
+  managed_festival.id into {personWorkChart.person.managedFestival.id} absent on null,
+  managed_festival.name into {personWorkChart.person.managedFestival.name} absent on null
+from person
+left join team
+  on team.lead_person_id = person.id
+  or exists (
+    select 1
+      from team_member_person_ids membership
+     where membership.team_id = team.id
+       and membership.value = person.id
+  )
+left join event_team assignment on assignment.team_id = team.id
+left join festival assigned_festival on assigned_festival.id = assignment.festival_id
+left join festival managed_festival
+  on managed_festival.event_manager_person_id = person.id
+where person.id = '${personId:PER001}'
+order by team.name, assigned_festival.name, managed_festival.name
+structure
+  {personWorkChart.person} key (person.id),
+  {personWorkChart.person.team} key (person.id, team.id),
+  {personWorkChart.person.team.festival} key (person.id, team.id, assigned_festival.id),
+  {personWorkChart.person.managedFestival} key (person.id, managed_festival.id);

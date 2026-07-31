@@ -1,0 +1,52 @@
+-- Festival briefing: manager, allocated teams and staff, venues, and sessions.
+output json;
+
+select
+  -- show festivals
+  festival.id into {festivalSummary.festival.id},
+  festival.name into {festivalSummary.festival.name},
+  event_manager.id into {festivalSummary.festival.eventManagerPersonId},
+  event_manager.name into {festivalSummary.festival.eventManagerName},
+  -- show the team(s) involved under each festival
+    team.id into {festivalSummary.festival.team.id},
+    team.name into {festivalSummary.festival.team.name},
+    assignment.team_type into {festivalSummary.festival.team.type},
+    team_lead.id into {festivalSummary.festival.team.leadPersonId},
+    team_lead.name into {festivalSummary.festival.team.leadPersonName},
+    team_member.id into {festivalSummary.festival.team.member.id} absent on null,
+    team_member.name into {festivalSummary.festival.team.member.name} absent on null,
+  -- show the festival venue(s)
+    venue.id into {festivalSummary.festival.venue.id},
+    venue.name into {festivalSummary.festival.venue.name},
+    venue_contact.id into {festivalSummary.festival.venue.contactPersonId},
+    venue_contact.name into {festivalSummary.festival.venue.contactPersonName},
+  -- festival sessions at each venue
+      session.id into {festivalSummary.festival.venue.session.id},
+      session.title into {festivalSummary.festival.venue.session.title},
+      session_host.id into {festivalSummary.festival.venue.session.hostPersonId},
+      session_host.name into {festivalSummary.festival.venue.session.hostPersonName},
+  -- session performer
+        performer.id into {festivalSummary.festival.venue.session.performer.id} absent on null,
+        performer.name into {festivalSummary.festival.venue.session.performer.name} absent on null
+from festival
+inner join person event_manager on event_manager.id = festival.event_manager_person_id
+inner join event_team assignment on assignment.festival_id = festival.id
+inner join team on team.id = assignment.team_id
+inner join person team_lead on team_lead.id = team.lead_person_id
+left join team_member_person_ids member_ref on member_ref.team_id = team.id
+left join person team_member on team_member.id = member_ref.value
+inner join venue on venue.festival_id = festival.id
+inner join person venue_contact on venue_contact.id = venue.contact_person_id
+inner join session on session.venue_id = venue.id
+inner join person session_host on session_host.id = session.host_person_id
+left join session_performer_person_ids performer_ref on performer_ref.session_id = session.id
+left join person performer on performer.id = performer_ref.value
+order by festival.name, assignment.team_type, team.name, team_member.name,
+         venue.name, session.title, performer.name
+structure
+  {festivalSummary.festival} key (festival.id),
+  {festivalSummary.festival.team} key (festival.id, assignment.id),
+  {festivalSummary.festival.team.member} key (festival.id, assignment.id, team_member.id),
+  {festivalSummary.festival.venue} key (festival.id, venue.id),
+  {festivalSummary.festival.venue.session} key (festival.id, venue.id, session.id),
+  {festivalSummary.festival.venue.session.performer} key (festival.id, venue.id, session.id, performer.id);

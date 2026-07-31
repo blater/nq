@@ -1,0 +1,44 @@
+-- Festival-facing teams, their staff, and their festival workload.
+output json;
+
+select
+  t.id into {resourceChart.team.id},
+  t.name into {resourceChart.team.name},
+  t.team_type into {resourceChart.team.type},
+  d.id into {resourceChart.team.departmentId},
+  d.name into {resourceChart.team.departmentName},
+  manager.id into {resourceChart.team.departmentManagerPersonId},
+  manager.name into {resourceChart.team.departmentManagerName},
+  lead_person.id into {resourceChart.team.leadPersonId},
+  lead_person.name into {resourceChart.team.leadPersonName},
+  (select count(*)
+     from event_team workload
+    where workload.team_id = t.id)
+    into {resourceChart.team.festivalAssignmentCount},
+  festival.id into {resourceChart.team.festival.id} absent on null,
+  festival.name into {resourceChart.team.festival.name} absent on null,
+  assigned_staff.id into {resourceChart.team.festival.staffMember.id} absent on null,
+  assigned_staff.name into {resourceChart.team.festival.staffMember.name} absent on null,
+  case when assigned_staff.id = t.lead_person_id then 'lead' else 'member' end
+    into {resourceChart.team.festival.staffMember.role} absent on null
+from team t
+inner join department d on d.id = t.department_id
+inner join person manager on manager.id = d.manager_person_id
+inner join person lead_person on lead_person.id = t.lead_person_id
+inner join person assigned_staff
+  on assigned_staff.id = t.lead_person_id
+  or exists (
+    select 1
+      from team_member_person_ids membership
+     where membership.team_id = t.id
+       and membership.value = assigned_staff.id
+  )
+left join event_team assignment on assignment.team_id = t.id
+left join festival on festival.id = assignment.festival_id
+where t.team_type in ('rigging', 'catering')
+order by t.team_type, t.name, festival.name, assigned_staff.name
+structure
+  {resourceChart.team} key (t.id),
+  {resourceChart.team.festival} key (t.id, festival.id),
+  {resourceChart.team.festival.staffMember}
+    key (t.id, festival.id, assigned_staff.id);

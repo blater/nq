@@ -1,0 +1,21 @@
+-- This join expands industry and role combinations. Keys prevent duplicate
+-- industries and roles in the output hierarchy.
+output json;
+
+select
+  c.company_id into {companies.company.id},
+  c.company_label into {companies.company.label},
+  i.industry_id into {companies.company.industries.industry.id},
+  i.industry_label into {companies.company.industries.industry.label},
+  r.record_id into {companies.company.roles.role.recordId},
+  r.person_label into {companies.company.roles.role.person},
+  r.role into {companies.company.roles.role.title}
+from company c
+join company_industries i on i.company_id = c.company_id
+join company_roles r on r.company_id = c.company_id
+where c.company_id = 'Q312'
+order by c.company_label, c.company_id, i.industry_label, r.role, r.person_label
+structure
+  {companies.company} key (c.company_id),
+  {companies.company.industries.industry} key (i.industry_id),
+  {companies.company.roles.role} key (r.company_id, r.record_id);

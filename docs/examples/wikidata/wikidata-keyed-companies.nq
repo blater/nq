@@ -1,0 +1,15 @@
+-- Industry rows are coalesced below one keyed company object.
+output json;
+
+select
+  c.company_id into {companies.company.id},
+  c.company_label into {companies.company.label},
+  i.industry_id into {companies.company.industries.industry.id},
+  i.industry_label into {companies.company.industries.industry.label}
+from company c
+join company_industries i on i.company_id = c.company_id
+where c.company_id = 'Q312'
+order by c.company_label, c.company_id, i.industry_label, i.industry_id
+structure
+  {companies.company} key (c.company_id),
+  {companies.company.industries.industry} key (i.industry_id);

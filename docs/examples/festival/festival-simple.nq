@@ -1,0 +1,8 @@
+select
+  festival.name into {response.festivals.name},
+  festival."date-from" into {response.festivals.when},
+  venue.name into {response.festivals.venue}
+from festival
+inner join venue on venue.festival_id = festival.id
+order by festival."date-from"
+;

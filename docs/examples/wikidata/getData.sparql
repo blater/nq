@@ -1,0 +1,64 @@
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT
+  ?company ?companyLabel
+  ?country ?countryLabel
+  ?industry ?industryLabel
+  ?person ?personLabel
+  ?role
+  ?start ?end
+WHERE {
+  {
+    SELECT DISTINCT ?company ?companyLabel ?industry WHERE {
+      # Companies founded between 1974 and 1994.
+      ?company wdt:P571 ?inception ;
+               wdt:P452 ?industry ;
+               rdfs:label ?companyLabel .
+      ?industry rdfs:label ?industryLabel .
+      FILTER(LANG(?companyLabel) = "en")
+      FILTER(LANG(?industryLabel) = "en")
+      FILTER(?inception >= "1974-01-01T00:00:00Z"^^xsd:dateTime &&
+              ?inception <= "1994-12-31T00:00:00Z"^^xsd:dateTime)
+
+      # Keep the remote query bounded before expanding optional relationships.
+      FILTER(
+        CONTAINS(LCASE(STR(?industryLabel)), "software") ||
+        CONTAINS(LCASE(STR(?industryLabel)), "computer")
+      )
+    }
+    ORDER BY ?companyLabel
+    LIMIT 250
+  }
+
+  OPTIONAL { ?company wdt:P17 ?directCountry . }
+  OPTIONAL { ?company wdt:P159/wdt:P17 ?headquartersCountry . }
+  BIND(COALESCE(?directCountry, ?headquartersCountry) AS ?country)
+
+  # Statement-level role edges keep the person, role, and date qualifiers together.
+  OPTIONAL {
+    {
+      ?company p:P112 ?roleStatement .
+      ?roleStatement ps:P112 ?person .
+      BIND("founder" AS ?role)
+    }
+    UNION
+    {
+      ?company p:P169 ?roleStatement .
+      ?roleStatement ps:P169 ?person .
+      BIND("ceo" AS ?role)
+    }
+    OPTIONAL { ?roleStatement pq:P580 ?start . }
+    OPTIONAL { ?roleStatement pq:P582 ?end . }
+  }
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+LIMIT 1000
