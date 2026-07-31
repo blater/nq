@@ -4,7 +4,7 @@ set -euo pipefail
 source_repository="${NQ_SOURCE_REPOSITORY:-blater/nq}"
 tap_repository="${NQ_TAP_REPOSITORY:-blater/homebrew-tap}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-project_dir="$(cd "$script_dir/.." && pwd)"
+project_dir="$(cd "$script_dir/../.." && pwd)"
 
 log() {
   printf '==> %s\n' "$*"
@@ -26,7 +26,7 @@ Error: HOMEBREW_TAP_TOKEN is required.
 Create a fine-grained GitHub token with "Contents: Read and write" access to
 blater/homebrew-tap, then run:
 
-  HOMEBREW_TAP_TOKEN='...' ./setup/github-actions.sh
+  ./actions-setup.sh
 
 The token is sent directly to GitHub Actions secrets and is never written to
 the repository or printed by this script.

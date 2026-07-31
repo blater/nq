@@ -11,12 +11,14 @@ Create a fine-grained GitHub token with **Contents: Read and write** access to
 `blater/homebrew-tap`, then run:
 
 ```bash
-HOMEBREW_TAP_TOKEN='...' ./setup/github-actions.sh
+./actions-setup.sh
 ```
 
-The setup script is idempotent. It checks both repositories and token access,
-enables GitHub Actions, and creates or replaces the encrypted
-`HOMEBREW_TAP_TOKEN` repository secret. It does not write or print the token.
+The setup script authenticates the GitHub CLI when necessary and securely
+prompts for the token. It is idempotent: it checks both repositories and token
+access, enables GitHub Actions, creates or replaces the encrypted
+`HOMEBREW_TAP_TOKEN` repository secret, and verifies that the secret exists. It
+does not write or print the token.
 
 ## Publishing a release
 

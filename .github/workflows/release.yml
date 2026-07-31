@@ -54,7 +54,7 @@ jobs:
         shell: bash
         run: |
           if [[ -z "$HOMEBREW_TAP_TOKEN" ]]; then
-            echo "::error title=Missing HOMEBREW_TAP_TOKEN::Run HOMEBREW_TAP_TOKEN=... ./setup/github-actions.sh before releasing."
+            echo "::error title=Missing HOMEBREW_TAP_TOKEN::Run ./actions-setup.sh before releasing."
             exit 1
           fi
 

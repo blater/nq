@@ -2,19 +2,31 @@
 
 NQ is a tool that lets you use SQL to query JSON YAML, XML, CSV files, and to load and extract them from databases.
 
-
-## Getting Started
-
-Find the elements with the highest values in a JSON file:
-
-Given a JSON file...
-
+It lets you query JSON using SQL.  Given customers.json:
 ```json
-[ {"id":1, "value": 1}, {"id": 2, "value": 3}, {"id": 3, "value": 3}, {"id": 4, "value": 2} ]
+  [{"id":1,"name":"Alice","city":"London"},
+   {"id":2,"name":"Bob","city":"Paris"},
+   {"id":3,"name":"Eva","city":"London"}]
+```
+
+  Select the customers from London:
+```sql
+  nq "select id, name from item where city = 'London' order by id;" customers.json
+```
+  Result:
+```json
+  [{"id":"1","name":"Alice"},{"id":"3","name":"Eva"}]
+```
+
+You can use the normal SQL functions, for example find the elements with the highest values in `elements.json`
+```json
+[ 
+  {"id":1, "value": 1}, {"id": 2, "value": 3}, {"id": 3, "value": 3}, {"id": 4, "value": 2} 
+]
 ```
 
 ```bash
-nq 'select id, value from item where a in (select max(a) from item);' docs/examples/jq/elements.json
+nq 'select id, value from item where a in (select max(a) from item);' elements.json
 ```
 result:
 
@@ -24,9 +36,10 @@ result:
 
 ### Get JSON from a database
 
-This simple example pulls JSON from one table, but you can join many tables. We'll see that next.
+You can extract JSON from a database, you can also insert/update a database from JSON.
+Here's a simple extract example:
 
-__customer__
+__table customer__
 
 | id | name  | status     |
 |---:|-------|------------|
@@ -44,23 +57,16 @@ Result:
 [{"customerId":"1","firstname":"Alice"},{"customerId":"3","firstname":"Eva"}]
 ```
 
-If you want this as say, YAML instead then use the "--output yaml" flag on the commend line:
+If you want this as YAML instead then use the "--output yaml" flag on the commend line:
 
 ```bash
 nq "select id into {customerId}, name into {firstname} from customer where status = 'active' order by id;" -p mydb.properties --output yaml
 ```
 
-```yaml
--
-  customerId: "1"
-  firstname: "Alice"
--
-  customerId: "3"
-  firstname: "Eva"
-```
+The `--output` flag works for `json`, `yaml`, `xml`, `csv`, `jsonl`, and `markdown` output formats.
 
 
-### A more powerful example
+### A hierachical extract
 
 This example produces a customer document with each customer's orders nested underneath, ready to save as JSON, XML or YAML or pass to another application.
 
@@ -75,17 +81,18 @@ Given two tables in a DB, customers and orders:
 
 ***orders***
 | customer_id | order_id | item_sku   | amount |
-| 1           | 10       | B0K12345XY |  4.50 |
-| 1           | 10       | C0K32199ZZ | 20.00 |
-| 1           | 11       | B01M12345X | 13.00 |
-| 2           | 12       | C0K32199ZZ | 20.00 |
-| 2           | 12       | C0K32199ZZ | 20.00 |
-| 2           | 13       | B0K99999AA |  5.00 |
+|------------:|----------|-----------:|-------:|
+| 1           | 10       | B0K12345XY |   4.50 |
+| 1           | 10       | C0K32199ZZ |  20.00 |
+| 1           | 11       | B01M12345X |  13.00 |
+| 2           | 12       | C0K32199ZZ |  20.00 |
+| 2           | 12       | C0K32199ZZ |  20.00 |
+| 2           | 13       | B0K99999AA |   5.00 |
 
  we want a json file of each customer as an object with an array of orders and totals underneath.
 
 ```sql
-select
+  select
     c.customer_id into {customers.customer.id},
     c.customer_name into {customers.customer.name},
     o.order_id into {customers.customer.orders.id},
@@ -125,6 +132,9 @@ select
     }
   }
 ```
+
+You can extract to any depth of hierachy.
+
 
 #### Inference and `structure`
 
