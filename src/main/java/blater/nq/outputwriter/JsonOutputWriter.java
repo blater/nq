@@ -112,7 +112,7 @@ public class JsonOutputWriter implements OutputWriter {
 
       json.append(quote(entry.getKey())).append(":");
       List<Node> children = entry.getValue();
-      if (children.size() == 1) {
+      if (children.size() == 1 && !children.getFirst().isArrayItem()) {
         writeValue(json, children.getFirst());
       } else {
         writeArray(json, children);

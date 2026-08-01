@@ -34,7 +34,8 @@ class DatabaseStructureInferrerTest {
     assertTrue(identity.identityText().contains("user=report"));
     assertFalse(identity.identityText().contains("secret"));
     assertEquals(tempDir, cacheFile.getParent());
-    assertTrue(cacheFile.getFileName().toString().matches("cache-[0-9a-f]{64}\\.mv\\.db"));
+    assertTrue(cacheFile.getFileName().toString()
+        .matches("[a-z0-9]+-[a-z0-9]+\\.mv\\.db"));
     assertEquals(
         "jdbc:sqlserver://db;user=report;password=<redacted>;databaseName=work",
         DatabaseTargetIdentity.sanitizeUrl(

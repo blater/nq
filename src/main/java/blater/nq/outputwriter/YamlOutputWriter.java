@@ -58,7 +58,7 @@ public class YamlOutputWriter implements OutputWriter {
     Map<String, Object> object = new LinkedHashMap<>();
     for (Map.Entry<String, List<Node>> entry : groupedChildren(node).entrySet()) {
       List<Node> children = entry.getValue();
-      if (children.size() == 1) {
+      if (children.size() == 1 && !children.getFirst().isArrayItem()) {
         object.put(entry.getKey(), nodeValue(children.getFirst()));
       } else {
         object.put(entry.getKey(), children.stream()

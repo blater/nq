@@ -34,6 +34,10 @@
     <mariadb.jdbc.version>3.5.9</mariadb.jdbc.version>
     <postgresql.version>42.7.12</postgresql.version>
     <native.maven.plugin.version>0.11.1</native.maven.plugin.version>
+    <jname.version>0.1.0</jname.version>
+    <jname.release.url>https://github.com/blater/jname/releases/download/v${jname.version}/jname-${jname.version}-all.jar</jname.release.url>
+    <jname.local.jar>${user.home}/src/jname/target/jname-${jname.version}-all.jar</jname.local.jar>
+    <jname.embedded.jar>${project.build.directory}/jname-${jname.version}-all.jar</jname.embedded.jar>
   </properties>
 
   <dependencies>
@@ -132,6 +136,48 @@
 
   <build>
     <plugins>
+      <!--
+        Jname publishes its platform-independent JAR as a GitHub release asset
+        rather than through a Maven repository. Prefer a sibling development
+        build when present; otherwise download the pinned release. Only its
+        library classes, dictionaries, licence, and native-image metadata are
+        embedded in NQ.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <id>embed-jname</id>
+            <phase>generate-sources</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <mkdir dir="${project.build.directory}"/>
+                <copy file="${jname.local.jar}"
+                      tofile="${jname.embedded.jar}"
+                      overwrite="true"
+                      failonerror="false"
+                      quiet="true"/>
+                <get src="${jname.release.url}"
+                     dest="${jname.embedded.jar}"
+                     skipexisting="true"/>
+                <unzip src="${jname.embedded.jar}"
+                       dest="${project.build.outputDirectory}"
+                       overwrite="true">
+                  <patternset>
+                    <include name="blater/jname/**"/>
+                    <include name="META-INF/native-image/io.github.blater/jname/**"/>
+                    <include name="META-INF/LICENSE"/>
+                    <include name="META-INF/NOTICE"/>
+                  </patternset>
+                </unzip>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.antlr</groupId>
         <artifactId>antlr4-maven-plugin</artifactId>

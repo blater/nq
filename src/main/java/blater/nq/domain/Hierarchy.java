@@ -306,6 +306,7 @@ public class Hierarchy {
     ChildBucket bucket = persistentBucket(parent, path);
     return bucket.keyed.computeIfAbsent(key, ignored -> {
       Node child = new Node(path.getTerminalNodeName());
+      child.setArrayItem(true);
       parent.addNode(child);
       return child;
     });

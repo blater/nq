@@ -25,6 +25,19 @@ class CsvOutputWriterTest {
   }
 
   @Test
+  void oneRootCollectionItemStillRendersAsCsvRecord() {
+    Node root = new Node("people");
+    Node person = person("1", "Alice");
+    person.setArrayItem(true);
+    root.addNode(person);
+
+    assertEquals("""
+        id,firstname
+        1,Alice
+        """, CsvOutputWriter.map(new Hierarchy(root)));
+  }
+
+  @Test
   void anonymousRootRendersItsSingleChildAsARecord() {
     Node root = new Node("");
     root.addNode(person("1", "Alice"));
@@ -51,7 +64,7 @@ class CsvOutputWriterTest {
   }
 
   @Test
-  void repeatedScalarChildrenJoinInOneCell() {
+  void repeatedScalarChildrenExpandIntoRows() {
     Node root = new Node("person");
     root.addNode(valueNode("id", "1"));
     root.addNode(valueNode("nickname", "Ace"));
@@ -59,20 +72,22 @@ class CsvOutputWriterTest {
 
     assertEquals("""
         id,nickname
-        1,Ace|Freddy
+        1,Ace
+        1,Freddy
         """, CsvOutputWriter.map(new Hierarchy(root)));
   }
 
   @Test
-  void repeatedNestedObjectsSerializeAsJsonCell() {
+  void repeatedNestedObjectsExpandIntoRows() {
     Node root = new Node("person");
     root.addNode(valueNode("id", "1"));
     root.addNode(phone("111"));
     root.addNode(phone("222"));
 
     assertEquals("""
-        id,phone
-        1,"[{""number"":""111""},{""number"":""222""}]"
+        id,phone.number
+        1,111
+        1,222
         """, CsvOutputWriter.map(new Hierarchy(root)));
   }
 

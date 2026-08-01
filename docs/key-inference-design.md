@@ -34,7 +34,7 @@ The implementation is one parser-to-runtime pipeline:
 | `Hierarchy` | Execution of explicit keyed placement and runtime null/conflict policy |
 | `CompiledSelect` | Executable SQL and effective mapping plan |
 
-`PersistentCache` remains the single persistent-cache implementation and the sole owner of cache naming. It maps a source identity to `cache-<sha256>.mv.db`. File-cache data and its inferred graph share that database; JDBC targets receive metadata-only databases under the same cache root. Database target identity is derived entirely from JDBC configuration, so choosing a cache file never opens or inspects the source database.
+`PersistentCache` remains the single persistent-cache implementation and the sole owner of cache naming. It assigns each cache a two-word jname such as `bright-otter.mv.db`, retrying if that name already exists. Source identity is stored in cache metadata and determines reuse. File-cache data and its inferred graph share that database; JDBC targets receive metadata-only databases under the same cache root. Database target identity is derived entirely from JDBC configuration, so choosing a cache file never opens or inspects the source database.
 
 ## Ambiguity and Safety
 

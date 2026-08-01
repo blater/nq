@@ -1,1 +1,1 @@
-{"result":{"person":{"id":"1","firstName":"Fred","city":"Bedrock"}}}
+{"result":{"person":[{"id":"1","firstName":"Fred","city":"Bedrock"}]}}

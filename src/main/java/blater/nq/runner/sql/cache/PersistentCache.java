@@ -1,5 +1,7 @@
 package blater.nq.runner.sql.cache;
 
+import blater.jname.Jname;
+import blater.jname.JnameOptions;
 import blater.nq.util.Log;
 
 import java.io.IOException;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static blater.nq.ParameterParser.*;
@@ -33,8 +36,8 @@ import static blater.nq.ParameterParser.*;
  * and cache clearing operations.
  */
 public final class PersistentCache {
-  private static final String CACHE_FILE_PREFIX = "cache-";
   private static final String H2_DATABASE_SUFFIX = ".mv.db";
+  private static final String CACHE_NAME_PATTERN = "[a-z0-9]{1,8}-[a-z0-9]{1,8}";
   private static final int METADATA_ROW_ID = 1;
   private static final String ACTIVE_CACHE_FILE = "active.cache.file";
   private static final int ARTIFACT_ROW_ID = 1;
@@ -66,9 +69,10 @@ public final class PersistentCache {
       return;
     }
 
-    Log.info("  inputType\tcreated\tsource");
+    Log.info("  name\tinputType\tcreated\tvariant\tsource");
     for (var entry : entries) {
-      Log.info((entry.active() ? "* " : "  ") + entry.inputType()
+      Log.info((entry.active() ? "* " : "  ") + entry.cacheFilename()
+          + "\t" + entry.inputType()
           + "\t" + ((entry.createdMillis()  <= 0) ? "-": Instant.ofEpochMilli(entry.createdMillis()).toString())
           + "\t" + entry.variantId()
           + (entry.outdated() ? " (outdated)" : "")
@@ -79,15 +83,17 @@ public final class PersistentCache {
 
   public static CacheHandle prepare(CacheSource source, Map<String, String> params)
   {
-    Path cacheFile = cacheFile(source.identityText(), params);
-    createDirectories(cacheFile.getParent());
-
-    if (readMetadata(cacheFile).filter(source::matches).isPresent())
-    {
+    Path root = cacheRoot(params);
+    createDirectories(root);
+    Optional<Path> existing = cacheFiles(params).stream()
+        .filter(cacheFile -> readMetadata(cacheFile).filter(source::matches).isPresent())
+        .findFirst();
+    if (existing.isPresent()) {
+      Path cacheFile = existing.get();
       return new CacheHandle(cacheFile, jdbcUrl(cacheFile), false, source);
     }
 
-    deleteCache(cacheFile);
+    Path cacheFile = unusedCacheFile(root, PersistentCache::generateCacheName);
     return new CacheHandle(cacheFile, jdbcUrl(cacheFile), true, source);
   }
 
@@ -322,11 +328,13 @@ public final class PersistentCache {
         .map(cacheFile -> readMetadata(cacheFile).map(metadata -> {
           if (metadata.databaseStructure()) {
             return new CacheEntry(
+                cacheFile.getFileName().toString(),
                 metadata.sourcePath(), metadata.inputType(), metadata.createdMillis(),
                 activeCache.map(cacheFile::equals).orElse(false), "database-metadata", false);
           }
           CacheSource source = metadata.source();
           return new CacheEntry(
+              cacheFile.getFileName().toString(),
               metadata.sourcePath(),
               metadata.inputType(),
               metadata.createdMillis(),
@@ -409,7 +417,35 @@ public final class PersistentCache {
   }
 
   public static Path cacheFile(String identityText, Map<String, String> params) {
-    return cacheRoot(params).resolve(CACHE_FILE_PREFIX + sha256(identityText) + H2_DATABASE_SUFFIX);
+    Path root = cacheRoot(params);
+    createDirectories(root);
+    return cacheFiles(params).stream()
+        .filter(cacheFile -> readMetadata(cacheFile)
+            .map(metadata -> identityText.equals(metadata.identityText()))
+            .orElse(false))
+        .findFirst()
+        .orElseGet(() -> unusedCacheFile(root, PersistentCache::generateCacheName));
+  }
+
+  static Path unusedCacheFile(Path root, Supplier<String> names) {
+    while (true) {
+      String name = names.get();
+      if (name == null || !name.matches(CACHE_NAME_PATTERN)) {
+        return Log.fatal(IllegalStateException.class,
+            "Jname generated an invalid cache name: " + name);
+      }
+      Path candidate = root.resolve(name + H2_DATABASE_SUFFIX);
+      if (!Files.exists(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  private static String generateCacheName() {
+    return Jname.generate(JnameOptions.builder()
+        .words(2)
+        .maxLetters(8)
+        .build());
   }
 
   static Path configFile() {
@@ -564,7 +600,7 @@ public final class PersistentCache {
     }
 
     try (Stream<Path> paths = Files.list(root)) {
-      return paths.filter(PersistentCache::isCacheFile).toList();
+      return paths.filter(PersistentCache::isCacheFile).sorted().toList();
     } catch (IOException ex) {
       return Log.fatal(IllegalStateException.class, "Could not list cache files: " + root, ex);
     }
@@ -590,8 +626,7 @@ public final class PersistentCache {
   }
 
   private static boolean isCacheFilename(String filename) {
-    return filename.startsWith(CACHE_FILE_PREFIX)
-        && filename.endsWith(H2_DATABASE_SUFFIX);
+    return filename.matches(CACHE_NAME_PATTERN + "\\.mv\\.db");
   }
 
   private static Optional<Path> configuredActiveCacheFile() {

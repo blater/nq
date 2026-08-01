@@ -15,12 +15,9 @@ import java.util.Map;
 
 /*
  * Responsibility: Renders a hierarchy as CSV by flattening record nodes
- * into dotted columns. Hierarchical repeats that cannot fit native CSV
- * are approximated into scalar cells.
+ * into dotted columns and expands repeated hierarchy nodes into rows.
  */
 public class CsvOutputWriter implements OutputWriter {
-  private static final String REPEATED_SCALAR_SEPARATOR = "|";
-
   @Override
   public void write(Hierarchy result) {
     if (result == null || result.isEmpty()) {
@@ -41,11 +38,13 @@ public class CsvOutputWriter implements OutputWriter {
     List<Map<String, String>> rows = new ArrayList<>(records.size());
     List<String> columns = new ArrayList<>();
     for (Node record : records) {
-      Map<String, String> row = flattenRecord(record);
-      rows.add(row);
-      for (String column : row.keySet()) {
-        if (!columns.contains(column)) {
-          columns.add(column);
+      List<Map<String, String>> recordRows = flattenNode(record, "");
+      rows.addAll(recordRows);
+      for (Map<String, String> row : recordRows) {
+        for (String column : row.keySet()) {
+          if (!columns.contains(column)) {
+            columns.add(column);
+          }
         }
       }
     }
@@ -62,40 +61,37 @@ public class CsvOutputWriter implements OutputWriter {
       if (onlyChildGroup.size() == 1 && onlyChildGroup.getFirst().isCollection()) {
         return onlyChildGroup.getFirst().getChildren();
       }
-      if (onlyChildGroup.size() > 1) {
+      if (onlyChildGroup.size() > 1
+          || onlyChildGroup.size() == 1 && onlyChildGroup.getFirst().isArrayItem()) {
         return onlyChildGroup;
       }
     }
     return List.of(root);
   }
 
-  private static Map<String, String> flattenRecord(Node record) {
-    Map<String, String> row = new LinkedHashMap<>();
-    flattenNode(record, "", row);
-    return row;
-  }
-
-  private static void flattenNode(Node node, String path, Map<String, String> row) {
+  private static List<Map<String, String>> flattenNode(Node node, String path) {
     if (node.isNull()) {
+      Map<String, String> row = new LinkedHashMap<>();
       row.put(pathOrNodeName(path, node), "");
-      return;
+      return List.of(row);
     }
     if (node.hasValue()) {
+      Map<String, String> row = new LinkedHashMap<>();
       row.put(pathOrNodeName(path, node), node.getValue());
-      return;
+      return List.of(row);
     }
 
+    List<Map<String, String>> rows = new ArrayList<>();
+    rows.add(new LinkedHashMap<>());
     for (Map.Entry<String, List<Node>> entry : groupedChildren(node).entrySet()) {
       String childPath = childPath(path, entry.getKey());
-      List<Node> children = entry.getValue();
-      if (children.size() == 1) {
-        flattenNode(children.getFirst(), childPath, row);
-      } else if (children.stream().allMatch(CsvOutputWriter::isScalarNode)) {
-        row.put(childPath, joinedScalarValues(children));
-      } else {
-        row.put(childPath, jsonArray(children));
+      List<Map<String, String>> childRows = new ArrayList<>();
+      for (Node child : entry.getValue()) {
+        childRows.addAll(flattenNode(child, childPath));
       }
+      rows = mergeRows(rows, childRows);
     }
+    return rows;
   }
 
   private static String pathOrNodeName(String path, Node node) {
@@ -108,15 +104,19 @@ public class CsvOutputWriter implements OutputWriter {
         : parentPath + "." + childName;
   }
 
-  private static boolean isScalarNode(Node node) {
-    return node.isNull() || node.hasValue();
-  }
+  private static List<Map<String, String>> mergeRows(
+      List<Map<String, String>> existingRows,
+      List<Map<String, String>> additionalRows) {
 
-  private static String joinedScalarValues(List<Node> nodes) {
-    return nodes.stream()
-        .map(node -> node.isNull() ? "" : node.getValue())
-        .reduce((left, right) -> left + REPEATED_SCALAR_SEPARATOR + right)
-        .orElse("");
+    List<Map<String, String>> mergedRows = new ArrayList<>();
+    for (Map<String, String> existing : existingRows) {
+      for (Map<String, String> additional : additionalRows) {
+        Map<String, String> merged = new LinkedHashMap<>(existing);
+        merged.putAll(additional);
+        mergedRows.add(merged);
+      }
+    }
+    return mergedRows;
   }
 
   private static String writeCsv(List<String> columns, List<Map<String, String>> rows) {
@@ -146,70 +146,4 @@ public class CsvOutputWriter implements OutputWriter {
     return grouped;
   }
 
-  private static String jsonArray(List<Node> nodes) {
-    StringBuilder json = new StringBuilder("[");
-    for (int index = 0; index < nodes.size(); index++) {
-      if (index > 0) {
-        json.append(",");
-      }
-      writeJsonValue(json, nodes.get(index));
-    }
-    json.append("]");
-    return json.toString();
-  }
-
-  private static void writeJsonValue(StringBuilder json, Node node) {
-    if (node.isNull()) {
-      json.append("null");
-    } else if (node.hasValue()) {
-      json.append(jsonQuote(node.getValue()));
-    } else {
-      writeJsonObject(json, node);
-    }
-  }
-
-  private static void writeJsonObject(StringBuilder json, Node node) {
-    json.append("{");
-    boolean first = true;
-    for (Map.Entry<String, List<Node>> entry : groupedChildren(node).entrySet()) {
-      if (!first) {
-        json.append(",");
-      }
-      first = false;
-      json.append(jsonQuote(entry.getKey())).append(":");
-      List<Node> children = entry.getValue();
-      if (children.size() == 1) {
-        writeJsonValue(json, children.getFirst());
-      } else {
-        json.append(jsonArray(children));
-      }
-    }
-    json.append("}");
-  }
-
-  private static String jsonQuote(String value) {
-    StringBuilder escaped = new StringBuilder(value.length() + 2);
-    escaped.append('"');
-    for (int index = 0; index < value.length(); index++) {
-      char ch = value.charAt(index);
-      switch (ch) {
-        case '"' -> escaped.append("\\\"");
-        case '\\' -> escaped.append("\\\\");
-        case '\b' -> escaped.append("\\b");
-        case '\f' -> escaped.append("\\f");
-        case '\n' -> escaped.append("\\n");
-        case '\r' -> escaped.append("\\r");
-        case '\t' -> escaped.append("\\t");
-        default -> {
-          if (ch < 0x20) {
-            escaped.append(String.format("\\u%04x", (int) ch));
-          } else {
-            escaped.append(ch);
-          }
-        }
-      }
-    }
-    escaped.append('"');
-    return escaped.toString();
-  }
 }

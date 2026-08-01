@@ -673,7 +673,7 @@ nq --use-cache customers.json
 
 `--use-cache` only selects an existing cache. Its argument can be the source
 identifier reported by `--list-caches` or a bare cache filename such as
-`cache-0123456789abcdef.mv.db`. A bare cache filename is resolved under
+`bright-otter.mv.db`. A bare cache filename is resolved under
 `--cache-dir`, or under `~/.nq/cache` by default. A referenced source file need
 not still exist, and no cache is created or rebuilt when a match is missing. If the
 source has multiple Parquet cache variants, add the matching
@@ -699,7 +699,11 @@ The active selection is stored in:
 ~/.nq/config.properties
 ```
 
-It records the generated cache file, so a cache loaded with a custom `--cache-dir` remains active without repeating that option. Cache databases use the form `cache-<source-hash>.mv.db`; the hash is derived from configuration and never requires a database connection.
+It records the generated cache file, so a cache loaded with a custom
+`--cache-dir` remains active without repeating that option. New cache files use
+two-word jnames such as `bright-otter.mv.db`. If a generated name already
+exists, NQ generates another. Source identity remains in the cache metadata, so
+the filename does not control reuse.
 
 Persistent cache creation and input-source reuse are always explicit. Use
 `--cache` or `-c` to create or reuse a cache for an input source, or `--use-cache`
@@ -904,7 +908,7 @@ nq --clear-cache 'stdin:json:sha256:<full-hash-from-list>'
 Clear one cache by its bare filename:
 
 ```bash
-nq --clear-cache cache-0123456789abcdef.mv.db
+nq --clear-cache bright-otter.mv.db
 ```
 
 Bare cache filenames are resolved under `--cache-dir`, or under
@@ -1767,8 +1771,9 @@ CSV is a flat format, so hierarchy is flattened:
 - Keyed top-level records also become CSV records, including a single record.
 - Otherwise, the root itself is written as one record.
 - Nested scalar nodes become dotted column names.
-- Repeated scalar nodes join in one cell with `|`.
-- Repeated nested object nodes serialize as compact JSON in one cell.
+- Repeated scalar and nested object nodes expand into rows, with parent values repeated on each row.
+- Independent repeated sibling groups produce their Cartesian product because CSV has no nested value type.
+- CSV cells never contain JSON arrays as a hierarchy fallback.
 - Attributes become ordinary columns.
 - Null nodes become empty cells.
 

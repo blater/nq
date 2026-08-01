@@ -44,6 +44,22 @@ class YamlOutputWriterTest {
   }
 
   @Test
+  void oneCollectionItemStillRendersAsSequence() {
+    Node root = new Node("people");
+    Node person = person("1", "Alice");
+    person.setArrayItem(true);
+    root.addNode(person);
+
+    assertEquals("""
+        people:
+          person:
+            -
+              id: "1"
+              firstname: "Alice"
+        """, YamlOutputWriter.map(new Hierarchy(root)));
+  }
+
+  @Test
   void anonymousRootRetainsEachObjectsLogicalName() {
     Node root = new Node("");
     root.addNode(person("1", "Alice"));

@@ -357,7 +357,7 @@ class MainTest {
     }
 
     assertEquals("""
-        {"result":{"customer":{"code":"G","name":"Shared","purchase":[{"id":"10","item":"Tea"},{"id":"11","item":"Cake"}]}}}
+        {"result":{"customer":[{"code":"G","name":"Shared","purchase":[{"id":"10","item":"Tea"},{"id":"11","item":"Cake"}]}]}}
         """, output[0]);
     assertTrue(debug.contains("{result.customer.purchase} -> p"));
     assertTrue(debug.contains("parent c via"));
@@ -397,7 +397,7 @@ class MainTest {
     }
 
     assertEquals("""
-        {"result":{"customer":{"purchase":[{"id":"10","item":"Tea"},{"id":"11","item":"Cake"}]}}}
+        {"result":{"customer":[{"purchase":[{"id":"10","item":"Tea"},{"id":"11","item":"Cake"}]}]}}
         """, output[0]);
     assertTrue(debug.contains("{result.customer.purchase} -> p"));
     assertTrue(debug.contains("parent c via"));
@@ -1105,7 +1105,7 @@ class MainTest {
         input.toString()));
 
     assertEquals("""
-        {"result":{"customer":{"id":"C1","country":"GB"}}}
+        {"result":{"customer":[{"id":"C1","country":"GB"}]}}
         """, output);
   }
 

@@ -220,7 +220,7 @@ public final class Help {
 
       EXAMPLES
           nq --use-cache customers.json
-          nq --use-cache cache-0123456789abcdef.mv.db
+          nq --use-cache bright-otter.mv.db
           nq --use-cache customers.parquet --parquet-record customer
           nq --use-cache data.json --relation-alias '/0=customers'
 
@@ -248,7 +248,7 @@ public final class Help {
       EXAMPLES
           nq --clear-cache
           nq --clear-cache customers.json
-          nq --clear-cache cache-0123456789abcdef.mv.db
+          nq --clear-cache bright-otter.mv.db
           nq --clear-cache-older-than 7d
       """;
 

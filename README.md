@@ -1,337 +1,377 @@
-# NQ — SQL for nested data
+# NQ — SQL between data files and databases
 
-[![CI](https://github.com/blater/nq/actions/workflows/ci.yml/badge.svg)](https://github.com/blater/nq/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/blater/nq)](https://github.com/blater/nq/releases/latest)
-[![License: AGPL-3.0](https://img.shields.io/github/license/blater/nq)](LICENSE.txt)
-
-NQ queries JSON, YAML, XML, CSV, JSON Lines, and Parquet with SQL. It builds
-nested documents from query results and moves data between documents and
-relational databases.
+NQ queries JSON, YAML, XML, CSV, JSON Lines, and Parquet with SQL. It builds nested documents from query results and moves data between documents and relational databases.
 
 ## Install
 
 ### macOS ARM64
-
 ```bash
 brew install blater/tap/nq
 ```
-
+### Windows x64
+```powershell
+choco install nq
+```
 ### Linux x64
-
 ```bash
-NQ_VERSION=0.9.7
+NQ_VERSION=0.9.8
 curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/nq-${NQ_VERSION}-linux-x64.tar.gz"
 curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/SHA256SUMS"
 grep "nq-${NQ_VERSION}-linux-x64.tar.gz" SHA256SUMS | sha256sum --check
 tar -xzf "nq-${NQ_VERSION}-linux-x64.tar.gz"
 install -m 0755 nq "$HOME/.local/bin/nq"
-nq --help
 ```
 
-### Windows x64
+## Getting started
 
-```powershell
-choco install nq
-```
-
-See the [complete installation guide](docs/install.md) for the JVM build,
-supported platforms, included JDBC drivers, checksum verification, and
-operating-system security prompts.
-
-## Your first query
-
-Pipe JSON straight into an ordinary SQL query. Use `-i` (or `--input`) because
-standard input has no filename extension from which to infer its format:
+You can run SQL directly against JSON/XML/Yaml
 
 ```bash
 echo '{
   "users": [
-    {"name": "Alice", "active": true},
-    {"name": "Bob", "active": false},
-    {"name": "Charlie", "active": true}
+    {"id": 1, "name": "Alice", "active": true},
+    {"id": 2, "name": "Bob", "active": false},
+    {"id": 3, "name": "Charlie", "active": true}
   ]
-}' | nq -i json "select name from users where active = 'true' order by id;"
+}' | nq "select name from users where active = 'true' order by id;"
 ```
 
 ```json
 [{"name":"Alice"},{"name":"Charlie"}]
 ```
 
-NQ discovers the `users` collection as a table. Shell redirection is equivalent
-to a pipe:
+You can use sql functions like count, and you can specify the output structure using "into {a.document.path}"
 
 ```bash
-nq -i json "select name from users where active = 'true' order by id;" < myusers.json
-```
-
-Add `--cache` to either command when the input should remain available as nq's
-active cache. The cache is keyed by the input type and content hash, so
-replaying the same stream reuses it safely.
-
-## The distinctive part: turn joined rows into a hierarchy
-
-A customer/order/item join repeats customer and order values across its flat
-rows. NQ maps selected values into an output hierarchy, while identity keys say
-which rows contribute to the same customer, order, and item:
-
-```sql
-select
-  c.id into {customers.customer.id},
-  c.name into {customers.customer.name},
-  o.id into {customers.customer.orders.order.id},
-  o.ordered_on into {customers.customer.orders.order.orderedOn},
-  i.sku into {customers.customer.orders.order.items.item.sku},
-  i.quantity into {customers.customer.orders.order.items.item.quantity}
-from customer c
-join customer_order o on o.customer_id = c.id
-join order_item i on i.order_id = o.id
-order by c.id, o.id, i.id
-structure
-  {customers.customer} key (c.id),
-  {customers.customer.orders.order} key (c.id, o.id),
-  {customers.customer.orders.order.items.item} key (c.id, o.id, i.id);
-```
-
-Run the self-contained, tested recipe from a repository clone:
-
-```bash
-nq docs/recipes/database-to-nested-json/database-to-nested-json.nq \
-  --db h2 --database mem:nq_database_to_nested
+echo '{
+  "users": [
+    {"id": 1, "name": "Alice", "active": true},
+    {"id": 2, "name": "Bob", "active": false},
+    {"id": 3, "name": "Charlie", "active": true}
+   ]
+}' | nq "select count(*) into {summary.activeUsers} from users where active = 'true';" 
 ```
 
 ```json
+{"summary":{"activeUsers":"2"}}
+```
+
+## Extractng data from a database
+
+Queries can be run against databases as well as directly against data files. Use the --output or -o option to specify the output format
+
+```bash
+nq "select id, name, city
+    from customer
+    order by id;" \
+  --db h2 \
+  --database file:./target/nq-readme \
+  --output yaml
+```
+
+```yaml
+- id: "1"
+  name: Alice
+  city: London
+- id: "2"
+  name: Bob
+  city: Bristol
+```
+
+Use the ***into*** clause to name fields or place individual values into specific places in the output:
+```sql
+select
+  count(*) into {summary.customerCount},
+  min(name) into {summary.firstCustomer}
+from customer;
+```
+
+```json
+{"summary":{"customerCount":"2","firstCustomer":"Alice"}}
+```
+
+## Updating a database from a JSON, XML, YAML, JSONL, or CSV file
+
+you can use all the usual SQL commands to insert/update/delete database data from a file or stream:
+
+Insert:
+```bash
+echo "person:{firstname:Barney, lastname:Rubble, city:London}" | \
+    nq "insert into person (firstname, lastname, city) values ({person.firstName}, {person.lastName}, {person.city});" 
+```
+Update:
+```bash
+echo "person:{id: 1, city:London}" | nq "update person set city = {person.city} where personid = {person.id};" -p mydb.properties
+```
+Delete:
+```bash
+echo "<person><id>1</id></person>" | nq -i xml  "delete from person where personid = {person.id};" 
+```
+
+
+### Connecting to a database
+
+You can supply all the parameters on the command line
+
+```bash
+nq myscript.nq \
+  --db postgresql \
+  --host db.example.com \
+  --port 5432 \
+  --database sales \
+  --user report_user
+  --password secret
+
+```
+or supply the name of a properties file containing the connection details
+```bash
+nq myscript.nq -p mydatabase.properties
+```
+The [JDBC guide](docs/user-manual.md#jdbc-parameters) covers this in detail.
+
+
+## Build nested documents from joined rows
+
+A non-trivial example. Here we have 4 tables showing a customer and their orders on a ecommerce site:
+
+| Table | Column | Type | Relationship |
+| --- | --- | --- | --- |
+| `customer` | `id` | integer | Primary key |
+|  | `name` | varchar(80) |  |
+| `address` | `id` | integer | Primary key |
+|  | `customer_id` | integer | Foreign key → `customer.id` |
+|  | `addr1` | varchar(80) |  |
+|  | `city` | varchar(30) |  |
+|  | `primary_residence` | char |  |
+| `customer_order` | `id` | integer | Primary key |
+|  | `customer_id` | integer | Foreign key → `customer.id` |
+|  | `ordered_on` | date |  |
+| `order_item` | `id` | integer | Primary key |
+|  | `order_id` | integer | Foreign key → `customer_order.id` |
+|  | `sku` | varchar(40) |  |
+|  | `quantity` | integer |  |
+
+**Customers**
+| ID   | NAME  |
+| ---- | ----- |
+| 1    | Alice |
+| 2    | Bob   |
+| 3    | Yuki  |
+
+**Address**
+| ID   | CUSTOMER_ID | ADDR1              |  CITY       | PRIMARY_RESIDENCE  |
+| ---- | ----------- | ------------------ | ----------- | ------------------ |
+| 1    | 1           | 21 acacia drive    | Tokyo       | Y                  |
+| 2    | 1           | 11 Downing Street  | London      | N                  |
+| 3    | 2           | 1 George Street    | Sydney      | Y                  |
+
+**Customer Order**
+| ID   | CUSTOMER_ID | ORDERED_ON  |
+| ---- | ----------- | ----------- |
+| 1001 | 1           | 2026-07-01  |
+| 1002 | 1           | 2026-07-15  |
+| 1003 | 2           | 2026-07-20  |
+
+**Order Item**
+| ID     | ORDER_ID  | SKU         | QUANTITY    |
+| ------ | --------- | ----------- | ----------- |
+| 1      | 1001      | TEA         | 2           |
+| 2      | 1001      | CAKE        | 1           |
+| 3      | 1002      | MUG         | 2           |
+| 4      | 1003      | COFFEE      | 1           |
+
+
+We want to pull the data out a list of all customers and details of any orders they might have made. Nq shows JSON by default.
+We will create a SQL query that joins all the tables together and uses "into" to define the output structure:
+
+```sql
+select
+  c.name       into {customers.customer.name},
+  a.city       into {customers.customer.city} absent on null,
+  o.id         into {customers.customer.orders.order.order_id},
+  o.ordered_on into {customers.customer.orders.order.date},
+  i.sku        into {customers.customer.orders.order.items.item.product},
+  i.quantity   into {customers.customer.orders.order.items.item.qty}
+from customer c
+left join address a on a.customer_id = c.id and a.primary_residence = 'Y'
+left join customer_order o on o.customer_id = c.id
+left join order_item i on i.order_id = o.id
+;
+```
+Note the use of "absent on null" to suppress fields when the value is null.
+The result contains each customer once and nests orders and items beneath it:
+
+```json
 {
-  "customers": {
-    "customer": [
-      {
-        "id": "1",
-        "name": "Alice",
+  "customers": [
+    {
+      "customer": {
+        "name": "Alice", "city": "Tokyo",
         "orders": {
           "order": [
             {
-              "id": "1001",
-              "orderedOn": "2026-07-01",
+              "order_id": "1001", "date": "2026-07-01",
               "items": {
                 "item": [
-                  {
-                    "sku": "TEA",
-                    "quantity": "2"
-                  },
-                  {
-                    "sku": "CAKE",
-                    "quantity": "1"
-                  }
+                  { "product": "TEA", "qty": "2" },
+                  { "product": "CAKE", "qty": "1" }
                 ]
               }
             },
             {
-              "id": "1002",
-              "orderedOn": "2026-07-15",
+              "order_id": "1002", "date": "2026-07-15",
               "items": {
-                "item": {
-                  "sku": "MUG",
-                  "quantity": "2"
-                }
+                "item": { "product": "MUG", "qty": "2" }
               }
             }
           ]
         }
-      },
-      {
-        "id": "2",
-        "name": "Bob",
+      }
+    },
+    {
+      "customer": {
+        "name": "Bob", "city": "Sydney",
         "orders": {
           "order": {
-            "id": "1003",
-            "orderedOn": "2026-07-20",
+            "order_id": "1003", "date": "2026-07-20",
             "items": {
               "item": {
-                "sku": "COFFEE",
-                "quantity": "1"
+                "product": "COFFEE", "qty": "1"
               }
             }
           }
         }
       }
-    ]
-  }
+    },
+    {
+      "customer": {
+        "name": "Yuki",
+        "orders": {}
+      }
+    }
+  ]
 }
+
 ```
 
-The keys prevent join expansion from duplicating parent objects. The same
-mapping works when the rows come from a configured JDBC database, and
-`--output yaml` or `--output xml` changes the boundary format without changing
-the query.
+## Insert rows and return generated keys
 
-## Query related collections inside a nested file
-
-NQ also discovers related collections inside a document as tables. It can join
-and aggregate them before mapping the result into a different hierarchy:
-
-![NQ terminal demonstration: nested input, SQL query, and reshaped JSON output](docs/assets/nq-terminal-demo.gif)
+An insert can write database-assigned values back into its input hierarchy.
+This XML insert maps the generated key into `{person.id}`:
 
 ```bash
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.json
+nq --input xml \
+  "output xml;
+
+   insert into person (firstname, lastname, city)
+   values ({person.firstName}, {person.lastName}, {person.city})
+   returns personid into {person.id};" \
+  --db h2 \
+  --database file:./target/nq-readme <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<person>
+  <firstName>Alice</firstName>
+  <lastName>Adams</lastName>
+  <city>London</city>
+</person>
+XML
 ```
 
-```json
-{"result":{"region":[{"country":"GB","customerCount":"2"},{"country":"US","customerCount":"4"}]}}
+The returned XML contains the generated ID:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<person>
+  <firstName>Alice</firstName>
+  <lastName>Adams</lastName>
+  <city>London</city>
+  <id>3</id>
+</person>
 ```
 
-The same script works with the equivalent
-[`identity-customers.yaml`](docs/examples/identity-customers.yaml) and
-[`identity-customers.xml`](docs/examples/identity-customers.xml) fixtures.
+The exact ID depends on the current database sequence. It is `3` after running
+the tutorial from its setup step. `returns` is also available on updates when
+the database calculates timestamps, versions, or other values.
 
-## When should I use NQ?
+Stored-procedure calls, repeated child records, transactions, error policies,
+and captured query rows are covered in the
+[DML reference](docs/user-manual.md#dml-input-reference).
 
-Use NQ when:
+## Supported formats
 
-- a nested API response, export, or fixture needs a relational query;
-- joined SQL rows must become deliberately structured JSON, YAML, or XML
-  without duplicated parent objects;
-- JSON, YAML, XML, CSV, JSON Lines, or Parquet must drive database inserts,
-  updates, deletes, or stored-procedure calls; or
-- a repeatable data-movement task is clearer as a small SQL-like script than
-  as application code.
+NQ reads these input formats:
 
-Use a more focused tool when the task is simpler: jq for JSON-native filters,
-yq or Dasel for direct document edits, Remarshal for guarded format
-conversion, Miller for record-stream processing, or DuckDB and other
-SQL-over-file tools for primarily analytical or tabular queries. The
-[comparison guide](docs/comparison.md) describes the boundaries without trying
-to make NQ the answer to every data task.
+| Format | Extensions or selection |
+| --- | --- |
+| JSON | `.json` or `--input json` |
+| JSON Lines | `.jsonl` or `--input jsonl` |
+| YAML | `.yaml`, `.yml`, or `--input yaml` |
+| XML | `.xml` or `--input xml` |
+| CSV | `.csv` or `--input csv` |
+| Parquet | `.parquet` or `--input parquet` |
 
-## Three core workflows
+Output is available as JSON, JSON Lines, YAML, XML, CSV, or Markdown. JSON is
+the default.
 
-### Query a nested file
-
-NQ materializes discovered collections into a temporary local H2 database and
-runs the SQL. No external database or service is involved.
-
-```sql
-select
-  a.country_code as country_key,
-  a.country_code into {result.region.country},
-  count(distinct c.id) into {result.region.customerCount}
-from customer c
-join address a on a.customer_id = c.id
-join kyc k on k.customer_id = c.id
-where a.kind = 'residential' and k.status <> 'not_started'
-group by a.country_code
-order by country_key
-structure {result.region} key (country_key);
-```
-
-### Extract a hierarchy from a database
-
-The runnable H2 example in
-[`docs/recipes/database-to-nested-json`](docs/recipes/database-to-nested-json/README.md)
-maps joined customer, order, and item rows directly into nested JSON. Use
-`--output yaml` or `--output xml` to change the boundary format.
-
-### Apply a hierarchical file to a database
-
-The runnable H2 example in
-[`docs/recipes/json-to-database`](docs/recipes/json-to-database/README.md) uses
-paths such as `{message.person.id}` in mapped `insert` and `update` statements.
-Equivalent YAML and XML structures use the same neutral hierarchy model.
-
-Browse the [task-oriented recipe index](docs/recipes/README.md) for more.
-
-## Files, caches, and output
-
-Supported input extensions are `.json`, `.jsonl`, `.yaml`, `.yml`, `.xml`,
-`.csv`, and `.parquet`. Parquet support is production-supported within the
-[documented limitations](docs/user-manual.md#parquet-input).
-
-An input file supplied by itself is converted directly to JSON by default, or
-to the format selected by `--output`, without creating an H2 database:
+A file supplied without SQL is converted directly and does not create a
+database:
 
 ```bash
 nq customers.xml --output json
-nq customers.json -o yaml
+nq customers.json --output yaml
 nq customers.csv --output markdown
 ```
 
-An input file supplied with a query uses a fresh temporary H2 database. Add
-`--cache` or `-c` explicitly to create and activate a persistent local cache:
+A query and input file use a temporary local database for that command. Use
+`--cache` or `-c` explicitly only when the imported data should remain
+available to later NQ commands:
 
 ```bash
 nq --cache customers.json
 nq catalog
 nq "select id, name from customers order by id;"
-nq --list-caches
 ```
 
-The default cache directory is `~/.nq/cache`. NQ does not upload source data or
-send usage telemetry.
+The [cache reference](docs/user-manual.md#querying-input-documents-temporary-and-persistent-h2)
+covers storage, selection, inspection, and cleanup. NQ does not upload source
+data or send usage telemetry.
 
-Output defaults to JSON. Choose JSON Lines, YAML, XML, CSV, or Markdown in a
-script or on the command line:
-
-```bash
-nq report.nq --output yaml
-```
+Native release builds include drivers for H2, PostgreSQL, MySQL, and MariaDB.
+Additional driver profiles are available when building from source. The JVM
+build can also load a driver JAR at runtime.
 
 NQ writes result data to stdout and diagnostics to stderr. Successful commands
-return exit status `0`; invalid options, parsing failures, connection failures,
-and SQL execution failures return a non-zero status. See the
-[automation guide](docs/automation.md).
+return status `0`; invalid options, parsing failures, database connection
+failures, and SQL execution failures return a non-zero status. See the
+[automation guide](docs/automation.md) for scripting and CI examples.
 
-## Database connections
+## Where NQ fits
 
-A properties file keeps credentials out of shell history:
+NQ is intended for work that crosses document and relational boundaries:
 
-```properties
-jdbc.driver=postgresql
-jdbc.database=jdbc:postgresql://localhost:5432/customer_data
-jdbc.username=report_user
-jdbc.password=change-me
-```
+- exporting joined database data into a deliberate JSON, YAML, or XML shape;
+- applying JSON, YAML, XML, CSV, or Parquet data through database DML;
+- joining or aggregating related collections inside structured files;
+- replacing one-off data movement code with a checked-in SQL-like script.
 
-```bash
-nq report.nq -p database.properties
-```
+Use a focused tool when the task stays inside a simpler boundary:
 
-Logical driver names are `h2`, `mysql`, `mariadb`, `postgresql`, `oracle`,
-`sqlserver`, `db2`, `hana`, and `informix`. Native release binaries include the
-common driver set documented in the [support matrix](docs/install.md#support-matrix).
+- jq for JSON-native filtering and editing;
+- yq or Dasel for direct YAML or document edits;
+- Remarshal for guarded format conversion;
+- Miller for record-stream processing;
+- DuckDB or another SQL-over-file tool for primarily analytical, tabular work.
+
+The [comparison guide](docs/comparison.md) describes these boundaries in more
+detail.
 
 ## Documentation
 
-- [Installation and platform support](docs/install.md)
-- [Recipes](docs/recipes/README.md)
-- [Complete user manual](docs/user-manual.md)
-- [NQ compared with adjacent tools](docs/comparison.md)
+- [Installation](docs/install.md)
+- [Task-oriented recipes](docs/recipes/README.md)
+- [User manual](docs/user-manual.md)
+- [Automation and CI/CD](docs/automation.md)
 - [Troubleshooting](docs/troubleshooting.md)
-- [How NQ works](docs/how-nq-works.md)
-- [Glossary](docs/glossary.md)
 - [Frequently asked questions](docs/faq.md)
-- [Releases](https://github.com/blater/nq/releases)
 
-Built-in help is version-matched to the executable:
-
-```bash
-nq -h
-nq --version
-nq --help
-nq --help help
-nq --help query
-nq --help cache
-nq --help connection
-```
-
-## Questions and contributions
-
-Have an awkward data file? Open a
-[“Help me query this” discussion](https://github.com/blater/nq/discussions/categories/q-a)
-with a **sanitized** sample and the output you want. Remove credentials,
-personal data, internal hostnames, and proprietary values before posting.
-
-Bug reports, documentation fixes, test fixtures, recipes, and code changes are
-welcome as issues or pull requests. Report security problems privately through
-[GitHub's security advisory form](https://github.com/blater/nq/security/advisories/new).
-
-## Licence
-
-NQ is licensed under [GNU AGPL-3.0](LICENSE.txt).
+NQ is licensed under the [GNU Affero General Public License v3.0](LICENSE.txt).

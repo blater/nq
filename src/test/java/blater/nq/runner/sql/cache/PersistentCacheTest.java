@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.DriverManager;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,6 +42,18 @@ class PersistentCacheTest {
 
     assertFalse(second.needsLoad());
     assertEquals(first.cacheFile(), second.cacheFile());
+  }
+
+  @Test
+  void retriesWhenGeneratedCacheNameAlreadyExists() throws Exception {
+    Path root = PersistentCache.cacheRoot(cacheParams());
+    Files.createDirectories(root);
+    Files.createFile(root.resolve("calm-otter.mv.db"));
+    var generated = List.of("calm-otter", "bright-fox").iterator();
+
+    Path cacheFile = PersistentCache.unusedCacheFile(root, generated::next);
+
+    assertEquals(root.resolve("bright-fox.mv.db"), cacheFile);
   }
 
   @Test

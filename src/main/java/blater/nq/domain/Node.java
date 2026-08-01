@@ -25,7 +25,7 @@ public final class Node {
   private boolean nullValue = false;
   // Renders as an XML attribute on its parent rather than a child element.
   private boolean attribute = false;
-  // Marks nodes expanded from source collection items until cache loading moves to streaming events.
+  // Marks a node as an item in a repeated collection, including keyed output nodes.
   private boolean arrayItem = false;
   // Marks an output container whose children are anonymous collection items.
   private boolean collection = false;

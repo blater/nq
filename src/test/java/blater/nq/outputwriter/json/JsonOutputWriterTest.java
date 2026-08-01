@@ -35,6 +35,18 @@ class JsonOutputWriterTest {
   }
 
   @Test
+  void oneCollectionItemStillRendersAsArray() {
+    Node root = new Node("people");
+    Node person = person("1", "Alice");
+    person.setArrayItem(true);
+    root.addNode(person);
+
+    assertEquals(
+        "{\"people\":{\"person\":[{\"id\":\"1\",\"firstname\":\"Alice\"}]}}",
+        JsonOutputWriter.map(new Hierarchy(root)));
+  }
+
+  @Test
   void nullValuesRenderAsJsonNull() {
     Node root = new Node("person");
     Node middleName = new Node("middleName");
