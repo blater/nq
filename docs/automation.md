@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install NQ
         env:
-          NQ_VERSION: 0.9.3
+          NQ_VERSION: 0.9.7
         run: |
           curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/nq-${NQ_VERSION}-linux-x64.tar.gz"
           curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/SHA256SUMS"

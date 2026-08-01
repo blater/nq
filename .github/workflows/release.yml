@@ -58,6 +58,16 @@ jobs:
             exit 1
           fi
 
+      - name: Check Chocolatey publication secret
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        shell: bash
+        run: |
+          if [[ -z "$CHOCOLATEY_API_KEY" ]]; then
+            echo "::error title=Missing CHOCOLATEY_API_KEY::Run ./actions-setup.sh before releasing."
+            exit 1
+          fi
+
   test:
     needs: validate
     runs-on: ubuntu-22.04
@@ -187,6 +197,52 @@ jobs:
             -Path target/nq.exe `
             -DestinationPath "dist/nq-$env:VERSION-$env:PLATFORM.zip"
 
+      - name: Build and smoke-test Chocolatey package
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tools = "util\chocolatey\tools"
+          New-Item -ItemType Directory -Force -Path $tools | Out-Null
+          Copy-Item target\nq.exe "$tools\nq.exe"
+          Copy-Item LICENSE.txt "$tools\LICENSE.txt"
+
+          $exeHash = (Get-FileHash "$tools\nq.exe" -Algorithm SHA256).Hash.ToLower()
+          $verification = Get-Content `
+            util\chocolatey\VERIFICATION.txt.template -Raw
+          $verification = $verification.Replace("__VERSION__", $env:VERSION)
+          $verification = $verification.Replace("__EXE_SHA256__", $exeHash)
+          Set-Content `
+            "$tools\VERIFICATION.txt" `
+            $verification `
+            -Encoding utf8NoBOM
+
+          Push-Location util\chocolatey
+          try {
+            choco pack nq.nuspec `
+              --version $env:VERSION `
+              --output-directory ..\..\dist
+          } finally {
+            Pop-Location
+          }
+
+          $source = (Resolve-Path dist).Path
+          choco install nq `
+            --version $env:VERSION `
+            --source $source `
+            --yes `
+            --no-progress
+          try {
+            $installed = & "$env:ChocolateyInstall\bin\nq.exe" --version
+            if ($installed -ne "nq $env:VERSION") {
+              throw "Chocolatey package installed unexpected version: $installed"
+            }
+          } finally {
+            choco uninstall nq --yes --no-progress
+          }
+
       - name: Upload packaged executable
         uses: actions/upload-artifact@v4
         with:
@@ -263,7 +319,7 @@ jobs:
         shell: bash
         run: |
           cd dist
-          sha256sum nq-* > SHA256SUMS
+          sha256sum nq-* nq.*.nupkg > SHA256SUMS
 
       - name: Create or update GitHub release
         env:
@@ -304,3 +360,31 @@ jobs:
         run: |
           gh auth setup-git --hostname github.com --force
           ./util/build_brew
+
+  chocolatey:
+    name: Publish Chocolatey package
+    needs:
+      - validate
+      - publish
+    runs-on: windows-2022
+    steps:
+      - name: Download Chocolatey package
+        uses: actions/download-artifact@v4
+        with:
+          name: release-windows-x64
+          path: dist
+
+      - name: Publish Chocolatey package
+        shell: pwsh
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $package = "dist\nq.$env:VERSION.nupkg"
+          if (-not (Test-Path $package)) {
+            throw "Chocolatey package not found: $package"
+          }
+          choco push $package `
+            --source https://push.chocolatey.org/ `
+            --api-key $env:CHOCOLATEY_API_KEY

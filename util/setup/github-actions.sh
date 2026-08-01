@@ -34,6 +34,20 @@ ERROR
   exit 1
 fi
 
+if [[ -z "${CHOCOLATEY_API_KEY:-}" ]]; then
+  cat >&2 <<'ERROR'
+Error: CHOCOLATEY_API_KEY is required.
+
+Copy the API key from your Chocolatey Community Repository account, then run:
+
+  ./actions-setup.sh
+
+The key is sent directly to GitHub Actions secrets and is never written to the
+repository or printed by this script.
+ERROR
+  exit 1
+fi
+
 require_command gh
 
 cd "$project_dir"
@@ -68,6 +82,10 @@ gh api \
 log "Storing HOMEBREW_TAP_TOKEN as a repository Actions secret"
 printf '%s' "$HOMEBREW_TAP_TOKEN" |
   gh secret set HOMEBREW_TAP_TOKEN --repo "$source_repository" --app actions
+
+log "Storing CHOCOLATEY_API_KEY as a repository Actions secret"
+printf '%s' "$CHOCOLATEY_API_KEY" |
+  gh secret set CHOCOLATEY_API_KEY --repo "$source_repository" --app actions
 
 log "GitHub Actions setup complete"
 printf '%s\n' \

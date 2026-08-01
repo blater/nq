@@ -1,85 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source_repository="blater/nq"
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-dist_dir="$script_dir/dist"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-usage() {
-  cat <<'USAGE'
-Usage: ./release
+cat >&2 <<'NOTICE'
+util/build_release now uses the cross-platform GitHub Actions release path so
+Windows and Chocolatey artifacts cannot be skipped.
+NOTICE
 
-Build the current NQ version, publish its GitHub release, and publish its
-Homebrew formula by calling ./build_brew.
-USAGE
-}
-
-log() {
-  printf '==> %s\n' "$*"
-}
-
-die() {
-  printf 'Error: %s\n' "$*" >&2
-  exit 1
-}
-
-case "${1:-}" in
-  "") ;;
-  -h|--help)
-    usage
-    exit 0
-    ;;
-  *)
-    usage >&2
-    exit 2
-    ;;
-esac
-
-cd "$script_dir"
-
-[[ "$(uname -s)" == "Darwin" ]] || die "Releases must be built on macOS."
-[[ "$(uname -m)" == "arm64" ]] || die "Releases must be built on Apple Silicon."
-
-version="$(awk -F '[<>]' '/^[[:space:]]*<version>/ { print $3; exit }' pom.xml)"
-[[ -n "$version" ]] || die "Could not read the project version from pom.xml."
-[[ "$version" != *SNAPSHOT* ]] || die "Set a release version in pom.xml before releasing."
-
-[[ -z "$(git status --porcelain --untracked-files=normal)" ]] || \
-  die "The Git working tree is not clean. Commit the release changes first."
-
-branch="$(git branch --show-current)"
-[[ -n "$branch" ]] || die "Releases cannot be created from a detached HEAD."
-
-local_commit="$(git rev-parse HEAD)"
-remote_commit="$(git ls-remote origin "refs/heads/$branch" | awk '{ print $1 }')"
-[[ -n "$remote_commit" ]] || die "Branch $branch does not exist on origin."
-[[ "$local_commit" == "$remote_commit" ]] || die "Current commit has not been pushed to origin/$branch."
-
-tag="v$version"
-if gh release view "$tag" --repo "$source_repository" >/dev/null 2>&1; then
-  die "GitHub release $tag already exists."
-fi
-
-log "Building NQ $version"
-"$script_dir/build_exe"
-
-mkdir -p "$dist_dir"
-archive_name="nq-${version}-darwin-arm64.tar.gz"
-archive_path="$dist_dir/$archive_name"
-
-log "Creating $archive_path"
-tar -C "$script_dir/target" -czf "$archive_path" nq
-
-log "Publishing GitHub release $tag"
-gh release create "$tag" "$archive_path" \
-  --repo "$source_repository" \
-  --target "$local_commit" \
-  --title "NQ $version" \
-  --generate-notes
-
-log "Publishing Homebrew formula"
-"$script_dir/build_brew"
-
-log "Release complete"
-printf 'Release: https://github.com/%s/releases/tag/%s\n' "$source_repository" "$tag"
-printf 'Install: brew install blater/tap/nq\n'
+exec "$script_dir/release.sh" "$@"

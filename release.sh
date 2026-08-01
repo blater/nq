@@ -2,19 +2,34 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source_repository="${NQ_SOURCE_REPOSITORY:-blater/nq}"
 
 usage() {
   cat <<'USAGE'
 Usage: ./release.sh X.Y.Z
 
 Update pom.xml to a higher version, commit and push the change, then create
-and push the matching vX.Y.Z release tag.
+and push the matching vX.Y.Z release tag. Wait for GitHub Actions to publish
+the native, JVM, Homebrew, and Chocolatey distributions, then verify the
+GitHub release assets.
 USAGE
 }
 
 die() {
   printf 'Error: %s\n' "$*" >&2
   exit 1
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || \
+    die "$1 is required but was not found on PATH."
+}
+
+require_actions_secret() {
+  local secret_name="$1"
+  if ! grep -q "^${secret_name}[[:space:]]" <<< "$actions_secrets"; then
+    die "$secret_name is not configured for $source_repository. Run ./actions-setup.sh."
+  fi
 }
 
 version_is_greater() {
@@ -45,7 +60,14 @@ version_is_greater() {
 }
 
 case "$#" in
-  1) ;;
+  1)
+    case "$1" in
+      -h|--help)
+        usage
+        exit 0
+        ;;
+    esac
+    ;;
   *)
     usage >&2
     exit 2
@@ -57,6 +79,25 @@ version="$1"
   die "Version must use X.Y.Z numeric format, for example 1.2.3."
 
 cd "$script_dir"
+
+require_command gh
+require_command git
+
+gh auth status --hostname github.com >/dev/null 2>&1 || \
+  die "GitHub CLI authentication is required. Run: gh auth login --hostname github.com"
+
+[[ -f .github/workflows/release.yml ]] || \
+  die "The GitHub release workflow is missing."
+[[ -f util/chocolatey/nq.nuspec ]] || \
+  die "The Chocolatey package definition is missing."
+[[ -f util/chocolatey/VERIFICATION.txt.template ]] || \
+  die "The Chocolatey verification template is missing."
+
+actions_secrets="$(
+  gh secret list --repo "$source_repository" --app actions
+)" || die "Could not read GitHub Actions secrets for $source_repository."
+require_actions_secret HOMEBREW_TAP_TOKEN
+require_actions_secret CHOCOLATEY_API_KEY
 
 current_version="$(awk -F '[<>]' '/^[[:space:]]*<version>/ { print $3; exit }' pom.xml)"
 [[ "$current_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
@@ -99,4 +140,50 @@ git push
 git tag -a "$tag" -m "Release $tag"
 git push origin "$tag"
 
-printf 'Release tag %s pushed; the GitHub release workflow has started.\n' "$tag"
+release_commit="$(git rev-parse "${tag}^{commit}")"
+printf 'Release tag %s pushed; waiting for the GitHub release workflow.\n' "$tag"
+
+run_id=""
+for _ in {1..30}; do
+  run_id="$(
+    gh api \
+      --method GET \
+      "repos/$source_repository/actions/workflows/release.yml/runs" \
+      -f event=push \
+      -f head_sha="$release_commit" \
+      -f per_page=1 \
+      --jq '.workflow_runs[0].id // empty'
+  )" || die "Could not find the GitHub release workflow run."
+  [[ -z "$run_id" ]] || break
+  sleep 2
+done
+[[ -n "$run_id" ]] || \
+  die "The GitHub release workflow did not appear for $tag."
+
+gh run watch "$run_id" --repo "$source_repository" --exit-status || \
+  die "The GitHub release workflow failed: https://github.com/$source_repository/actions/runs/$run_id"
+
+release_assets="$(
+  gh release view "$tag" \
+    --repo "$source_repository" \
+    --json assets \
+    --jq '.assets[].name'
+)" || die "Could not inspect GitHub release $tag."
+
+required_assets=(
+  "nq-${version}-darwin-arm64.tar.gz"
+  "nq-${version}-linux-x64.tar.gz"
+  "nq-${version}-windows-x64.zip"
+  "nq-${version}-jvm.jar"
+  "nq.${version}.nupkg"
+  "SHA256SUMS"
+)
+for asset in "${required_assets[@]}"; do
+  grep -Fxq "$asset" <<< "$release_assets" || \
+    die "GitHub release $tag is missing $asset."
+done
+
+printf 'Release complete: https://github.com/%s/releases/tag/%s\n' \
+  "$source_repository" "$tag"
+printf 'Install on macOS: brew install blater/tap/nq\n'
+printf 'Install on Windows after Chocolatey moderation: choco install nq\n'

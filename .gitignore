@@ -1,4 +1,5 @@
 target/
 dist/
+util/chocolatey/tools/
 .DS_Store
 .idea/

@@ -4,18 +4,20 @@ NQ — SQL for nested data is distributed as native executables for macOS ARM64,
 Linux x64, and Windows x64. A JVM build is also available for systems with JDK
 25.
 
-The commands below target NQ 0.9.3, the release against which this guide was
+The commands below target NQ 0.9.7, the release against which this guide was
 verified. Check the [latest release](https://github.com/blater/nq/releases/latest)
 before installing.
 
 ## Support matrix
 
-| Platform | Architecture | Package | Included JDBC drivers | Runtime loading of driver JARs |
-|---|---|---|---|---|
-| macOS | ARM64 | Homebrew or release `.tar.gz` | H2, MySQL, MariaDB, PostgreSQL | No |
-| Linux | x64 | Release `.tar.gz` | H2, MySQL, MariaDB, PostgreSQL | No |
-| Windows | x64 | Release `.zip` | H2, MySQL, MariaDB, PostgreSQL | No |
-| JVM | Any JDK 25 platform | Fat JAR | Depends on build profile | Yes, through an explicit classpath |
+| Platform | Architecture | Package | JDBC drivers | Runtime driver JARs |
+| --- | --- | --- | --- | --- |
+| macOS | ARM64 | Homebrew or `.tar.gz` | Common set | No |
+| Linux | x64 | `.tar.gz` | Common set | No |
+| Windows | x64 | Chocolatey or `.zip` | Common set | No |
+| JVM | Any JDK 25 platform | Fat JAR | Build profile | Yes |
+
+The common driver set is H2, MySQL, MariaDB, and PostgreSQL.
 
 Oracle, SQL Server, Db2, SAP HANA, and Informix native builds are not currently
 published as release assets. Build the `jdbc-enterprise` or `jdbc-all` profile
@@ -44,7 +46,7 @@ clean-environment verification matrix.
 ## Linux x64
 
 ```bash
-NQ_VERSION=0.9.3
+NQ_VERSION=0.9.7
 curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/nq-${NQ_VERSION}-linux-x64.tar.gz"
 curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/SHA256SUMS"
 grep "nq-${NQ_VERSION}-linux-x64.tar.gz" SHA256SUMS | sha256sum --check
@@ -58,10 +60,23 @@ instead may require administrator privileges.
 
 ## Windows x64
 
-In PowerShell:
+Install with Chocolatey from an administrator PowerShell:
 
 ```powershell
-$version = "0.9.3"
+choco install nq
+```
+
+Upgrade with:
+
+```powershell
+choco upgrade nq
+```
+
+The Chocolatey package contains the same native executable as the Windows x64
+release archive. If Chocolatey is unavailable, install the archive directly:
+
+```powershell
+$version = "0.9.7"
 $asset = "nq-$version-windows-x64.zip"
 $release = "https://github.com/blater/nq/releases/download/v$version"
 Invoke-WebRequest "$release/$asset" -OutFile $asset
@@ -74,7 +89,6 @@ Expand-Archive $asset -DestinationPath .\nq
 ```
 
 Move `nq.exe` into a directory on `PATH` for use outside the extracted folder.
-A WinGet, Scoop, or Chocolatey package is not currently published.
 
 ## Operating-system security prompts
 
@@ -120,8 +134,8 @@ executables cannot. See
 
 ## Shell completion
 
-Completion definitions live in [`utils/completions`](../utils/completions/README.md) for
-Bash, Zsh, and Fish.
+Completion definitions live in
+[`util/completions`](../util/completions/README.md) for Bash, Zsh, and Fish.
 
 ## Verify first use
 

@@ -1,0 +1,20 @@
+VERIFICATION
+
+The nq.exe included in this package is built from the tagged NQ source by the
+official GitHub Actions release workflow. The same executable is included in:
+
+https://github.com/blater/nq/releases/download/v__VERSION__/nq-__VERSION__-windows-x64.zip
+
+The SHA-256 hash of the packaged nq.exe is:
+
+__EXE_SHA256__
+
+To verify it:
+
+1. Download the Windows archive and SHA256SUMS from the release above.
+2. Check the archive against its entry in SHA256SUMS.
+3. Extract nq.exe and run:
+
+   Get-FileHash nq.exe -Algorithm SHA256
+
+The resulting hash must match the hash recorded in this file.

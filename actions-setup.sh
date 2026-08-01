@@ -3,7 +3,8 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source_repository="${NQ_SOURCE_REPOSITORY:-blater/nq}"
-token_was_provided=false
+homebrew_token_was_provided=false
+chocolatey_key_was_provided=false
 
 die() {
   printf 'Error: %s\n' "$*" >&2
@@ -20,7 +21,7 @@ if ! gh auth status --hostname github.com >/dev/null 2>&1; then
 fi
 
 if [[ -n "${HOMEBREW_TAP_TOKEN:-}" ]]; then
-  token_was_provided=true
+  homebrew_token_was_provided=true
 else
   printf 'Homebrew tap fine-grained token: ' >&2
   IFS= read -r -s HOMEBREW_TAP_TOKEN
@@ -29,9 +30,22 @@ else
   export HOMEBREW_TAP_TOKEN
 fi
 
+if [[ -n "${CHOCOLATEY_API_KEY:-}" ]]; then
+  chocolatey_key_was_provided=true
+else
+  printf 'Chocolatey Community Repository API key: ' >&2
+  IFS= read -r -s CHOCOLATEY_API_KEY
+  printf '\n' >&2
+  [[ -n "$CHOCOLATEY_API_KEY" ]] || die "A Chocolatey API key is required."
+  export CHOCOLATEY_API_KEY
+fi
+
 cleanup() {
-  if [[ "$token_was_provided" == false ]]; then
+  if [[ "$homebrew_token_was_provided" == false ]]; then
     unset HOMEBREW_TAP_TOKEN
+  fi
+  if [[ "$chocolatey_key_was_provided" == false ]]; then
+    unset CHOCOLATEY_API_KEY
   fi
 }
 trap cleanup EXIT
@@ -44,3 +58,10 @@ if ! gh secret list --repo "$source_repository" --app actions |
 fi
 
 printf 'Verified HOMEBREW_TAP_TOKEN in %s Actions secrets.\n' "$source_repository"
+
+if ! gh secret list --repo "$source_repository" --app actions |
+  awk '$1 == "CHOCOLATEY_API_KEY" { found = 1 } END { exit !found }'; then
+  die "CHOCOLATEY_API_KEY was not found in $source_repository Actions secrets."
+fi
+
+printf 'Verified CHOCOLATEY_API_KEY in %s Actions secrets.\n' "$source_repository"

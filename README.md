@@ -4,9 +4,9 @@
 [![Release](https://img.shields.io/github/v/release/blater/nq)](https://github.com/blater/nq/releases/latest)
 [![License: AGPL-3.0](https://img.shields.io/github/license/blater/nq)](LICENSE.txt)
 
-Use SQL to query and reshape JSON, YAML, XML, CSV, JSON Lines, and Parquet,
-turn joined rows into deliberate output hierarchies, and move hierarchical
-data into or out of relational databases.
+NQ queries JSON, YAML, XML, CSV, JSON Lines, and Parquet with SQL. It builds
+nested documents from query results and moves data between documents and
+relational databases.
 
 ## Install
 
@@ -19,7 +19,7 @@ brew install blater/tap/nq
 ### Linux x64
 
 ```bash
-NQ_VERSION=0.9.3
+NQ_VERSION=0.9.7
 curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/nq-${NQ_VERSION}-linux-x64.tar.gz"
 curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/SHA256SUMS"
 grep "nq-${NQ_VERSION}-linux-x64.tar.gz" SHA256SUMS | sha256sum --check
@@ -31,16 +31,7 @@ nq --help
 ### Windows x64
 
 ```powershell
-$version = "0.9.3"
-$asset = "nq-$version-windows-x64.zip"
-$release = "https://github.com/blater/nq/releases/download/v$version"
-Invoke-WebRequest "$release/$asset" -OutFile $asset
-Invoke-WebRequest "$release/SHA256SUMS" -OutFile SHA256SUMS
-$expected = ((Select-String $asset SHA256SUMS).Line -split '\s+')[0].ToLower()
-$actual = (Get-FileHash $asset -Algorithm SHA256).Hash.ToLower()
-if ($actual -ne $expected) { throw "Checksum verification failed" }
-Expand-Archive $asset -DestinationPath .\nq
-.\nq\nq.exe --help
+choco install nq
 ```
 
 See the [complete installation guide](docs/install.md) for the JVM build,
