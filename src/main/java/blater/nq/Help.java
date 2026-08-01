@@ -5,12 +5,13 @@ public final class Help {
   static final String USAGE = """
       Usage:
         nq <script-file-or-text> [input-file] [name=value ...] [options]
+        nq -i|--input <type> [script-file-or-text] [options] < input
         nq catalog [table-pattern] [options]
         nq <input-file> [-o|--output <type>]
         nq -c|--cache <input-file> [cache-options]
-        nq --use-cache <input-file-or-cache-filename> [cache-options]
+        nq --use-cache <source-id-or-cache-filename> [cache-options]
         nq --list-caches [cache-options]
-        nq --clear-cache [input-file-or-cache-filename] [cache-options]
+        nq --clear-cache [source-id-or-cache-filename] [cache-options]
         nq --clear-cache-older-than <age> [cache-options]
         nq -h | --help [topic]
         nq --version
@@ -26,6 +27,7 @@ public final class Help {
         --jdbc-password <password>
 
       Output and query options:
+        -i, --input <xml|json|jsonl|yaml|csv|parquet>
         -o, --output <xml|json|jsonl|csv|yaml|markdown>
         --debug
         --no-key-inference
@@ -123,6 +125,7 @@ public final class Help {
 
       SYNOPSIS
           nq <script-file-or-text> [input-file] [name=value ...] [options]
+          nq -i|--input <type> <script-file-or-text> [options] < input
 
       DESCRIPTION
           A script may be a filename or inline script text. Supply an input file
@@ -135,11 +138,16 @@ public final class Help {
           record streams use ITEM. Resolve collisions or name anonymous paths
           with repeatable --relation-alias path=name options. Use
           --anonymous-collections error to reject ambiguous ITEM merging.
+          Use -i or --input to read a named format from standard input. It uses
+          temporary in-memory storage unless --cache is supplied. Persistent
+          stdin caches are identified by input type and content hash.
 
       EXAMPLES
           nq report.nq -p database.properties
           nq update.nq customers.json -p database.properties
           nq 'select id from item;' elements.json
+          cat elements.json | nq -i json 'select id from item;'
+          nq -i json 'select id from item;' < elements.json
           nq 'select id from customers;' customers.json
           nq query.nq data.json --relation-alias '/0=customers'
           nq query.nq customers.json --cache --output json
@@ -154,10 +162,11 @@ public final class Help {
 
   static final String CACHE_CMD = """
       CACHE
-          Load and query a structured input file through persistent local H2.
+          Load and query structured file or standard input through persistent local H2.
 
       SYNOPSIS
           nq -c|--cache <input-file> [--cache-dir path]
+          nq -i|--input <type> --cache [<script>] < input
           nq <script> <input-file> --cache [--cache-dir path] [--output type]
           nq <script> [--output type]
 
@@ -167,7 +176,8 @@ public final class Help {
           ~/.nq/cache. Persistent caching is always explicit; a lone input file
           instead converts directly to the selected output format. A script
           with no input or JDBC connection queries the active cache. Explicit
-          --cache takes precedence over JDBC settings.
+          --cache takes precedence over JDBC settings. Standard-input caches
+          are identified by input type, content hash, and materialization options.
 
           JSON and YAML relation names come from collection member names.
           Anonymous JSON arrays, JSON Lines, and CSV use ITEM. Configure source
@@ -181,6 +191,7 @@ public final class Help {
           nq -c customers.json
           nq totals.nq
           nq totals.nq customers.json --cache --output json
+          cat customers.json | nq -i json --cache totals.nq
 
       SEE ALSO
           nq --help query
@@ -195,12 +206,13 @@ public final class Help {
           Switch the active cache without loading or rebuilding it.
 
       SYNOPSIS
-          nq --use-cache <input-file-or-cache-filename> [--cache-dir path]
+          nq --use-cache <source-id-or-cache-filename> [--cache-dir path]
 
       DESCRIPTION
-          Selects an existing cache by its source path or by a bare cache
+          Selects an existing cache by its source identifier or by a bare cache
           filename. A bare cache filename is resolved in --cache-dir, or in
-          ~/.nq/cache by default. The source file need not still exist. The
+          ~/.nq/cache by default. File sources use absolute paths; standard-input
+          sources use stdin:<type>:sha256:<hash>. The source file need not exist. The
           command fails if no matching cache exists and does not create one. If
           several current variants exist, repeat their materialization options
           to select an exact variant; use --parquet-record for Parquet variants.
@@ -219,16 +231,16 @@ public final class Help {
 
   static final String CLEAR_CACHE_CMD = """
       CLEAR-CACHE
-          Remove persistent input-file caches.
+          Remove persistent input caches.
 
       SYNOPSIS
           nq --clear-cache [--cache-dir path]
-          nq --clear-cache <input-file-or-cache-filename> [--cache-dir path]
-          nq --clear-cache=<input-file-or-cache-filename> [--cache-dir path]
+          nq --clear-cache <source-id-or-cache-filename> [--cache-dir path]
+          nq --clear-cache=<source-id-or-cache-filename> [--cache-dir path]
           nq --clear-cache-older-than <age> [--cache-dir path]
 
       DESCRIPTION
-          With no target, --clear-cache removes every cache. An input-file path
+          With no target, --clear-cache removes every cache. A source identifier
           removes every cache variant belonging to that source. A bare cache
           filename removes that file from --cache-dir, or ~/.nq/cache by
           default. Ages accept minutes, hours, or days, including 30m, 6h, and 7d.
@@ -242,14 +254,14 @@ public final class Help {
 
   static final String LIST_CACHES_CMD = """
       LIST-CACHES
-          List persistent input-file caches.
+          List persistent input caches.
 
       SYNOPSIS
           nq --list-caches [--cache-dir path]
 
       DESCRIPTION
           Displays each cache's input type, creation time, materialization
-          variant, and source path. The active cache is marked with an asterisk.
+          variant, and source identifier. The active cache is marked with an asterisk.
           Incompatible old input layouts are marked outdated and cannot be used.
 
       EXAMPLE
@@ -357,12 +369,13 @@ public final class Help {
 
       SYNOPSIS
           nq <script-file-or-text> [input-file] [name=value ...] [options]
+          nq -i|--input <type> [script-file-or-text] [options] < input
           nq catalog [table-pattern] [connection/cache options]
           nq <input-file> [-o|--output type]
           nq -c|--cache <input-file> [--cache-dir path]
-          nq --use-cache <input-file-or-cache-filename> [--cache-dir path]
+          nq --use-cache <source-id-or-cache-filename> [--cache-dir path]
           nq --list-caches [--cache-dir path]
-          nq --clear-cache [input-file-or-cache-filename] [--cache-dir path]
+          nq --clear-cache [source-id-or-cache-filename] [--cache-dir path]
           nq --clear-cache-older-than age [--cache-dir path]
           nq -h | --help | --help <topic>
 
@@ -375,6 +388,9 @@ public final class Help {
 
           Arguments may appear in any unambiguous order. A script may be a file
           or inline text. The input file type is selected by its extension. An
+          input type supplied with -i or --input reads standard input instead.
+          Standard input is temporary unless --cache is supplied; persistent
+          stdin caches are identified by input type and content hash. An
           input file on its own is converted directly to JSON or the format
           selected by --output. Supplying a script disables direct conversion.
           Persistent caching requires -c or --cache. Named JSON/YAML collections
@@ -416,6 +432,9 @@ public final class Help {
           --output type, -o type
               Write xml, json, jsonl, yaml, csv, or markdown output.
 
+          --input type, -i type
+              Read xml, json, jsonl, yaml, csv, or parquet from standard input.
+
           --debug
               Log inference decisions and other diagnostic details to stderr.
 
@@ -432,12 +451,13 @@ public final class Help {
               metadata on every use; the default is 24 hours.
 
           --cache, -c
-              Persist, select, or query a file-backed local H2 cache. Without
-              this option, a script and input file use temporary in-memory H2.
-              An explicit cache takes precedence over JDBC settings.
+              Persist, select, or query a file-backed local H2 cache. Standard
+              input is content-addressed by type and hash. Without this option,
+              a script and input source use temporary in-memory H2. An explicit
+              cache takes precedence over JDBC settings.
 
-          --use-cache input-file-or-cache-filename
-              Make an existing input-file cache active without loading or
+          --use-cache source-id-or-cache-filename
+              Make an existing input cache active without loading or
               rebuilding it.
 
           --cache-dir path
@@ -452,11 +472,11 @@ public final class Help {
               paths. This option and the anonymous policy select cache variants.
 
           --list-caches
-              List persistent caches, variants, and source files. Incompatible
+              List persistent caches, variants, and source identifiers. Incompatible
               old input layouts are marked outdated.
 
-          --clear-cache [input-file-or-cache-filename]
-              Clear all caches, every variant for one input file, or one named
+          --clear-cache [source-id-or-cache-filename]
+              Clear all caches, every variant for one input source, or one named
               cache file.
 
           --clear-cache-older-than age

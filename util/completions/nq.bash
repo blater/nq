@@ -27,7 +27,7 @@ _nq_completion() {
   esac
 
   if [[ "$current" == -* ]]; then
-    COMPREPLY=($(compgen -W "-h --help --version -p -o --output -c --cache --debug --no-key-inference --cache-dir --use-cache --list-caches --clear-cache --clear-cache-older-than --anonymous-collections --relation-alias --metadata-refresh --metadata-expiry-hours --parquet-root --parquet-record --db --database --host --port --user --password --jdbc-driver --jdbc-class-name --jdbc-database --jdbc-username --jdbc-password" -- "$current"))
+    COMPREPLY=($(compgen -W "-h --help --version -p -i --input -o --output -c --cache --debug --no-key-inference --cache-dir --use-cache --list-caches --clear-cache --clear-cache-older-than --anonymous-collections --relation-alias --metadata-refresh --metadata-expiry-hours --parquet-root --parquet-record --db --database --host --port --user --password --jdbc-driver --jdbc-class-name --jdbc-database --jdbc-username --jdbc-password" -- "$current"))
   elif [[ $COMP_CWORD -eq 1 ]]; then
     COMPREPLY=($(compgen -W "catalog" -- "$current") $(compgen -f -- "$current"))
   else

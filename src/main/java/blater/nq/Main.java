@@ -15,6 +15,13 @@ import blater.nq.runner.sql.cache.PersistentCache;
 import blater.nq.runner.sql.SqlExecutor;
 import blater.nq.util.Log;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +31,17 @@ import static blater.nq.ParameterParser.*;
 public class Main {
   public static void main(String... args) throws Exception {
     var params = ParameterParser.parse(args);
+    Path stagedInput = stageStandardInput(params);
+    try {
+      run(params);
+    } finally {
+      if (stagedInput != null) {
+        Files.deleteIfExists(stagedInput);
+      }
+    }
+  }
+
+  private static void run(Map<String, String> params) throws Exception {
     Log.debug(Boolean.parseBoolean(params.get(DEBUG_PARAM)));
 
     if (params.containsKey(VERSION_PARAM)) {
@@ -71,7 +89,9 @@ public class Main {
     } else if (!ParameterParser.hasScript(params)) {
       if (Boolean.parseBoolean(params.get(CACHE_MODE_PARAM))) {
         boolean loaded = CacheExecution.loadAndActivate(params);
-        String source = CacheSource.normalizedSourcePath(params.get(INPUT_FILENAME)).toString();
+        String source = params.containsKey(STDIN_SOURCE_PARAM)
+            ? params.get(STDIN_SOURCE_PARAM)
+            : CacheSource.normalizedSourcePath(params.get(INPUT_FILENAME)).toString();
         System.out.println((loaded ? "Loaded cache for " : "Using existing cache for ") + source);
       } else {
         convertInput(params);
@@ -82,6 +102,48 @@ public class Main {
           : ScriptLoader.load(params.get(SCRIPT_FILE_PARAM));
       NestScript script = ScriptParser.parse(inputScript);
       execute(script, params);
+    }
+  }
+
+  private static Path stageStandardInput(Map<String, String> params) {
+    if (!STDIN_INPUT.equals(params.get(INPUT_FILENAME))) {
+      return null;
+    }
+
+    InputType inputType = InputType.fromName(params.get(INPUT_TYPE_PARAM));
+    Path staged = null;
+    try {
+      staged = Files.createTempFile("nq-stdin-", inputType.fileExtension());
+      Files.copy(System.in, staged, StandardCopyOption.REPLACE_EXISTING);
+      params.put(INPUT_FILENAME, staged.toString());
+      params.put(STDIN_SOURCE_PARAM,
+          "stdin:" + inputType.name().toLowerCase() + ":sha256:" + sha256(staged));
+      return staged;
+    } catch (IOException e) {
+      if (staged != null) {
+        try {
+          Files.deleteIfExists(staged);
+        } catch (IOException cleanupFailure) {
+          e.addSuppressed(cleanupFailure);
+        }
+      }
+      return Log.fatal(IllegalStateException.class, "Could not read standard input.", e);
+    }
+  }
+
+  private static String sha256(Path input) throws IOException {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      try (var stream = Files.newInputStream(input)) {
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = stream.read(buffer)) >= 0) {
+          digest.update(buffer, 0, read);
+        }
+      }
+      return HexFormat.of().formatHex(digest.digest());
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 is not available.", e);
     }
   }
 

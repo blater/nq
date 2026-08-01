@@ -21,7 +21,10 @@ public record CacheSource(
   }
 
   public static CacheSource from(String inputFilename, Map<String, String> parameters) {
-    return from(inputFilename, InputType.fromFilename(inputFilename), parameters);
+    InputType inputType = parameters.containsKey(ParameterParser.INPUT_TYPE_PARAM)
+        ? InputType.fromName(parameters.get(ParameterParser.INPUT_TYPE_PARAM))
+        : inputTypeFromSource(inputFilename);
+    return from(inputFilename, inputType, parameters);
   }
 
   public static CacheSource from(
@@ -32,8 +35,11 @@ public record CacheSource(
         && parameters.containsKey(ParameterParser.PARQUET_RECORD_PARAM)
         ? "record=" + parameters.get(ParameterParser.PARQUET_RECORD_PARAM)
         : "";
+    String sourcePath = parameters.containsKey(ParameterParser.STDIN_SOURCE_PARAM)
+        ? parameters.get(ParameterParser.STDIN_SOURCE_PARAM)
+        : normalizedSourceIdentity(inputFilename);
     return new CacheSource(
-        normalizedSourcePath(inputFilename).toString(),
+        sourcePath,
         inputType,
         variant,
         MaterializationConfiguration.from(parameters).canonicalKey());
@@ -45,6 +51,28 @@ public record CacheSource(
     }
     Path path = Path.of(inputFilename);
     return path.toAbsolutePath().normalize();
+  }
+
+  public static String normalizedSourceIdentity(String source) {
+    return isStandardInputSource(source)
+        ? source
+        : normalizedSourcePath(source).toString();
+  }
+
+  private static boolean isStandardInputSource(String source) {
+    return source != null && source.startsWith("stdin:");
+  }
+
+  private static InputType inputTypeFromSource(String source) {
+    if (!isStandardInputSource(source)) {
+      return InputType.fromFilename(source);
+    }
+    int typeEnd = source.indexOf(':', "stdin:".length());
+    if (typeEnd < 0) {
+      return Log.fatal(IllegalArgumentException.class,
+          "Malformed standard input cache identifier: " + source);
+    }
+    return InputType.fromName(source.substring("stdin:".length(), typeEnd));
   }
 
   boolean matches(Metadata metadata) {

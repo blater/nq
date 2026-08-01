@@ -18,6 +18,9 @@ import java.util.stream.Stream;
  */
 public final class ParameterParser {
   public static final String INPUT_FILENAME = "NSQL_INPUTFILE";
+  public static final String INPUT_TYPE_PARAM = "NSQL_INPUT_TYPE";
+  public static final String STDIN_SOURCE_PARAM = "NSQL_STDIN_SOURCE";
+  public static final String STDIN_INPUT = "-";
 
   public static final String SCRIPT_FILE_PARAM = "NSQL_SCRIPTFILE";
   public static final String SCRIPT_TEXT_PARAM = "NSQL_SCRIPT";
@@ -126,6 +129,13 @@ public final class ParameterParser {
             commandParameters, OUTPUT_TYPE_PARAM,
             args, i, attachedValue, "no output type supplied");
 
+        case "--input", "-i" -> {
+          String value = requiredValue(
+              args, i, attachedValue, "no standard input type supplied");
+          i = nextIndex(i, attachedValue);
+          commandParameters.put(INPUT_TYPE_PARAM, InputType.fromName(value).name().toLowerCase());
+        }
+
         case "--debug" -> {
           requireNoAttachedValue(argument, attachedValue);
           commandParameters.put(DEBUG_PARAM, "true");
@@ -206,9 +216,25 @@ public final class ParameterParser {
       normalizeJdbcDriver(parameters);
     }
     resolvePositionals(parameters, positionals);
+    validateStandardInputOptions(parameters);
     validateStandaloneInputOptions(parameters);
     validateMaterializationOptions(parameters);
     return parameters;
+  }
+
+  private static void validateStandardInputOptions(Map<String, String> parameters) {
+    if (!parameters.containsKey(INPUT_TYPE_PARAM)) return;
+
+    if (parameters.containsKey(CACHE_LIST_PARAM)
+        || parameters.containsKey(CACHE_USE_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_TARGET_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_ALL_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)
+        || parameters.containsKey(METADATA_REFRESH_PARAM)
+        || parameters.containsKey(METADATA_EXPIRY_HOURS_PARAM)) {
+      Log.fatal(IllegalArgumentException.class,
+          "--input is not valid for cache or metadata commands.");
+    }
   }
 
   private static void validateStandaloneInputOptions(Map<String, String> parameters) {
@@ -279,7 +305,9 @@ public final class ParameterParser {
       Log.fatal(IllegalArgumentException.class,
           "Materialization options do not apply to JDBC-backed mapped DML input.");
     }
-    InputType inputType = InputType.fromFilename(parameters.get(INPUT_FILENAME));
+    InputType inputType = parameters.containsKey(INPUT_TYPE_PARAM)
+        ? InputType.fromName(parameters.get(INPUT_TYPE_PARAM))
+        : InputType.fromFilename(parameters.get(INPUT_FILENAME));
     if (inputType == InputType.XML || inputType == InputType.PARQUET) {
       Log.fatal(IllegalArgumentException.class,
           "Materialization options are supported for JSON, JSON Lines, YAML, and CSV input.");
@@ -522,6 +550,8 @@ public final class ParameterParser {
         || key.equals(VERSION_PARAM)
         || key.equals(CATALOG_PATTERN_PARAM)
         || key.equals(INPUT_FILENAME)
+        || key.equals(INPUT_TYPE_PARAM)
+        || key.equals(STDIN_SOURCE_PARAM)
         || key.equals(JDBC_PROPS_FILE_PARAM)
         || key.equals(OUTPUT_TYPE_PARAM)
         || key.equals(DEBUG_PARAM)
@@ -575,6 +605,11 @@ public final class ParameterParser {
   }
 
   private static void resolvePositionals(Map<String, String> params, List<String> positionArguments) {
+    if (params.containsKey(INPUT_TYPE_PARAM)) {
+      resolveStandardInputPositionals(params, positionArguments);
+      return;
+    }
+
     if (params.containsKey(METADATA_REFRESH_PARAM)
         || params.containsKey(METADATA_EXPIRY_HOURS_PARAM)) {
       if (positionArguments.size() == 1
@@ -659,6 +694,35 @@ public final class ParameterParser {
       default -> Log.fatal(
           IllegalArgumentException.class,
           "Unexpected argument: " + positionArguments.get(2));
+    }
+  }
+
+  private static void resolveStandardInputPositionals(
+      Map<String, String> params, List<String> positionArguments) {
+    if (!positionArguments.isEmpty() && "catalog".equalsIgnoreCase(positionArguments.getFirst())) {
+      resolveCatalog(params, positionArguments.subList(1, positionArguments.size()));
+      params.put(INPUT_FILENAME, STDIN_INPUT);
+      return;
+    }
+
+    switch (positionArguments.size()) {
+      case 0 -> params.put(INPUT_FILENAME, STDIN_INPUT);
+      case 1 -> {
+        String script = positionArguments.getFirst();
+        if (isInputFile(script)) {
+          Log.fatal(IllegalArgumentException.class,
+              "--input reads standard input and cannot be combined with an input file: " + script);
+        }
+        if (fileExists(script)) {
+          params.put(SCRIPT_FILE_PARAM, script);
+        } else {
+          params.put(SCRIPT_TEXT_PARAM, script);
+        }
+        params.put(INPUT_FILENAME, STDIN_INPUT);
+      }
+      default -> Log.fatal(
+          IllegalArgumentException.class,
+          "Unexpected argument: " + positionArguments.get(1));
     }
   }
 

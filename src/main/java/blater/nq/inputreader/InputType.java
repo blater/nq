@@ -30,6 +30,29 @@ public enum InputType {
     return Log.fatal(IllegalArgumentException.class, "Unsupported input file type: " + filename);
   }
 
+  public static InputType fromName(String name) {
+    if (name == null || name.isBlank()) {
+      return Log.fatal(IllegalArgumentException.class, "No input type supplied.");
+    }
+    String normalized = name.trim().toLowerCase(Locale.ROOT).replace('_', '-');
+    return switch (normalized) {
+      case "xml" -> XML;
+      case "json" -> JSON;
+      case "jsonl", "json-lines", "ndjson" -> JSONL;
+      case "yaml", "yml" -> YAML;
+      case "csv" -> CSV;
+      case "parquet" -> PARQUET;
+      default -> Log.fatal(
+          IllegalArgumentException.class,
+          "Unsupported input type: " + name
+              + ". Expected one of: xml, json, jsonl, yaml, csv, parquet");
+    };
+  }
+
+  public String fileExtension() {
+    return extensions.getFirst();
+  }
+
   public static boolean supportsFilename(String filename) {
     return filename != null && !filename.isBlank() && matchingType(filename) != null;
   }

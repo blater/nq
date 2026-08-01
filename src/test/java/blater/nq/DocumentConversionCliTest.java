@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -91,6 +93,21 @@ class DocumentConversionCliTest {
         [{"result":{"id":"7"}}]
         """, output);
     assertFalse(output.contains("Alice"));
+  }
+
+  @Test
+  void typedStandardInputCanBeConvertedWithoutAQuery() throws Exception {
+    InputStream original = System.in;
+    try (InputStream input = new ByteArrayInputStream(
+        "customer:\n  id: 7\n  name: Alice\n".getBytes(StandardCharsets.UTF_8))) {
+      System.setIn(input);
+      String output = captureStdout(() -> Main.main("-i", "yaml", "-o", "json"));
+      assertEquals("""
+          {"customer":{"id":"7","name":"Alice"}}
+          """, output);
+    } finally {
+      System.setIn(original);
+    }
   }
 
   private Path write(String name, String content) throws Exception {

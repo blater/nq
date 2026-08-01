@@ -7,8 +7,8 @@ NQ is a SQL-like scripting language for moving data between relational databases
 Typical uses are:
 
 - Query a database and render hierarchical output.
-- Convert XML, JSON, JSON Lines, YAML, CSV, or Parquet directly to any supported output format.
-- Query those input formats with SQL through temporary H2, or persistent H2 with `--cache`.
+- Convert XML, JSON, JSON Lines, YAML, CSV, or Parquet files or standard input directly to any supported output format.
+- Query those input formats from files or standard input through temporary H2, or persistent H2 with `--cache`.
 - Load XML, JSON, JSON Lines, YAML, CSV, or Parquet input and apply `insert`, `update`, `delete`, or stored-procedure calls.
 - Capture database rows into an in-memory temp rowset and use those rows in later DML.
 - Write returned database values, such as generated keys, back into the input hierarchy.
@@ -40,7 +40,7 @@ jdbc.username=sa
 jdbc.password=
 ```
 
-### Convert An Input File
+### Convert Input
 
 An input file supplied without a script is read into NQ's neutral hierarchy and
 written directly as JSON by default. Use `--output` to select another format:
@@ -55,7 +55,13 @@ Direct conversion does not materialize H2 tables, create or select a cache, or
 perform relation and key inference. Supplying a script disables this automatic
 conversion and writes only the hierarchy produced by the script.
 
-### Query An Input File
+For standard input, specify the input type explicitly:
+
+```bash
+echo '{"customer":{"id":7,"name":"Alice"}}' | nq -i json -o yaml
+```
+
+### Query An Input Document
 
 An input file supplied with a script is loaded into temporary H2 unless
 `--cache` is explicit. No external JDBC properties are required.
@@ -95,6 +101,13 @@ Output:
 
 ```json
 {"result":{"customer":{"id":"C1","country":"GB"}}}
+```
+
+The same query can read JSON from a pipeline or shell redirection:
+
+```bash
+cat customers.json | nq -i json customers.nq
+nq -i json customers.nq < customers.json
 ```
 
 ### Query SQL To Hierarchical Output
@@ -263,10 +276,11 @@ For simplicity, command examples from this point onward use the default `nq` exe
 
 ```bash
 nq script-file [load-file] [param=value ...] [-p properties-file] [--output type] [--cache]
+nq -i|--input type [script-file-or-text] [param=value ...] [--output type] [--cache] < input
 nq catalog [table-pattern] [connection/cache options]
 nq load-file [--output type]
 nq -c|--cache load-file [--cache-dir path]
-nq --use-cache load-file-or-cache-filename [--cache-dir path]
+nq --use-cache source-id-or-cache-filename [--cache-dir path]
 ```
 
 Arguments can appear in any unambiguous order.
@@ -320,7 +334,16 @@ With no pattern, the command lists table names only. A table name or `*` pattern
 
 When JDBC settings select an external database, a load file is not read by a select-only script. Mapped DML reads it when the statement needs input, and reports a missing file at that point. Without JDBC settings, the file is loaded immediately as the temporary database being queried.
 
-An input file accompanying a script is loaded into a temporary in-memory H2 database when neither `--cache` nor JDBC settings are supplied. Explicit `--cache` selects the file's persistent cache instead. With JDBC settings, the file remains input for mapped DML. Without an input file or JDBC settings, a script falls back to the active persistent cache.
+`-i type` or `--input type` supplies standard input in place of `load-file`.
+It supports direct conversion, temporary queries, persistent `--cache` queries,
+and mapped DML. It cannot be combined with a positional input file. A script
+remains optional for direct conversion and standalone persistent loading.
+
+An input source accompanying a script is loaded into a temporary in-memory H2
+database when neither `--cache` nor JDBC settings are supplied. Explicit
+`--cache` selects its persistent cache instead. With JDBC settings, the input
+remains available for mapped DML. Without an input source or JDBC settings, a
+script falls back to the active persistent cache.
 
 ### Options
 
@@ -342,15 +365,16 @@ An input file accompanying a script is loaded into a temporary in-memory H2 data
 | `--jdbc-database url`      | Set the complete `jdbc.database` JDBC URL. |
 | `--jdbc-username username` | Set the exact `jdbc.username` value. |
 | `--jdbc-password password` | Set the exact `jdbc.password` value. |
-| `--output type`, `-o type` | Write output as `xml`, `json`, `csv`, `yaml`, or `markdown`. |
+| `--input type`, `-i type`  | Read `xml`, `json`, `jsonl`, `yaml`, `csv`, or `parquet` from standard input. |
+| `--output type`, `-o type` | Write output as `xml`, `json`, `jsonl`, `csv`, `yaml`, or `markdown`. |
 | `--debug`                  | Log each query's inferred output-path, relation, key, and parent relationship decisions to stderr. |
 | `--no-key-inference`       | Disable automatic DQL keys and preserve row-first output for paths without explicit `structure` keys. |
 | `--metadata-refresh`       | Rebuild cached key and relationship metadata for the selected target, then exit. |
 | `--metadata-expiry-hours hours` | Persist metadata expiry for the selected target; zero refreshes every use. |
-| `--cache`, `-c`            | Persist and reuse an input file's local H2 cache. Persistent caching is always explicit. |
-| `--use-cache input-file-or-cache-filename` | Make an existing cache active without loading or rebuilding it. |
+| `--cache`, `-c`            | Persist and reuse a file or content-addressed standard-input H2 cache. Persistent caching is always explicit. |
+| `--use-cache source-id-or-cache-filename` | Make an existing cache active without loading or rebuilding it. |
 | `--cache-dir path`         | Use a non-default cache directory.                |
-| `--clear-cache`            | Clear all caches, all variants for one input file, or one named cache file. |
+| `--clear-cache`            | Clear all caches, all variants for one input source, or one named cache file. |
 | `--clear-cache-older-than duration` | Clear caches not used within a duration such as `30m`, `6h`, or `7d`. |
 | `--list-caches`            | List known local query caches.                    |
 | `--parquet-root name`      | Override the Parquet hierarchy root name. Also supports `--parquet-root=name`. |
@@ -453,9 +477,9 @@ For predefined drivers, the selected JAR or native executable must contain the r
 
 Supplied values are used as written. NQ does not validate port ranges, encode URL components, or reconcile inconsistent credentials; the JDBC driver or database reports those errors. For example, `--host=` and `--port=` supply explicit empty values rather than selecting defaults, while omitting those options selects documented defaults. The simple form requires `--db` and `--database` together and does not decompose an existing `jdbc.database` URL from a properties file.
 
-Explicit `--cache` takes precedence over JDBC settings because cache operations own their local H2 connection. Non-JDBC values from the same properties file remain available as runtime parameters. Cache-maintenance commands ignore JDBC settings. Without `--cache`, explicit JDBC settings use an accompanying input file for mapped DML; without JDBC settings, that file is queried through temporary H2. With no input file, JDBC settings take precedence over the active-cache fallback. Command-line passwords may be visible in shell history and process listings; prefer a protected properties file for reusable credentials.
+Explicit `--cache` takes precedence over JDBC settings because cache operations own their local H2 connection. Non-JDBC values from the same properties file remain available as runtime parameters. Cache-maintenance commands ignore JDBC settings. Without `--cache`, explicit JDBC settings use an accompanying input file or typed standard input for mapped DML; without JDBC settings, that input is queried through temporary H2. With no input source, JDBC settings take precedence over the active-cache fallback. Command-line passwords may be visible in shell history and process listings; prefer a protected properties file for reusable credentials.
 
-### Input File Type Selection
+### Input Type Selection
 
 Input file type is selected by file extension:
 
@@ -469,6 +493,19 @@ Input file type is selected by file extension:
 | `.parquet`      | Parquet      |
 
 Extension matching is case-insensitive. Blank or missing input filenames preserve the historical empty XML-input behavior.
+
+For pipelines and redirected input, specify the format explicitly with `-i` or
+`--input`. NQ spools standard input only for the duration of the command and
+uses its normal direct-conversion or query path. With `--cache`, the persistent
+cache identity includes the input type, a SHA-256 hash of the stream content,
+and materialization configuration. Identical input reuses the same cache;
+changed input creates and activates a different cache.
+
+```bash
+cat customers.json | nq -i json "select id, name from customers;"
+nq -i json "select id, name from customers;" < customers.json
+cat customers.json | nq -i json --cache "select id, name from customers;"
+```
 
 ### Source Relation Names and Aliases
 
@@ -549,7 +586,7 @@ configure temporary and persistent input loading; they do not apply to
 JDBC-backed mapped DML, an already active cache query, list/clear commands, or
 metadata commands.
 
-### Querying Input Files: Temporary and Persistent H2
+### Querying Input Documents: Temporary and Persistent H2
 
 NQ materializes the same SQL tables for both modes. The difference is how long the H2 database lives and whether it can be reused.
 
@@ -561,7 +598,17 @@ Supplying a script and input file without `--cache` or JDBC settings loads the f
 nq 'select id from item where a in (select max(a) from item);' elements.json
 ```
 
-The database exists only for that command and is discarded when the command finishes. The source file is read again on every invocation, so changes are visible immediately. Temporary loads create no cache file, do not appear in `--list-caches`, do not change the active cache, and do not persist inferred key metadata. `--cache-dir` has no effect on them.
+Typed standard input uses the same temporary path:
+
+```bash
+cat elements.json | nq -i json 'select id from item where a in (select max(a) from item);'
+```
+
+The database exists only for that command and is discarded when the command
+finishes. A source file is read again, or standard input is consumed again, on
+every invocation, so changes are visible immediately. Temporary loads create no
+cache file, do not appear in `--list-caches`, do not change the active cache,
+and do not persist inferred key metadata. `--cache-dir` has no effect on them.
 
 Temporary loading avoids cache files, stale results, H2 file locking, and active-cache side effects. Its costs are that parsing and table creation are repeated for every command, the database cannot be reused later, and the materialized data must fit comfortably in memory. It is therefore a good default for one-off queries and modest input files.
 
@@ -573,26 +620,49 @@ Add `--cache` when repeated queries or a larger input make reuse more valuable t
 nq totals.nq customers.json --cache --output json
 ```
 
-The first command loads the file into a file-backed H2 database. Later commands reuse that database without rereading the source, and it becomes the active cache. Persistent caching avoids repeated parsing and loading and can handle data without requiring the complete database to remain in memory. It uses disk space, can encounter H2 file-lock contention between processes, and may return stale data because the cache is not automatically synchronized when the source file changes.
+Standard input can also create or reuse a persistent cache:
+
+```bash
+cat customers.json | nq -i json --cache totals.nq --output json
+```
+
+NQ hashes the exact input bytes before cache selection. Its stdin cache identity
+contains the input type, SHA-256 content hash, and materialization configuration.
+Replaying identical bytes reuses the cache; different content creates a distinct
+cache and makes it active. The temporary spool file is deleted after the command.
+
+On first use, NQ loads the input into a file-backed H2 database. Later commands
+reuse that database without rereading the source, and it becomes the active
+cache. Persistent caching avoids repeated parsing and loading and can handle
+data without requiring the complete database to remain in memory. It uses disk
+space and can encounter H2 file-lock contention between processes. File-backed
+sources may return stale data because their caches are not automatically
+synchronized when the source file changes; content-addressed stdin caches do
+not reuse a cache when their input bytes change.
 
 A standalone persistent load also requires `--cache` or `-c`:
 
 ```bash
 nq --cache customers.json
+cat customers.json | nq -i json --cache
 ```
 
-The command reports either `Loaded cache for <path>` or `Using existing cache for <path>`. Query the active cache without repeating the input filename or option:
+The command reports either `Loaded cache for <source>` or
+`Using existing cache for <source>`. Query the active cache without repeating
+the input source or option:
 
 ```bash
 nq totals.nq --output json
 ```
 
-A persistent cache becomes active for later queries. The source path shown by
-`--list-caches` is its identifier; cache names and aliases are not required. An
+A persistent cache becomes active for later queries. The source identifier shown
+by `--list-caches` is an absolute path for file input or
+`stdin:<type>:sha256:<hash>` for standard input. Either identifier can be passed
+to `--use-cache` or `--clear-cache`; cache names and aliases are not required. An
 explicit `--cache` wins over JDBC settings. Without `--cache`, JDBC settings
 make an accompanying input file a mapped-DML source; without JDBC settings, a
-script queries that file through temporary H2. With no input file, JDBC settings
-win over the active-cache fallback.
+script queries that file through temporary H2. With no input source, JDBC
+settings win over the active-cache fallback.
 
 To switch the active selection without running a query or loading the source
 file, use:
@@ -602,10 +672,10 @@ nq --use-cache customers.json
 ```
 
 `--use-cache` only selects an existing cache. Its argument can be the source
-path reported by `--list-caches` or a bare cache filename such as
+identifier reported by `--list-caches` or a bare cache filename such as
 `cache-0123456789abcdef.mv.db`. A bare cache filename is resolved under
-`--cache-dir`, or under `~/.nq/cache` by default. The source file need not
-still exist, and no cache is created or rebuilt when a match is missing. If the
+`--cache-dir`, or under `~/.nq/cache` by default. A referenced source file need
+not still exist, and no cache is created or rebuilt when a match is missing. If the
 source has multiple Parquet cache variants, add the matching
 `--parquet-record` value. Relation aliases and the anonymous policy are also
 part of cache identity. If a source has several materialization variants,
@@ -631,16 +701,17 @@ The active selection is stored in:
 
 It records the generated cache file, so a cache loaded with a custom `--cache-dir` remains active without repeating that option. Cache databases use the form `cache-<source-hash>.mv.db`; the hash is derived from configuration and never requires a database connection.
 
-Persistent cache creation and input-path reuse are always explicit. Use
-`--cache` or `-c` to create or reuse a cache for an input path, or `--use-cache`
+Persistent cache creation and input-source reuse are always explicit. Use
+`--cache` or `-c` to create or reuse a cache for an input source, or `--use-cache`
 to select an existing cache. After that explicit selection, a script with no
-input file can use the active-cache fallback. A script supplied with an input
-file but without `--cache` always performs a fresh temporary load, even when a
-persistent cache already exists for that path.
+input source can use the active-cache fallback. A script supplied with an input
+file or typed standard input but without `--cache` always performs a fresh
+temporary load, even when a persistent cache already exists for that source.
 
-Persistent caches are not synchronized with source-file changes. Run the query
+File-backed persistent caches are not synchronized with source-file changes. Run the query
 with its input file and without `--cache` for a fresh temporary load, or clear
-the persistent cache before rebuilding it. An explicit Parquet
+the persistent cache before rebuilding it. Stdin caches avoid this ambiguity by
+using the content hash: changed bytes select a different cache. An explicit Parquet
 `--parquet-record` name is part of the persistent cache identity because it
 changes the generated table name; `--parquet-root` is not, because the
 hierarchy root is not materialized as a cache table. Clearing a Parquet input
@@ -790,8 +861,10 @@ List caches:
 nq --list-caches
 ```
 
-The listing shows input type, cache creation time, variant, and source path. The
-active cache is marked with `*`. The default materialization variant is
+The listing shows input type, cache creation time, variant, and source
+identifier. File sources appear as absolute paths; standard-input sources
+appear as `stdin:<type>:sha256:<hash>`. The active cache is marked with `*`.
+The default materialization variant is
 `default-v2`; configured variants use `config-<12 hex>`. Parquet selection is
 shown alongside that label. Cache metadata is stored inside each H2 cache
 database.
@@ -820,6 +893,14 @@ Clear one input file's cache:
 nq --clear-cache customers.json
 ```
 
+Select or clear a standard-input cache by copying its identifier from
+`--list-caches`:
+
+```bash
+nq --use-cache 'stdin:json:sha256:<full-hash-from-list>'
+nq --clear-cache 'stdin:json:sha256:<full-hash-from-list>'
+```
+
 Clear one cache by its bare filename:
 
 ```bash
@@ -827,8 +908,8 @@ nq --clear-cache cache-0123456789abcdef.mv.db
 ```
 
 Bare cache filenames are resolved under `--cache-dir`, or under
-`~/.nq/cache` by default. A source path continues to clear all variants for
-that source.
+`~/.nq/cache` by default. A source identifier continues to clear all variants
+for that source.
 
 Clear caches not used within a duration:
 

@@ -34,7 +34,8 @@ class HelpTest {
     assertTrue(shortHelp.contains("--jdbc-database <url>"));
     assertTrue(shortHelp.contains("nq <input-file> [-o|--output <type>]"));
     assertTrue(shortHelp.contains("-c, --cache"));
-    assertTrue(shortHelp.contains("--use-cache <input-file-or-cache-filename>"));
+    assertTrue(shortHelp.contains("--use-cache <source-id-or-cache-filename>"));
+    assertTrue(shortHelp.contains("-i, --input <xml|json|jsonl|yaml|csv|parquet>"));
     assertTrue(shortHelp.contains("--parquet-record <name>"));
     assertTrue(shortHelp.contains("--anonymous-collections <merge|error>"));
     assertTrue(shortHelp.contains("--relation-alias <source-path>=<relation-name>"));
@@ -74,6 +75,7 @@ class HelpTest {
     assertTrue(query.contains("temporary in-memory H2"));
     assertTrue(output.contains("persistent local H2"));
     assertTrue(output.contains("file-backed H2"));
+    assertTrue(output.contains("content hash"));
     assertFalse(output.contains("temporary in-memory H2"));
   }
 
@@ -82,7 +84,8 @@ class HelpTest {
     String output = captureStdout(() -> Main.main("--help", "use-cache"));
 
     assertTrue(output.startsWith("USE-CACHE\n"));
-    assertTrue(output.contains("nq --use-cache <input-file-or-cache-filename>"));
+    assertTrue(output.contains("nq --use-cache <source-id-or-cache-filename>"));
+    assertTrue(output.contains("stdin:<type>:sha256:<hash>"));
     assertTrue(output.contains("does not create one"));
     assertTrue(output.contains("materialization options"));
   }

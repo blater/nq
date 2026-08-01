@@ -112,7 +112,7 @@ public final class CacheExecution {
       String inputFilename = requiredInput(parameters);
       CacheSource source = CacheSource.from(inputFilename, parameters);
       InputDocument input = InputReader.of(source.inputType())
-          .read(source.sourcePath(), parameters);
+          .read(inputFilename, parameters);
       new HierarchyCacheLoader(executor).load(input, MaterializationConfiguration.from(parameters));
       return executor;
     } catch (RuntimeException | Error ex) {
@@ -129,7 +129,7 @@ public final class CacheExecution {
       return;
     }
     InputDocument input = InputReader.of(handle.source().inputType())
-        .read(handle.source().sourcePath(), parameters);
+        .read(requiredInput(parameters), parameters);
     new HierarchyCacheLoader(executor).load(input, MaterializationConfiguration.from(parameters));
     PersistentCache.markLoaded(handle);
   }

@@ -10,6 +10,7 @@ _arguments -s \
   '--help=-[show full or topic help]:topic:($help_topics)' \
   '--version[show NQ version]' \
   '-p[read JDBC properties]:properties file:_files' \
+  '(-i --input)'{-i,--input}'[read typed standard input]:format:(json jsonl yaml xml csv parquet)' \
   '(-o --output)'{-o,--output}'[select output format]:format:($outputs)' \
   '--debug[enable debug diagnostics]' \
   '--no-key-inference[disable query-output key inference]' \

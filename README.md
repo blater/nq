@@ -49,23 +49,33 @@ operating-system security prompts.
 
 ## Your first query
 
-Download the 165-byte example and query it with ordinary SQL:
+Pipe JSON straight into an ordinary SQL query. Use `-i` (or `--input`) because
+standard input has no filename extension from which to infer its format:
 
 ```bash
-curl -sSLO https://raw.githubusercontent.com/blater/nq/master/docs/examples/customers.json
-nq "select id, name from customers where city = 'London' order by id;" customers.json
+echo '{
+  "users": [
+    {"name": "Alice", "active": true},
+    {"name": "Bob", "active": false},
+    {"name": "Charlie", "active": true}
+  ]
+}' | nq -i json "select name from users where active = 'true' order by id;"
 ```
 
 ```json
-[{"id":"1","name":"Alice"},{"id":"3","name":"Eva"}]
+[{"name":"Alice"},{"name":"Charlie"}]
 ```
 
-NQ discovers the `customers` collection as a table. Inspect discovered tables
-and columns before writing a query:
+NQ discovers the `users` collection as a table. Shell redirection is equivalent
+to a pipe:
 
 ```bash
-nq catalog '*' --cache customers.json
+nq -i json "select name from users where active = 'true' order by id;" < myusers.json
 ```
+
+Add `--cache` to either command when the input should remain available as nq's
+active cache. The cache is keyed by the input type and content hash, so
+replaying the same stream reuses it safely.
 
 ## The distinctive part: turn joined rows into a hierarchy
 

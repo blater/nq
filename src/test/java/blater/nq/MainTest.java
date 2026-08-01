@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -904,6 +906,65 @@ class MainTest {
   }
 
   @Test
+  void inlineQueryReadsTypedJsonFromStandardInput() throws Exception {
+    String input = """
+        {
+          "users": [
+            {"name": "Alice", "active": true},
+            {"name": "Bob", "active": false},
+            {"name": "Charlie", "active": true}
+          ]
+        }
+        """;
+
+    String output = withStandardInput(input, () -> captureStdout(() -> Main.main(
+        "-i", "json",
+        "select name from users where active = 'true' order by id;")));
+
+    assertEquals("""
+        [{"name":"Alice"},{"name":"Charlie"}]
+        """, output);
+  }
+
+  @Test
+  void longInputOptionSelectsStandardInputAndAllowsPersistentCache() {
+    var params = ParameterParser.parse(
+        "--input=json", "--cache", "--relation-alias", "/users=people",
+        "select name from people;");
+
+    assertEquals("json", params.get(ParameterParser.INPUT_TYPE_PARAM));
+    assertEquals(ParameterParser.STDIN_INPUT, params.get(ParameterParser.INPUT_FILENAME));
+    assertEquals("select name from people;", params.get(ParameterParser.SCRIPT_TEXT_PARAM));
+    assertEquals("true", params.get(ParameterParser.CACHE_MODE_PARAM));
+  }
+
+  @Test
+  void persistentStandardInputCacheCanBeReusedAsTheActiveCache() throws Exception {
+    String input = """
+        {"users":[{"name":"Alice","active":true},{"name":"Bob","active":false}]}
+        """;
+    String query = "select name from users where active = 'true' order by id;";
+    Path cacheDir = tempDir.resolve("stdin-cache");
+
+    String first = withStandardInput(input, () -> captureStdout(() -> Main.main(
+        "-i", "json", "--cache", "--cache-dir", cacheDir.toString(), query)));
+    String sameStream = withStandardInput(input, () -> captureStdout(() -> Main.main(
+        "-i", "json", "--cache", "--cache-dir", cacheDir.toString(), query)));
+    String reused = captureStdout(() -> Main.main(query));
+
+    assertEquals("""
+        [{"name":"Alice"}]
+        """, first);
+    assertEquals(first, sameStream);
+    assertEquals(first, reused);
+    try (var cacheFiles = Files.list(cacheDir)) {
+      assertEquals(1, cacheFiles
+          .filter(path -> path.getFileName().toString().endsWith(".mv.db"))
+          .count());
+    }
+  }
+
+  @Test
   void catalogCommandStoresItsOptionalPatternAndConnectionSelection() {
     var summary = ParameterParser.parse("catalog");
     var details = ParameterParser.parse("--output=json", "catalog", "customer*");
@@ -1552,8 +1613,23 @@ class MainTest {
     return output.toString(StandardCharsets.UTF_8);
   }
 
+  private <T> T withStandardInput(String input, ThrowingSupplier<T> supplier) throws Exception {
+    InputStream original = System.in;
+    try (InputStream replacement = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8))) {
+      System.setIn(replacement);
+      return supplier.get();
+    } finally {
+      System.setIn(original);
+    }
+  }
+
   @FunctionalInterface
   private interface ThrowingRunnable {
     void run() throws Exception;
+  }
+
+  @FunctionalInterface
+  private interface ThrowingSupplier<T> {
+    T get() throws Exception;
   }
 }

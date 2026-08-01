@@ -2,6 +2,7 @@ complete -c nq -s h -d 'Show brief help'
 complete -c nq -l help -d 'Show full or topic help' -xa 'help query catalog cache use-cache clear-cache list-caches connection output parameters parquet'
 complete -c nq -l version -d 'Show NQ version'
 complete -c nq -s p -r -d 'Read JDBC properties' -F
+complete -c nq -s i -l input -r -d 'Read typed standard input' -xa 'json jsonl yaml xml csv parquet'
 complete -c nq -s o -l output -r -d 'Select output format' -xa 'json jsonl yaml xml csv markdown'
 complete -c nq -l debug -d 'Enable debug diagnostics'
 complete -c nq -l no-key-inference -d 'Disable query-output key inference'

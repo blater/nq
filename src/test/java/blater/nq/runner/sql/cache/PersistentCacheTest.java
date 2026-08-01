@@ -117,6 +117,19 @@ class PersistentCacheTest {
   }
 
   @Test
+  void standardInputCacheIdentifierCanSelectAndClearCache() throws Exception {
+    Map<String, String> params = cacheParams();
+    String sourceId = "stdin:json:sha256:0123456789abcdef";
+    CacheHandle cached = preparedCache(new CacheSource(sourceId, InputType.JSON, ""), params);
+
+    CacheHandle selected = PersistentCache.use(sourceId, params);
+
+    assertEquals(cached.cacheFile(), selected.cacheFile());
+    assertEquals(1, PersistentCache.clearForInput(sourceId, params));
+    assertFalse(Files.exists(cached.cacheFile()));
+  }
+
+  @Test
   void parquetRecordNamesCreateDistinctCacheVariantsForSameFile() throws Exception {
     Path input = write("customers.parquet", "not used by this test");
     Map<String, String> params = cacheParams();

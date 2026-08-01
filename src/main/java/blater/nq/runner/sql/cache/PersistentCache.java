@@ -214,7 +214,7 @@ public final class PersistentCache {
       return handle;
     }
 
-    String sourcePath = CacheSource.normalizedSourcePath(target).toString();
+    String sourcePath = CacheSource.normalizedSourceIdentity(target);
     boolean variantSpecified = params.containsKey(PARQUET_RECORD_PARAM)
         || MaterializationConfiguration.from(params).explicitlyConfigured();
     CacheSource requested = CacheSource.from(target, params);
@@ -351,7 +351,7 @@ public final class PersistentCache {
       return 1;
     }
 
-    String sourcePath = CacheSource.normalizedSourcePath(target).toString();
+    String sourcePath = CacheSource.normalizedSourceIdentity(target);
     int cleared = 0;
     for (Path cacheFile : cacheFiles(params)) {
       if (readMetadata(cacheFile)
