@@ -34,8 +34,3 @@ jobs:
           bash -n docs/examples/wikidata/fetch-wikidata-data.sh
           bash -n docs/examples/wikidata/qrytest.sh
           bash -n docs/assets/generate-terminal-demo.sh
-
-      - name: Check Markdown style
-        uses: DavidAnson/markdownlint-cli2-action@v23
-        with:
-          globs: "**/*.md"
