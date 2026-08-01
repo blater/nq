@@ -8,7 +8,7 @@ They do not inspect live databases or input files.
 For the current shell:
 
 ```bash
-source utils/completions/nq.bash
+source util/completions/nq.bash
 ```
 
 For future shells, copy `nq.bash` to a completion directory used by your Bash
@@ -20,7 +20,7 @@ Place `_nq` in a directory on `$fpath`, then rebuild the completion cache:
 
 ```zsh
 mkdir -p ~/.zsh/completions
-cp utils/completions/_nq ~/.zsh/completions/
+cp util/completions/_nq ~/.zsh/completions/
 fpath=(~/.zsh/completions $fpath)
 autoload -Uz compinit && compinit
 ```
@@ -29,5 +29,5 @@ autoload -Uz compinit && compinit
 
 ```fish
 mkdir -p ~/.config/fish/completions
-cp utils/completions/nq.fish ~/.config/fish/completions/
+cp util/completions/nq.fish ~/.config/fish/completions/
 ```
