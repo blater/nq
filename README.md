@@ -5,11 +5,11 @@ data structures into these formats from databases, and generally working with an
 
 ## Install
 
-| Platform | instructions | notes |
-| --- | --- | --- | 
-| macOS ARM64 | `brew install blater/tap/nq` | |
-| Windows x64 | `irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1` | Run from an administrator powershell<br>with Chocolatey installed. |
-| Lunux x64 | `curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh`  | This installs the latest NQ package directly<br>from GitHub Releases. Rerun the same command to upgrade. |
+| Platform | instructions | 
+| --- | --- | 
+| macOS ARM64 | `brew install blater/tap/nq` |
+| Windows x64 | Run from an administrator powershell<br>with Chocolatey installed. <br>`irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1` | 
+| Lunux x64 | This installs the latest NQ package directly<br>from GitHub Releases. Rerun the same command to upgrade.<br>`curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh` |
 
 ## Getting started
 
