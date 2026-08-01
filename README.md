@@ -8,8 +8,8 @@ data structures into these formats from databases, and generally working with an
 | Platform | instructions | notes |
 | --- | --- | --- | 
 | macOS ARM64 | `brew install blater/tap/nq` | |
-| Windows x64 | `irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1 | iex` | Run from an administrator powershell<br>with Chocolatey installed. |
-| Lunux x64 | `curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh | sh` | This installs the latest NQ package directly<br>from GitHub Releases. Rerun the same command to upgrade. |
+| Windows x64 | `irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1` | Run from an administrator powershell<br>with Chocolatey installed. |
+| Lunux x64 | `curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh`  | This installs the latest NQ package directly<br>from GitHub Releases. Rerun the same command to upgrade. |
 
 ## Getting started
 
