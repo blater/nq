@@ -263,7 +263,7 @@ nq --list-caches
 ```
 
 The default cache directory is `~/.nq/cache`. NQ does not upload source data or
-send usage telemetry. See [Privacy and telemetry](docs/privacy.md).
+send usage telemetry.
 
 Output defaults to JSON. Choose JSON Lines, YAML, XML, CSV, or Markdown in a
 script or on the command line:
@@ -306,8 +306,7 @@ common driver set documented in the [support matrix](docs/install.md#support-mat
 - [How NQ works](docs/how-nq-works.md)
 - [Glossary](docs/glossary.md)
 - [Frequently asked questions](docs/faq.md)
-- [Roadmap](ROADMAP.md)
-- [Changelog](CHANGELOG.md)
+- [Releases](https://github.com/blater/nq/releases)
 
 Built-in help is version-matched to the executable:
 
@@ -329,11 +328,9 @@ with a **sanitized** sample and the output you want. Remove credentials,
 personal data, internal hostnames, and proprietary values before posting.
 
 Bug reports, documentation fixes, test fixtures, recipes, and code changes are
-welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) to get started. Report security
-problems privately as described in [SECURITY.md](SECURITY.md).
+welcome as issues or pull requests. Report security problems privately through
+[GitHub's security advisory form](https://github.com/blater/nq/security/advisories/new).
 
 ## Licence
 
-NQ is licensed under [GNU AGPL-3.0](LICENSE.txt). See the
-[licence intent and plain-language FAQ](docs/license-faq.md). The FAQ explains
-project intent, not legal advice.
+NQ is licensed under [GNU AGPL-3.0](LICENSE.txt).

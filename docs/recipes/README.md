@@ -20,7 +20,6 @@ sanitized fixtures and scripts. Commands are exercised by the test suite.
 
 ## Contribute a recipe
 
-Recipes are a first-class contribution; Java changes are not required. Follow
-[the contribution guide](../../CONTRIBUTING.md#adding-or-changing-a-recipe).
-Use invented or safely sanitized data, include exact expected output, and add an
-end-to-end test for the checked-in command.
+Recipes are a first-class contribution; Java changes are not required. Open an
+issue or pull request with invented or safely sanitized data, include exact
+expected output, and add an end-to-end test for the checked-in command.

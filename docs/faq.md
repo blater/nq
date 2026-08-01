@@ -56,14 +56,14 @@ processor. Test a representative file and read [Performance and limits](performa
 ## Does my data leave the machine?
 
 No data or usage telemetry is sent to the NQ project. NQ connects to a network
-only when you configure a network JDBC endpoint. Read [Privacy and telemetry](privacy.md).
+only when you configure a network JDBC endpoint.
 
 ## What does AGPL mean for CLI users?
 
 The project intends ordinary use of the unmodified CLI on your own data to be
 permitted and does not claim your generated output. Modification,
 redistribution, and network-accessible modified versions require reading the
-actual licence. See the [licence FAQ](license-faq.md), which is not legal advice.
+actual [licence](../LICENSE.txt).
 
 ## Which SQL dialect is used?
 
@@ -90,4 +90,5 @@ feature parity with a dedicated columnar analytical engine. See
 
 Use [GitHub Discussions](https://github.com/blater/nq/discussions/categories/q-a)
 for usage questions and sanitized examples. Use an issue for reproducible bugs.
-Report vulnerabilities privately through [the security policy](../SECURITY.md).
+Report vulnerabilities privately through
+[GitHub's security advisory form](https://github.com/blater/nq/security/advisories/new).
