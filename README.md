@@ -1,36 +1,20 @@
-# NQ — SQL between data files and databases
 
-NQ queries JSON, YAML, XML, CSV, JSON Lines, and Parquet with SQL. It builds nested documents from query results and moves data between documents and relational databases.
+NQ is a command-line tool for querying and moving data between JSON,YAML,XML,CSV files and relational databases. 
+It provides a familiar SQL language for querying JSON, YAML, XML, CSV, JSONL, and Parquet files, extracting complex 
+data structures into these formats from databases, and generally working with and reshaping data.
 
 ## Install
 
-### macOS ARM64
-```bash
-brew install blater/tap/nq
-```
-### Windows x64
-
-From an administrator PowerShell with Chocolatey installed, run:
-
-```powershell
-irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1 | iex
-```
-
-This installs the latest NQ package directly from GitHub Releases. Rerun the
-same command to upgrade.
-
-### Linux x64
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh | sh
-```
-
-This installs the latest NQ release into `$HOME/.local/bin`. Rerun the same
-command to update.
+| Platform | instructions | notes |
+| --- | --- | --- | 
+| macOS ARM64 | `brew install blater/tap/nq` | |
+| Windows x64 | `irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1 | iex` | Run from an administrator powershell<br>with Chocolatey installed. |
+| Lunux x64 | `curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh | sh` | This installs the latest NQ package directly<br>from GitHub Releases. Rerun the same command to upgrade. |
 
 ## Getting started
 
-You can run SQL directly against JSON/XML/Yaml
+You can run SQL directly against JSON/XML/Yaml.  
+This filters for active users...
 
 ```bash
 echo '{
