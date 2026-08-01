@@ -58,16 +58,6 @@ jobs:
             exit 1
           fi
 
-      - name: Check Chocolatey publication secret
-        env:
-          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
-        shell: bash
-        run: |
-          if [[ -z "$CHOCOLATEY_API_KEY" ]]; then
-            echo "::error title=Missing CHOCOLATEY_API_KEY::Run ./actions-setup.sh before releasing."
-            exit 1
-          fi
-
   test:
     needs: validate
     runs-on: ubuntu-22.04
@@ -360,31 +350,3 @@ jobs:
         run: |
           gh auth setup-git --hostname github.com --force
           ./util/build_brew
-
-  chocolatey:
-    name: Publish Chocolatey package
-    needs:
-      - validate
-      - publish
-    runs-on: windows-2022
-    steps:
-      - name: Download Chocolatey package
-        uses: actions/download-artifact@v4
-        with:
-          name: release-windows-x64
-          path: dist
-
-      - name: Publish Chocolatey package
-        shell: pwsh
-        env:
-          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
-          VERSION: ${{ needs.validate.outputs.version }}
-        run: |
-          $ErrorActionPreference = "Stop"
-          $package = "dist\nq.$env:VERSION.nupkg"
-          if (-not (Test-Path $package)) {
-            throw "Chocolatey package not found: $package"
-          }
-          choco push $package `
-            --source https://push.chocolatey.org/ `
-            --api-key $env:CHOCOLATEY_API_KEY

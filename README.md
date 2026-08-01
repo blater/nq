@@ -9,18 +9,24 @@ NQ queries JSON, YAML, XML, CSV, JSON Lines, and Parquet with SQL. It builds nes
 brew install blater/tap/nq
 ```
 ### Windows x64
+
+From an administrator PowerShell with Chocolatey installed, run:
+
 ```powershell
-choco install nq
+irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1 | iex
 ```
+
+This installs the latest NQ package directly from GitHub Releases. Rerun the
+same command to upgrade.
+
 ### Linux x64
+
 ```bash
-NQ_VERSION=0.9.8
-curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/nq-${NQ_VERSION}-linux-x64.tar.gz"
-curl -fLO "https://github.com/blater/nq/releases/download/v${NQ_VERSION}/SHA256SUMS"
-grep "nq-${NQ_VERSION}-linux-x64.tar.gz" SHA256SUMS | sha256sum --check
-tar -xzf "nq-${NQ_VERSION}-linux-x64.tar.gz"
-install -m 0755 nq "$HOME/.local/bin/nq"
+curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh | sh
 ```
+
+This installs the latest NQ release into `$HOME/.local/bin`. Rerun the same
+command to update.
 
 ## Getting started
 

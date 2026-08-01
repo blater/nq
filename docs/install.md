@@ -14,7 +14,7 @@ before installing.
 | --- | --- | --- | --- | --- |
 | macOS | ARM64 | Homebrew or `.tar.gz` | Common set | No |
 | Linux | x64 | `.tar.gz` | Common set | No |
-| Windows | x64 | Chocolatey or `.zip` | Common set | No |
+| Windows | x64 | GitHub-hosted Chocolatey package or `.zip` | Common set | No |
 | JVM | Any JDK 25 platform | Fat JAR | Build profile | Yes |
 
 The common driver set is H2, MySQL, MariaDB, and PostgreSQL.
@@ -60,20 +60,18 @@ instead may require administrator privileges.
 
 ## Windows x64
 
-Install with Chocolatey from an administrator PowerShell:
+Install or upgrade the latest GitHub release with Chocolatey from an
+administrator PowerShell:
 
 ```powershell
-choco install nq
+irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1 | iex
 ```
 
-Upgrade with:
-
-```powershell
-choco upgrade nq
-```
-
-The Chocolatey package contains the same native executable as the Windows x64
-release archive. If Chocolatey is unavailable, install the archive directly:
+The bootstrap downloads the `.nupkg` attached to the latest GitHub release,
+checks it against that release's `SHA256SUMS`, and gives the local package to
+Chocolatey. Rerun the same command to upgrade. The package contains the same
+native executable as the Windows x64 release archive. If Chocolatey is
+unavailable, install the archive directly:
 
 ```powershell
 $version = "0.9.7"

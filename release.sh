@@ -10,7 +10,7 @@ Usage: ./release.sh X.Y.Z
 
 Update pom.xml to a higher version, commit and push the change, then create
 and push the matching vX.Y.Z release tag. Wait for GitHub Actions to publish
-the native, JVM, Homebrew, and Chocolatey distributions, then verify the
+the native, JVM, Homebrew, and GitHub-hosted Chocolatey distributions, then verify the
 GitHub release assets.
 USAGE
 }
@@ -92,12 +92,15 @@ gh auth status --hostname github.com >/dev/null 2>&1 || \
   die "The Chocolatey package definition is missing."
 [[ -f util/chocolatey/VERIFICATION.txt.template ]] || \
   die "The Chocolatey verification template is missing."
+[[ -f util/chocolatey/install.ps1 ]] || \
+  die "The GitHub-hosted Chocolatey installer is missing."
+[[ -f util/install-linux.sh ]] || \
+  die "The Linux installer is missing."
 
 actions_secrets="$(
   gh secret list --repo "$source_repository" --app actions
 )" || die "Could not read GitHub Actions secrets for $source_repository."
 require_actions_secret HOMEBREW_TAP_TOKEN
-require_actions_secret CHOCOLATEY_API_KEY
 
 current_version="$(awk -F '[<>]' '/^[[:space:]]*<version>/ { print $3; exit }' pom.xml)"
 [[ "$current_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
@@ -186,4 +189,4 @@ done
 printf 'Release complete: https://github.com/%s/releases/tag/%s\n' \
   "$source_repository" "$tag"
 printf 'Install on macOS: brew install blater/tap/nq\n'
-printf 'Install on Windows after Chocolatey moderation: choco install nq\n'
+printf 'Install on Windows: irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1 | iex\n'
