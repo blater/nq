@@ -105,7 +105,7 @@ class SqlExecutorConnectionContextTest {
             () -> sqlExecutor.query("select id from missing_relation"));
 
         assertTrue(thrown.getMessage().contains("nq catalog '*'"));
-        assertTrue(thrown.getMessage().contains("same input/cache or connection options"));
+        assertTrue(thrown.getMessage().contains("same input or connection options"));
       } finally {
         sqlExecutor.close();
       }

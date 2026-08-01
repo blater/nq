@@ -41,8 +41,11 @@ public class Log {
   }
 
   public static <R, T extends Throwable> R fatal(Class<T> type, String message) {
+    if (THROW_FATAL_ERRORS) {
+      sneakyThrow(createException(type, message, null));
+    }
     log.error(MESSAGE_PREFIX + message);
-    if (isDebug || THROW_FATAL_ERRORS) {
+    if (isDebug) {
       T ex = createException(type, message, null);
       sneakyThrow(ex);
     }
@@ -50,8 +53,11 @@ public class Log {
   }
 
   public static <R, T extends Throwable> R fatal(Class<T> type, String message, Throwable cause) {
+    if (THROW_FATAL_ERRORS) {
+      sneakyThrow(createException(type, message, cause));
+    }
     log.error(MESSAGE_PREFIX + message, cause);
-    if (isDebug || THROW_FATAL_ERRORS) {
+    if (isDebug) {
       T ex = createException(type, message, cause);
       sneakyThrow(ex);
     }

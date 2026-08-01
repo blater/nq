@@ -51,19 +51,14 @@ class MainTest {
   }
 
   @Test
-  void parseErrorsAreReportedOnceThroughLog() throws Exception {
+  void parseErrorsAreReportedThroughException() {
     String message = "line 1:22 expected '\\g' or ';' at line end";
 
-    String errors = captureStderr(() -> {
-      HiqlSyntaxException exception = assertThrows(
-          HiqlSyntaxException.class,
-          () -> Main.main("select * from festival"));
-      assertEquals(message, exception.getMessage());
-    });
+    HiqlSyntaxException exception = assertThrows(
+        HiqlSyntaxException.class,
+        () -> Main.main("select * from festival"));
 
-    assertTrue(errors.contains("ERROR - " + message));
-    assertFalse(errors.contains("blater.nq.util.Log"));
-    assertEquals(1, errors.split(java.util.regex.Pattern.quote(message), -1).length - 1);
+    assertEquals(message, exception.getMessage());
   }
 
   @Test
