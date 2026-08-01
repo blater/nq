@@ -6,6 +6,8 @@ import blater.nq.parser.ScriptLoader;
 import blater.nq.parser.ScriptParser;
 import blater.nq.parser.script.NestScript;
 import blater.nq.runner.ScriptRunner;
+import blater.nq.runner.sql.SqlExecutor;
+import blater.nq.runner.sql.cache.CacheExecution;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -29,10 +31,17 @@ class CacheQueryExamplesE2ETest {
         "identity-customers.yaml",
         "identity-customers.xml")) {
 
-      var hierarchy = ScriptRunner.run(script, Map.of(
+      Map<String, String> parameters = Map.of(
           ParameterParser.CACHE_MODE_PARAM, "true",
           ParameterParser.CACHE_DIR_PARAM, tempDir.resolve("cache-" + filename).toString(),
-          ParameterParser.INPUT_FILENAME, Path.of("docs", "examples", filename).toString()));
+          ParameterParser.INPUT_FILENAME, Path.of("docs", "examples", filename).toString());
+      SqlExecutor executor = CacheExecution.openForQuery(parameters).orElseThrow();
+      blater.nq.domain.Hierarchy hierarchy;
+      try {
+        hierarchy = ScriptRunner.run(script, parameters, executor);
+      } finally {
+        executor.close();
+      }
 
       assertEquals(
           "{\"result\":{\"region\":[{\"country\":\"GB\",\"customerCount\":\"2\"},{\"country\":\"US\",\"customerCount\":\"4\"}]}}",

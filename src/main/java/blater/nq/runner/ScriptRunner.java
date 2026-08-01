@@ -6,7 +6,6 @@ import blater.nq.inputreader.InputType;
 import blater.nq.parser.script.NestScript;
 import blater.nq.parser.script.NestStatement;
 import blater.nq.runner.sql.Capture;
-import blater.nq.runner.sql.cache.CacheExecution;
 import blater.nq.runner.sql.dml.*;
 import blater.nq.runner.sql.dml.mapping.InputFileRowMapper;
 import blater.nq.runner.sql.dml.mapping.MappingResult;
@@ -35,61 +34,70 @@ public final class ScriptRunner {
     if (script == null || script.statements().isEmpty())
       return null;
 
-    SqlExecutor sqlExecutor = CacheExecution.openForQuery(params)
-        .orElseGet(() -> new SqlExecutor(params));
+    SqlExecutor sqlExecutor = new SqlExecutor(params);
     try {
-      final InputFileRowMapper inputFileRowMapper = new InputFileRowMapper();
-      Hierarchy inputHierarchy = null;
-      Map<String, List<Map<String, Object>>> captureRowSets = new HashMap<>();
-      Hierarchy hierarchy =  null;
-
-      for (NestStatement stmt : script.statements()) {
-        switch (stmt.getType()) {
-          case AUTOCOMMIT ->  sqlExecutor.setAutoCommit(has(stmt.getTargetName()) && stmt.getTargetName().equals("true"));
-
-          case CAPTURE -> captureRowSets.putAll(Capture.captureTempRowset(stmt, params, sqlExecutor));
-
-          case CATALOG -> hierarchy = sqlExecutor.catalog(stmt.getCatalogPattern());
-
-          case SELECT -> hierarchy = RunQuery.runQuery(stmt, params, hierarchy, sqlExecutor);
-
-          case LITERAL -> RunLiteralSql.execute(stmt, params, sqlExecutor);
-
-          case INSERT, UPDATE, DELETE, PROC -> {
-            if (inputDataIsFromFile(stmt)) {
-              if (inputHierarchy == null)  {
-                String inputFilename = params.get(INPUT_FILENAME);
-                inputHierarchy = InputReader.of(InputType.fromFilename(inputFilename)).load(inputFilename, params);
-              }
-              runDmlForInputFile(stmt, inputHierarchy, params, inputFileRowMapper, sqlExecutor);
-
-            } else {
-              // use rows captured from a preceding 'capture' statement; each is mapped to a SqlRow & DML run with it
-              List<Map<String, Object>> rows = captureRowSets.get(stmt.getSourceRowsetName());
-              if (rows == null)
-                Log.fatal(IllegalArgumentException.class, "No temp rowset named: " + stmt.getSourceRowsetName());
-
-              // run the statement against each captured row one by one
-              // annoying for more than a couple of dozen rows, bad for > 1k rows, unusable for >10k
-              //  todo:
-              //   add captures at time of capture into in-memory temp table & reformulate the dml
-              //   statement dynamically to reference the temp table.
-              //   for small row sets, similar or less efficient; for >1K rows, hundreds of times more efficient;
-              //   for >100K rows, thousands of times more efficient
-              for (Map<String, Object> capturedRow : rows)
-                runDml(stmt, Capture.toSqlRow(stmt.getMappings(), capturedRow, params), sqlExecutor);
-            }
-          }
-        }
-      }
-      if (inputHierarchy != null) {
-        return inputHierarchy;
-      }
-      // Refactor note: callers expect DML-only scripts to return an empty hierarchy, not null.
-      return hierarchy == null ? new Hierarchy() : hierarchy;
+      return run(script, params, sqlExecutor);
     } finally {
       sqlExecutor.close();
     }
+  }
+
+  public static Hierarchy run(
+      NestScript script,
+      Map<String, String> params,
+      SqlExecutor sqlExecutor) {
+    if (script == null || script.statements().isEmpty())
+      return null;
+
+    final InputFileRowMapper inputFileRowMapper = new InputFileRowMapper();
+    Hierarchy inputHierarchy = null;
+    Map<String, List<Map<String, Object>>> captureRowSets = new HashMap<>();
+    Hierarchy hierarchy =  null;
+
+    for (NestStatement stmt : script.statements()) {
+      switch (stmt.getType()) {
+        case AUTOCOMMIT ->  sqlExecutor.setAutoCommit(has(stmt.getTargetName()) && stmt.getTargetName().equals("true"));
+
+        case CAPTURE -> captureRowSets.putAll(Capture.captureTempRowset(stmt, params, sqlExecutor));
+
+        case CATALOG -> hierarchy = sqlExecutor.catalog(stmt.getCatalogPattern());
+
+        case SELECT -> hierarchy = RunQuery.runQuery(stmt, params, hierarchy, sqlExecutor);
+
+        case LITERAL -> RunLiteralSql.execute(stmt, params, sqlExecutor);
+
+        case INSERT, UPDATE, DELETE, PROC -> {
+          if (inputDataIsFromFile(stmt)) {
+            if (inputHierarchy == null)  {
+              String inputFilename = params.get(INPUT_FILENAME);
+              inputHierarchy = InputReader.of(InputType.fromFilename(inputFilename)).load(inputFilename, params);
+            }
+            runDmlForInputFile(stmt, inputHierarchy, params, inputFileRowMapper, sqlExecutor);
+
+          } else {
+            // use rows captured from a preceding 'capture' statement; each is mapped to a SqlRow & DML run with it
+            List<Map<String, Object>> rows = captureRowSets.get(stmt.getSourceRowsetName());
+            if (rows == null)
+              Log.fatal(IllegalArgumentException.class, "No temp rowset named: " + stmt.getSourceRowsetName());
+
+            // run the statement against each captured row one by one
+            // annoying for more than a couple of dozen rows, bad for > 1k rows, unusable for >10k
+            //  todo:
+            //   add captures at time of capture into in-memory temp table & reformulate the dml
+            //   statement dynamically to reference the temp table.
+            //   for small row sets, similar or less efficient; for >1K rows, hundreds of times more efficient;
+            //   for >100K rows, thousands of times more efficient
+            for (Map<String, Object> capturedRow : rows)
+              runDml(stmt, Capture.toSqlRow(stmt.getMappings(), capturedRow, params), sqlExecutor);
+          }
+        }
+      }
+    }
+    if (inputHierarchy != null) {
+      return inputHierarchy;
+    }
+    // Refactor note: callers expect DML-only scripts to return an empty hierarchy, not null.
+    return hierarchy == null ? new Hierarchy() : hierarchy;
   }
 
   private static boolean inputDataIsFromFile(NestStatement stmt) {

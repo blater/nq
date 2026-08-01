@@ -26,9 +26,8 @@ nq catalog '*' --cache input.json
 ```
 
 Named JSON/YAML collections normally become tables with their member names.
-Top-level anonymous JSON arrays, JSON Lines, and CSV use `ITEM`. Colliding or
-anonymous nested relations may need `--relation-alias`; see
-[Source relation names and aliases](user-manual.md#source-relation-names-and-aliases).
+Top-level anonymous JSON arrays, JSON Lines, and CSV use `ITEM`. See
+[Source relation names](user-manual.md#source-relation-names).
 
 ## A file changed but a cached query shows old data
 
@@ -36,7 +35,6 @@ Persistent caches are not synchronized automatically with source changes.
 Query without `--cache` for a fresh temporary load or rebuild the cache:
 
 ```bash
-nq --clear-cache input.json
 nq --cache input.json
 ```
 

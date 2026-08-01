@@ -7,7 +7,6 @@ import blater.nq.domain.Hierarchy;
 import blater.nq.domain.SqlType;
 import blater.nq.util.Log;
 
-import java.nio.file.Path;
 import java.sql.*;
 import java.util.*;
 
@@ -20,18 +19,7 @@ import static blater.nq.runner.SyntaxErrorType.OK;
  */
 public final class SqlExecutor {
   private final ConnectionContext context = new ConnectionContext();
-  private final Path cacheFile;
-  private final String cacheIdentity;
-
   public SqlExecutor(Map<String, String> parameters) {
-    this.cacheFile = null;
-    this.cacheIdentity = null;
-    connect(parameters);
-  }
-
-  public SqlExecutor(Map<String, String> parameters, Path cacheFile, String cacheIdentity) {
-    this.cacheFile = Objects.requireNonNull(cacheFile);
-    this.cacheIdentity = Objects.requireNonNull(cacheIdentity);
     connect(parameters);
   }
 
@@ -84,14 +72,6 @@ public final class SqlExecutor {
 
   public Connection connection() {
     return context.connection();
-  }
-
-  public Optional<Path> cacheFile() {
-    return Optional.ofNullable(cacheFile);
-  }
-
-  public Optional<String> cacheIdentity() {
-    return Optional.ofNullable(cacheIdentity);
   }
 
   public Hierarchy catalog(String tablePattern) {
@@ -229,7 +209,7 @@ public final class SqlExecutor {
         : exception.getMessage().toLowerCase(Locale.ROOT);
     if (databaseMessage.contains("table") && databaseMessage.contains("not found")
         || databaseMessage.contains("column") && databaseMessage.contains("not found")) {
-      message += " Inspect discovered names with nq catalog '*' using the same input/cache or connection options.";
+      message += " Inspect discovered names with nq catalog '*' using the same input or connection options.";
     }
     return message;
   }

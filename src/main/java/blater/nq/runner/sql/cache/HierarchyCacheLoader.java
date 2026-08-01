@@ -2,7 +2,6 @@ package blater.nq.runner.sql.cache;
 
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.Node;
-import blater.nq.inputreader.InputDocument;
 import blater.nq.runner.sql.SqlExecutor;
 import blater.nq.runner.sql.SqlRowCursor;
 import blater.nq.util.Log;
@@ -24,27 +23,20 @@ public final class HierarchyCacheLoader {
   private static final int INSERT_BATCH_SIZE = 500;
 
   private final SqlExecutor sqlExecutor;
-  private final Map<RelationMaterializationPlan.StorageKey, TableState> tables = new LinkedHashMap<>();
-  private final Map<String, String> tableSqlIdentities = new LinkedHashMap<>();
+  private final Map<String, TableState> tables = new LinkedHashMap<>();
 
   public HierarchyCacheLoader(SqlExecutor sqlExecutor) {
     this.sqlExecutor = sqlExecutor;
   }
 
   public void load(Hierarchy hierarchy) {
-    load(InputDocument.fromHierarchy(hierarchy), MaterializationConfiguration.from(Map.of()));
-  }
-
-  public void load(InputDocument document, MaterializationConfiguration configuration) {
     tables.clear();
-    tableSqlIdentities.clear();
-    Hierarchy hierarchy = document == null ? null : document.hierarchy();
     if (hierarchy == null || hierarchy.getRoot() == null) {
       return;
     }
 
-    RelationMaterializationPlan plan = RelationMaterializationPlan.create(document, configuration);
-    writeNode(hierarchy.getRoot(), null, null, true, plan);
+    Node root = hierarchy.getRoot();
+    writeNode(root, null, null, true, root.getName());
     flushAllTables();
     for (TableState table : tables.values()) {
       if (table.created) {
@@ -58,7 +50,7 @@ public final class HierarchyCacheLoader {
       String parentTable,
       String parentId,
       boolean root,
-      RelationMaterializationPlan plan) {
+      String rootName) {
     Map<String, List<String>> valuesByName = new LinkedHashMap<>();
     Set<String> repeatedNames = new LinkedHashSet<>();
     List<Node> objectChildren = new ArrayList<>();
@@ -67,15 +59,26 @@ public final class HierarchyCacheLoader {
     String currentTable = parentTable;
     String currentId = parentId;
     if (shouldMaterialize(node, valuesByName, objectChildren, root)) {
-      RelationMaterializationPlan.PlannedRelation relation = plan.relation(node);
-      TableState table = table(relation.storageKey(), relation.logicalName(), false);
+      String logicalName = relationName(node, parentTable, rootName);
+      TableState table = table(logicalName, false);
       currentId = table.writeObjectRow(parentTable, parentId, valuesByName, repeatedNames);
-      currentTable = relation.logicalName();
+      currentTable = logicalName;
     }
 
     for (Node child : objectChildren) {
-      writeNode(child, currentTable, currentId, false, plan);
+      writeNode(child, currentTable, currentId, false, rootName);
     }
+  }
+
+  private String relationName(Node node, String parentTable, String rootName) {
+    if (parentTable == null
+        && node.isArrayItem()
+        && "item".equals(node.getName())
+        && rootName != null
+        && !Set.of("json", "yaml", "csv").contains(rootName)) {
+      return rootName;
+    }
+    return node.getName();
   }
 
   private void classifyDirectChildren(
@@ -138,10 +141,9 @@ public final class HierarchyCacheLoader {
   }
 
   private TableState table(
-      RelationMaterializationPlan.StorageKey storageKey,
       String logicalName,
       boolean valueTable) {
-    TableState existing = tables.get(storageKey);
+    TableState existing = tables.get(logicalName);
     if (existing != null) {
       if (existing.valueTable != valueTable) {
         Log.fatal(
@@ -151,18 +153,8 @@ public final class HierarchyCacheLoader {
       return existing;
     }
 
-    String renderedName = CacheIdentifierNaming.render(logicalName, "table");
-    String sqlIdentity = CacheIdentifierNaming.sqlIdentity(logicalName);
-    String existingLogicalName = tableSqlIdentities.putIfAbsent(sqlIdentity, logicalName);
-    if (existingLogicalName != null && !existingLogicalName.equals(logicalName)) {
-      Log.fatal(
-          IllegalArgumentException.class,
-          "Cache table SQL identifier collision between ["
-              + existingLogicalName + "] and [" + logicalName + "]");
-    }
-
-    TableState table = new TableState(storageKey, logicalName, renderedName, valueTable);
-    tables.put(storageKey, table);
+    TableState table = new TableState(logicalName, valueTable);
+    tables.put(logicalName, table);
     return table;
   }
 
@@ -184,25 +176,18 @@ public final class HierarchyCacheLoader {
   }
 
   private final class TableState {
-    private final RelationMaterializationPlan.StorageKey storageKey;
     private final String logicalName;
-    private final String renderedSqlName;
     private final boolean valueTable;
     private final Map<String, String> columnsByLogicalName = new LinkedHashMap<>();
-    private final Map<String, String> columnSqlIdentities = new LinkedHashMap<>();
     private final Map<String, FieldStorageType> fieldStorageTypesByLogicalName = new LinkedHashMap<>();
     private final List<Map<String, Object>> pendingRows = new ArrayList<>();
     private int nextGeneratedId = 1;
     private boolean created = false;
 
     private TableState(
-        RelationMaterializationPlan.StorageKey storageKey,
         String logicalName,
-        String renderedSqlName,
         boolean valueTable) {
-      this.storageKey = storageKey;
       this.logicalName = logicalName;
-      this.renderedSqlName = renderedSqlName;
       this.valueTable = valueTable;
     }
 
@@ -315,7 +300,7 @@ public final class HierarchyCacheLoader {
         String select = "select "
             + columnsByLogicalName.get(rowIdColumn()) + " as \"cache_parent_id\", "
             + renderedFieldColumn + " as \"cache_field_value\" "
-            + "from " + renderedSqlName + " "
+            + "from " + logicalName + " "
             + "where " + renderedFieldColumn + " is not null";
 
         try (SqlRowCursor rows = sqlExecutor.query(select)) {
@@ -328,7 +313,7 @@ public final class HierarchyCacheLoader {
         }
 
         columnsByLogicalName.remove(fieldName);
-        sqlExecutor.execute("alter table " + renderedSqlName + " drop column " + renderedFieldColumn);
+        sqlExecutor.execute("alter table " + logicalName + " drop column " + renderedFieldColumn);
       }
       fieldStorageTypesByLogicalName.put(fieldName, FieldStorageType.VALUE_TABLE);
     }
@@ -336,7 +321,6 @@ public final class HierarchyCacheLoader {
     private TableState ensureValueTable(String fieldName) {
       String valueTableName = repeatedTableName(logicalName, fieldName);
       TableState valueTableState = table(
-          new RelationMaterializationPlan.StorageKey(storageKey.value() + "#value:" + fieldName),
           valueTableName,
           true);
       valueTableState.ensureColumn(rowIdColumn());
@@ -350,31 +334,20 @@ public final class HierarchyCacheLoader {
         return;
       }
 
-      String renderedColumnName = CacheIdentifierNaming.render(logicalColumnName, "column");
-      String sqlIdentity = CacheIdentifierNaming.sqlIdentity(logicalColumnName);
-      String existingLogicalName = columnSqlIdentities.putIfAbsent(sqlIdentity, logicalColumnName);
-      if (existingLogicalName != null && !existingLogicalName.equals(logicalColumnName)) {
-        Log.fatal(
-            IllegalArgumentException.class,
-            "Cache column SQL identifier collision in table ["
-                + logicalName + "] between ["
-                + existingLogicalName + "] and [" + logicalColumnName + "]");
-      }
-
       if (!created) {
-        columnsByLogicalName.put(logicalColumnName, renderedColumnName);
+        columnsByLogicalName.put(logicalColumnName, logicalColumnName);
         sqlExecutor.execute(
-            "create table " + renderedSqlName
-                + " (" + renderedColumnName + " " + TEXT_SQL_TYPE + ")");
+            "create table " + logicalName
+                + " (" + logicalColumnName + " " + TEXT_SQL_TYPE + ")");
         created = true;
         return;
       }
 
       flush();
-      columnsByLogicalName.put(logicalColumnName, renderedColumnName);
+      columnsByLogicalName.put(logicalColumnName, logicalColumnName);
       sqlExecutor.execute(
-          "alter table " + renderedSqlName
-              + " add column " + renderedColumnName + " " + TEXT_SQL_TYPE);
+          "alter table " + logicalName
+              + " add column " + logicalColumnName + " " + TEXT_SQL_TYPE);
     }
 
     private void flushIfFull() {
@@ -392,7 +365,7 @@ public final class HierarchyCacheLoader {
       String placeholders = columnsByLogicalName.keySet().stream()
           .map(ignored -> "?")
           .collect(Collectors.joining(", "));
-      String insert = "insert into " + renderedSqlName
+      String insert = "insert into " + logicalName
           + " (" + columns + ") values (" + placeholders + ")";
 
       List<List<Object>> rows = new ArrayList<>(pendingRows.size());

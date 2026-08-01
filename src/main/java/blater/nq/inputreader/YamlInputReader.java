@@ -26,12 +26,9 @@ public class YamlInputReader implements InputReader {
   private static final String ARRAY_ITEM = "item";
 
   @Override
-  public InputDocument read(String filename, Map<String, String> parameters) {
+  public Hierarchy load(String filename, Map<String, String> parameters) {
     Object inputYaml = loadYamlFile(filename);
-    Hierarchy hierarchy = yamlToHierarchy(inputYaml, parameters);
-    return new InputDocument(
-        hierarchy,
-        SourceStructure.fromStructured(inputYaml, hierarchy, SYNTHETIC_ROOT));
+    return yamlToHierarchy(inputYaml, parameters);
   }
 
   private static Object loadYamlFile(String filename) {

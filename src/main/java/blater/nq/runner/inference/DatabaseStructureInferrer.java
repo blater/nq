@@ -57,36 +57,6 @@ public final class DatabaseStructureInferrer {
     return new DatabaseStructure(completed, relationships, System.currentTimeMillis());
   }
 
-  /** Checks key-relevant metadata for only the relations used by the current SELECT. */
-  public static boolean matches(
-      Connection connection,
-      DatabaseStructure cached,
-      List<String> referencedRelations) throws SQLException {
-    DatabaseMetaData metadata = connection.getMetaData();
-    for (String relationName : referencedRelations.stream().distinct().toList()) {
-      DatabaseStructure.Relation relation = cached.relation(relationName).orElse(null);
-      if (relation == null) return false;
-      if (!relation.columns().equals(columns(metadata, relation.id()))) return false;
-
-      List<DatabaseStructure.CandidateKey> cachedDeclared = relation.candidateKeys().stream()
-          .filter(key -> key.evidence() == PRIMARY_KEY || key.evidence() == UNIQUE_INDEX)
-          .toList();
-      List<DatabaseStructure.CandidateKey> liveDeclared = new ArrayList<>();
-      liveDeclared.addAll(primaryKeys(metadata, relation.id()));
-      liveDeclared.addAll(uniqueIndexes(metadata, relation.id()));
-      liveDeclared = deduplicateKeys(liveDeclared);
-      if (!cachedDeclared.equals(liveDeclared)) return false;
-
-      List<DatabaseStructure.Relationship> cachedForeignKeys = cached.relationships().stream()
-          .filter(item -> item.source().equals(relation.id()))
-          .filter(item -> item.evidence() == DECLARED_FOREIGN_KEY)
-          .toList();
-      List<DatabaseStructure.Relationship> liveForeignKeys = declaredRelationships(metadata, List.of(relation));
-      if (!cachedForeignKeys.equals(liveForeignKeys)) return false;
-    }
-    return true;
-  }
-
   private static List<DatabaseStructure.Column> columns(
       DatabaseMetaData metadata,
       DatabaseStructure.RelationId relation) throws SQLException {

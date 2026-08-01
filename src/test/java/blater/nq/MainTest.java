@@ -2,6 +2,7 @@ package blater.nq;
 
 import blater.nq.parser.HiqlSyntaxException;
 import blater.nq.runner.sql.cache.CacheExecution;
+import blater.nq.runner.sql.cache.PersistentCache;
 import blater.nq.testsupport.ParquetTestFiles;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
 import org.apache.parquet.schema.MessageType;
@@ -432,28 +433,7 @@ class MainTest {
   }
 
   @Test
-  void metadataRefreshAndExpiryCommandsUseTheSelectedTargetAndExit() throws Exception {
-    String url = databaseUrl();
-    Path properties = propertiesFile(url);
-    try (Connection connection = DriverManager.getConnection(url, "sa", "")) {
-      execute(connection, "create table item (id integer primary key)");
-    }
-    Path cache = tempDir.resolve("metadata-command-cache");
-
-    String refreshed = captureStdout(() -> Main.main(
-        "-p", properties.toString(), "--cache-dir", cache.toString(), "--metadata-refresh"));
-    String configured = captureStdout(() -> Main.main(
-        "-p", properties.toString(), "--cache-dir", cache.toString(), "--metadata-expiry-hours", "0"));
-
-    assertTrue(refreshed.contains("Refreshed database key metadata"));
-    assertTrue(configured.contains("expiry set to 0"));
-    try (var files = Files.list(cache)) {
-      assertEquals(1, files.filter(path -> path.getFileName().toString().endsWith(".mv.db")).count());
-    }
-  }
-
-  @Test
-  void staleReferencedKeyMetadataRefreshesBeforeTheNextQuery() throws Exception {
+  void schemaChangesAreUsedByTheNextQuery() throws Exception {
     String url = databaseUrl();
     Path properties = propertiesFile(url);
     try (Connection connection = DriverManager.getConnection(url, "sa", "")) {
@@ -929,17 +909,16 @@ class MainTest {
   @Test
   void longInputOptionSelectsStandardInputAndAllowsPersistentCache() {
     var params = ParameterParser.parse(
-        "--input=json", "--cache", "--relation-alias", "/users=people",
-        "select name from people;");
+        "--input=json", "--cache", "select name from users;");
 
     assertEquals("json", params.get(ParameterParser.INPUT_TYPE_PARAM));
     assertEquals(ParameterParser.STDIN_INPUT, params.get(ParameterParser.INPUT_FILENAME));
-    assertEquals("select name from people;", params.get(ParameterParser.SCRIPT_TEXT_PARAM));
+    assertEquals("select name from users;", params.get(ParameterParser.SCRIPT_TEXT_PARAM));
     assertEquals("true", params.get(ParameterParser.CACHE_MODE_PARAM));
   }
 
   @Test
-  void persistentStandardInputCacheCanBeReusedAsTheActiveCache() throws Exception {
+  void persistentStandardInputCacheBecomesTheActiveCache() throws Exception {
     String input = """
         {"users":[{"name":"Alice","active":true},{"name":"Bob","active":false}]}
         """;
@@ -948,15 +927,12 @@ class MainTest {
 
     String first = withStandardInput(input, () -> captureStdout(() -> Main.main(
         "-i", "json", "--cache", "--cache-dir", cacheDir.toString(), query)));
-    String sameStream = withStandardInput(input, () -> captureStdout(() -> Main.main(
-        "-i", "json", "--cache", "--cache-dir", cacheDir.toString(), query)));
-    String reused = captureStdout(() -> Main.main(query));
+    String active = captureStdout(() -> Main.main(query));
 
     assertEquals("""
         [{"name":"Alice"}]
         """, first);
-    assertEquals(first, sameStream);
-    assertEquals(first, reused);
+    assertEquals(first, active);
     try (var cacheFiles = Files.list(cacheDir)) {
       assertEquals(1, cacheFiles
           .filter(path -> path.getFileName().toString().endsWith(".mv.db"))
@@ -1129,7 +1105,7 @@ class MainTest {
   }
 
   @Test
-  void standaloneCacheLoadReportsReuseAndSuppliesTheActiveCache() throws Exception {
+  void eachStandaloneCacheLoadIsFreshAndSuppliesTheActiveCache() throws Exception {
     Path cacheDir = tempDir.resolve("active-cache");
     Path input = write("active.json", """
         {
@@ -1149,13 +1125,18 @@ class MainTest {
 
     String loaded = captureStdout(() -> Main.main(
         "--cache", "--cache-dir", cacheDir.toString(), input.toString()));
-    String reused = captureStdout(() -> Main.main(
+    String reloaded = captureStdout(() -> Main.main(
         "--cache", "--cache-dir", cacheDir.toString(), input.toString()));
     String queryOutput = captureStdout(() -> Main.main(script.toString()));
 
     String source = input.toAbsolutePath().normalize().toString();
     assertEquals("Loaded cache for " + source + System.lineSeparator(), loaded);
-    assertEquals("Using existing cache for " + source + System.lineSeparator(), reused);
+    assertEquals("Loaded cache for " + source + System.lineSeparator(), reloaded);
+    try (var cacheFiles = Files.list(cacheDir)) {
+      assertEquals(2, cacheFiles
+          .filter(path -> path.getFileName().toString().endsWith(".mv.db"))
+          .count());
+    }
     assertEquals("""
         {"result":[{"customer":{"id":"C1"}}]}
         """, queryOutput);
@@ -1176,15 +1157,17 @@ class MainTest {
         """);
 
     Main.main("--cache-dir", cacheDir.toString(), "--cache", first.toString());
+    String firstCache = PersistentCache.active().orElseThrow()
+        .cacheFile().getFileName().toString();
     Main.main("--cache-dir", cacheDir.toString(), "--cache", second.toString());
     Files.delete(first);
 
     String switched = captureStdout(() -> Main.main(
-        "--use-cache", first.toString(), "--cache-dir", cacheDir.toString()));
+        "--use-cache", firstCache, "--cache-dir", cacheDir.toString()));
     String output = captureStdout(() -> Main.main(script.toString()));
 
     assertEquals(
-        "Active cache set to " + first.toAbsolutePath().normalize() + System.lineSeparator(),
+        "Active cache set to " + firstCache + System.lineSeparator(),
         switched);
     assertEquals("""
         [{"result":{"id":"FIRST"}}]
@@ -1194,22 +1177,22 @@ class MainTest {
   @Test
   void useCacheDoesNotCreateAMissingCache() {
     Path cacheDir = tempDir.resolve("missing-use-cache");
-    Path source = tempDir.resolve("not-cached.json");
+    String filename = "missing-otter.mv.db";
 
     IllegalArgumentException exception = assertThrows(
         IllegalArgumentException.class,
         () -> Main.main(
-            "--use-cache", source.toString(),
+            "--use-cache", filename,
             "--cache-dir", cacheDir.toString()));
 
     assertEquals(
-        "No existing cache found for " + source.toAbsolutePath().normalize() + ".",
+        "No existing cache found at " + cacheDir.resolve(filename).toAbsolutePath().normalize() + ".",
         exception.getMessage());
     assertFalse(Files.exists(cacheDir));
   }
 
   @Test
-  void explicitCacheSelectionBecomesActiveForLaterQueries() throws Exception {
+  void explicitCacheLoadBecomesActiveForLaterQueries() throws Exception {
     Path cacheDir = tempDir.resolve("selected-cache");
     Path first = write("first-active.json", """
         { "data": { "customer": [{ "id": "FIRST" }] } }
@@ -1291,8 +1274,8 @@ class MainTest {
   }
 
   @Test
-  void cacheModeReusesExistingCacheWithoutReadingSourceFile() throws Exception {
-    Path cacheDir = tempDir.resolve("cache-reuse");
+  void activeCacheCanBeQueriedWithoutReadingSourceFile() throws Exception {
+    Path cacheDir = tempDir.resolve("active-cache-query");
     Path script = write("query.nq", """
         output json;
         select c.id into {result.customer.id}
@@ -1321,10 +1304,7 @@ class MainTest {
     Files.delete(input);
 
     String output = captureStdout(() -> Main.main(
-        "--cache",
-        "--cache-dir", cacheDir.toString(),
-        script.toString(),
-        input.toString()));
+        script.toString()));
 
     assertEquals("""
         {"result":[{"customer":{"id":"C1"}}]}
@@ -1332,8 +1312,8 @@ class MainTest {
   }
 
   @Test
-  void cacheModeReusesExistingParquetCacheWithoutReadingSourceFile() throws Exception {
-    Path cacheDir = tempDir.resolve("cache-parquet-reuse");
+  void activeParquetCacheCanBeQueriedWithoutReadingSourceFile() throws Exception {
+    Path cacheDir = tempDir.resolve("active-parquet-query");
     Path script = write("query.nq", """
         output json;
         select c.id into {result.customer.id}
@@ -1359,10 +1339,7 @@ class MainTest {
     Files.delete(input);
 
     String output = captureStdout(() -> Main.main(
-        "--cache",
-        "--cache-dir", cacheDir.toString(),
-        script.toString(),
-        input.toString()));
+        script.toString()));
 
     assertEquals("""
         {"result":[{"customer":{"id":"C1"}}]}

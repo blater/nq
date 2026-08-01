@@ -328,78 +328,6 @@ class HierarchyCacheLoaderTest {
   }
 
   @Test
-  void quotesUnusualIdentifiersAndStoresSqlTextAsValues() throws Exception {
-    try (H2Database database = new H2Database()) {
-      SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
-      try {
-        new HierarchyCacheLoader(executor).load(unusualIdentifierHierarchy());
-
-        assertEquals(
-            "select * from customer; drop table customer;",
-            database.queryString("select \"select\" from \"customer detail\""));
-        assertEquals(1, database.queryInt("select count(*) from \"customer detail\""));
-      } finally {
-        executor.close();
-      }
-    }
-  }
-
-  @Test
-  void quotesOffsetColumnBecauseItIsAnH2Keyword() throws Exception {
-    try (H2Database database = new H2Database()) {
-      SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
-      try {
-        Node data = new Node("data");
-        Node positive = new Node("positive");
-        positive.addNode(value("offset", "1"));
-        data.addNode(positive);
-
-        new HierarchyCacheLoader(executor).load(new Hierarchy(data));
-
-        assertEquals("1", database.queryString("select \"offset\" from positive"));
-      } finally {
-        executor.close();
-      }
-    }
-  }
-
-  @Test
-  void renderedIdentifierCollisionsFailClearly() throws Exception {
-    try (H2Database database = new H2Database()) {
-      SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
-      try {
-        IllegalArgumentException thrown = assertThrows(
-            IllegalArgumentException.class,
-            () -> new HierarchyCacheLoader(executor).load(identifierCollisionHierarchy()));
-
-        assertEquals(
-            "Relation name [CUSTOMER] is requested by [/data/CUSTOMER] and [/data/customer]. "
-                + "Assign a stable name with --relation-alias, for example "
-                + "--relation-alias '/data/customer=data_customer'.",
-            thrown.getMessage());
-      } finally {
-        executor.close();
-      }
-    }
-  }
-
-  @Test
-  void sameNamedNestedObjectsAtDifferentPathsRequireAliases() throws Exception {
-    try (H2Database database = new H2Database()) {
-      SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
-      try {
-        IllegalArgumentException thrown = assertThrows(
-            IllegalArgumentException.class,
-            () -> new HierarchyCacheLoader(executor).load(duplicateWalletHierarchy()));
-
-        assertEquals(true, thrown.getMessage().contains("Relation name [wallet] is requested by"));
-      } finally {
-        executor.close();
-      }
-    }
-  }
-
-  @Test
   void emptyHierarchyCreatesNoTables() throws Exception {
     try (H2Database database = new H2Database()) {
       SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
@@ -438,23 +366,6 @@ class HierarchyCacheLoaderTest {
     second.addNode(value("region", "EMEA"));
     data.addNode(first);
     data.addNode(second);
-    return new Hierarchy(data);
-  }
-
-  private Hierarchy duplicateWalletHierarchy() {
-    Node data = new Node("data");
-    Node customerOne = new Node("customer");
-    customerOne.addNode(wallet("GBP", "1.00"));
-    Node customerTwo = new Node("customer");
-    customerTwo.addNode(wallet("GBP", "2.00"));
-    Node accountOne = new Node("account");
-    accountOne.addNode(wallet("GBP", "3.00"));
-    Node accountTwo = new Node("account");
-    accountTwo.addNode(wallet("GBP", "4.00"));
-    data.addNode(customerOne);
-    data.addNode(customerTwo);
-    data.addNode(accountOne);
-    data.addNode(accountTwo);
     return new Hierarchy(data);
   }
 
@@ -513,25 +424,6 @@ class HierarchyCacheLoaderTest {
     second.addNode(arrayValue("tag", "trial"));
     data.addNode(first);
     data.addNode(second);
-    return new Hierarchy(data);
-  }
-
-  private Hierarchy unusualIdentifierHierarchy() {
-    Node data = new Node("data");
-    Node customer = new Node("customer detail");
-    customer.addNode(value("select", "select * from customer; drop table customer;"));
-    data.addNode(customer);
-    return new Hierarchy(data);
-  }
-
-  private Hierarchy identifierCollisionHierarchy() {
-    Node data = new Node("data");
-    Node lower = new Node("customer");
-    lower.addNode(value("id", "C1"));
-    Node upper = new Node("CUSTOMER");
-    upper.addNode(value("id", "C2"));
-    data.addNode(lower);
-    data.addNode(upper);
     return new Hierarchy(data);
   }
 

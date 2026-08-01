@@ -6,6 +6,8 @@ import blater.nq.domain.HierarchyPath;
 import blater.nq.domain.Node;
 import blater.nq.outputwriter.JsonOutputWriter;
 import blater.nq.parser.ScriptParser;
+import blater.nq.runner.sql.SqlExecutor;
+import blater.nq.runner.sql.cache.CacheExecution;
 import blater.nq.testsupport.H2Database;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -103,7 +105,13 @@ class ScriptRunnerCatalogTest {
     params.put(ParameterParser.INPUT_FILENAME, input.toString());
     params.put(ParameterParser.CACHE_DIR_PARAM, tempDir.resolve("cache").toString());
 
-    Hierarchy catalog = ScriptRunner.run(ScriptParser.parse("catalog person;"), params);
+    Hierarchy catalog;
+    SqlExecutor executor = CacheExecution.openForQuery(params).orElseThrow();
+    try {
+      catalog = ScriptRunner.run(ScriptParser.parse("catalog person;"), params, executor);
+    } finally {
+      executor.close();
+    }
 
     assertTrue(containsValue(values(catalog, "catalog.table.name"), "person"));
     assertTrue(containsValue(values(catalog, "catalog.table.columns.column.name"), "id"));

@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/** Applies a cached database graph to one parsed DQL SELECT. */
+/** Applies an inferred database graph to one parsed DQL SELECT. */
 public final class KeyInferencePlanner {
 
   public CompiledSelect compile(SelectBlueprint blueprint, DatabaseStructure structure) {

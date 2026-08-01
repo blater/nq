@@ -34,11 +34,9 @@ class HelpTest {
     assertTrue(shortHelp.contains("--jdbc-database <url>"));
     assertTrue(shortHelp.contains("nq <input-file> [-o|--output <type>]"));
     assertTrue(shortHelp.contains("-c, --cache"));
-    assertTrue(shortHelp.contains("--use-cache <source-id-or-cache-filename>"));
+    assertTrue(shortHelp.contains("--use-cache <cache-filename>"));
     assertTrue(shortHelp.contains("-i, --input <xml|json|jsonl|yaml|csv|parquet>"));
     assertTrue(shortHelp.contains("--parquet-record <name>"));
-    assertTrue(shortHelp.contains("--anonymous-collections <merge|error>"));
-    assertTrue(shortHelp.contains("--relation-alias <source-path>=<relation-name>"));
     assertTrue(shortHelp.contains("Run 'nq --help' for the complete manual"));
     assertFalse(shortHelp.contains("NQ(1)"));
     assertTrue(longHelp.startsWith("NQ(1)"));
@@ -63,7 +61,6 @@ class HelpTest {
 
     assertTrue(output.startsWith("QUERY\n"));
     assertTrue(output.contains("nq <script-file-or-text>"));
-    assertTrue(output.contains("--relation-alias"));
     assertTrue(output.contains("nq --help connection"));
   }
 
@@ -75,7 +72,7 @@ class HelpTest {
     assertTrue(query.contains("temporary in-memory H2"));
     assertTrue(output.contains("persistent local H2"));
     assertTrue(output.contains("file-backed H2"));
-    assertTrue(output.contains("content hash"));
+    assertTrue(output.contains("fresh file-backed H2"));
     assertFalse(output.contains("temporary in-memory H2"));
   }
 
@@ -84,10 +81,9 @@ class HelpTest {
     String output = captureStdout(() -> Main.main("--help", "use-cache"));
 
     assertTrue(output.startsWith("USE-CACHE\n"));
-    assertTrue(output.contains("nq --use-cache <source-id-or-cache-filename>"));
-    assertTrue(output.contains("stdin:<type>:sha256:<hash>"));
-    assertTrue(output.contains("does not create one"));
-    assertTrue(output.contains("materialization options"));
+    assertTrue(output.contains("nq --use-cache <cache-filename>"));
+    assertTrue(output.contains("bare filename"));
+    assertTrue(output.contains("never creates one"));
   }
 
   @Test

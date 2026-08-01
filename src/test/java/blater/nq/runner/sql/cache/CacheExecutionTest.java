@@ -25,17 +25,18 @@ class CacheExecutionTest {
   }
 
   @Test
-  void standaloneLoadAndReuseShareOneLifecycle() throws Exception {
+  void eachStandaloneLoadCreatesAndActivatesANewCache() throws Exception {
     Path input = write("standalone.json", """
         { "data": { "customer": [{ "id": "C1" }] } }
         """);
     Map<String, String> parameters = cacheParameters(input, "standalone-cache");
 
-    assertTrue(CacheExecution.loadAndActivate(parameters));
-    assertFalse(CacheExecution.loadAndActivate(parameters));
+    CacheExecution.loadAndActivate(parameters);
+    Path first = PersistentCache.active().orElseThrow().cacheFile();
+    CacheExecution.loadAndActivate(parameters);
 
     CacheHandle active = PersistentCache.active().orElseThrow();
-    assertEquals(input.toAbsolutePath().normalize().toString(), active.source().sourcePath());
+    assertFalse(first.equals(active.cacheFile()));
   }
 
   @Test
@@ -88,7 +89,6 @@ class CacheExecutionTest {
     try (var rows = first.query("select id from customer")) {
       assertTrue(rows.next());
       assertEquals("FIRST", rows.stringValue(1));
-      assertTrue(first.cacheFile().isEmpty());
     } finally {
       first.close();
     }

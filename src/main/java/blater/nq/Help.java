@@ -9,9 +9,9 @@ public final class Help {
         nq catalog [table-pattern] [options]
         nq <input-file> [-o|--output <type>]
         nq -c|--cache <input-file> [cache-options]
-        nq --use-cache <source-id-or-cache-filename> [cache-options]
+        nq --use-cache <cache-filename> [cache-options]
         nq --list-caches [cache-options]
-        nq --clear-cache [source-id-or-cache-filename] [cache-options]
+        nq --clear-cache [cache-filename] [cache-options]
         nq --clear-cache-older-than <age> [cache-options]
         nq -h | --help [topic]
         nq --version
@@ -35,10 +35,6 @@ public final class Help {
       Cache options:
         -c, --cache
         --cache-dir <path>
-        --anonymous-collections <merge|error>
-        --relation-alias <source-path>=<relation-name>  (repeatable)
-        --metadata-refresh
-        --metadata-expiry-hours <hours>
 
       Parquet options:
         --parquet-root <name>
@@ -73,9 +69,9 @@ public final class Help {
       AVAILABLE HELP TOPICS
           query          Run a script against a database or input-file cache.
           catalog        List tables or show details for matching tables.
-          cache          Load and reuse persistent input-file caches.
+          cache          Load a fresh persistent input-file cache.
           use-cache      Switch the active cache without loading an input file.
-          clear-cache    Remove all caches, one input's caches, or old caches.
+          clear-cache    Remove all caches, one named cache, or old caches.
           list-caches    List persistent input-file caches.
           connection     Configure JDBC connections from options or properties.
           output         Select XML, JSON, JSON Lines, YAML, CSV, or Markdown output.
@@ -130,17 +126,14 @@ public final class Help {
       DESCRIPTION
           A script may be a filename or inline script text. Supply an input file
           without JDBC settings to query it through temporary in-memory H2.
-          Add --cache to persist and reuse that H2 database. With JDBC settings,
+          Add --cache to persist that H2 database and make it active. With JDBC settings,
           the input supplies mapped DML values. With no input or JDBC connection,
           the script queries the active cache. DQL structure keys are inferred
           from database metadata unless --no-key-inference is supplied. Named
           JSON/YAML collections use their member names as tables; anonymous
-          record streams use ITEM. Resolve collisions or name anonymous paths
-          with repeatable --relation-alias path=name options. Use
-          --anonymous-collections error to reject ambiguous ITEM merging.
+          record streams use ITEM.
           Use -i or --input to read a named format from standard input. It uses
-          temporary in-memory storage unless --cache is supplied. Persistent
-          stdin caches are identified by input type and content hash.
+          temporary in-memory storage unless --cache is supplied.
 
       EXAMPLES
           nq report.nq -p database.properties
@@ -149,7 +142,6 @@ public final class Help {
           cat elements.json | nq -i json 'select id from item;'
           nq -i json 'select id from item;' < elements.json
           nq 'select id from customers;' customers.json
-          nq query.nq data.json --relation-alias '/0=customers'
           nq query.nq customers.json --cache --output json
           nq 'output json; select 1 into {result.value};' -p database.properties
 
@@ -172,19 +164,14 @@ public final class Help {
 
       DESCRIPTION
           Supported input types are XML, JSON, JSON Lines, YAML, CSV, and Parquet. --cache
-          persists, reuses, and activates a file-backed H2 database under
+          creates and activates a fresh file-backed H2 database under
           ~/.nq/cache. Persistent caching is always explicit; a lone input file
           instead converts directly to the selected output format. A script
           with no input or JDBC connection queries the active cache. Explicit
-          --cache takes precedence over JDBC settings. Standard-input caches
-          are identified by input type, content hash, and materialization options.
+          --cache takes precedence over JDBC settings.
 
           JSON and YAML relation names come from collection member names.
-          Anonymous JSON arrays, JSON Lines, and CSV use ITEM. Configure source
-          paths with repeatable --relation-alias path=name options. Several
-          unresolved anonymous paths merge into ITEM with a provenance-loss
-          warning by default; --anonymous-collections error rejects the load.
-          Materialization configuration is part of persistent cache identity.
+          Anonymous JSON arrays, JSON Lines, and CSV use ITEM.
 
       EXAMPLES
           nq --cache customers.json
@@ -206,23 +193,16 @@ public final class Help {
           Switch the active cache without loading or rebuilding it.
 
       SYNOPSIS
-          nq --use-cache <source-id-or-cache-filename> [--cache-dir path]
+          nq --use-cache <cache-filename> [--cache-dir path]
 
       DESCRIPTION
-          Selects an existing cache by its source identifier or by a bare cache
-          filename. A bare cache filename is resolved in --cache-dir, or in
-          ~/.nq/cache by default. File sources use absolute paths; standard-input
-          sources use stdin:<type>:sha256:<hash>. The source file need not exist. The
-          command fails if no matching cache exists and does not create one. If
-          several current variants exist, repeat their materialization options
-          to select an exact variant; use --parquet-record for Parquet variants.
-          Outdated layouts are listed but must be rebuilt from the source.
+          Selects an existing cache by its bare filename. The filename is
+          resolved in --cache-dir, or in ~/.nq/cache by default. The source file
+          need not exist. The command fails if the named cache does not exist
+          and never creates one.
 
       EXAMPLES
-          nq --use-cache customers.json
           nq --use-cache bright-otter.mv.db
-          nq --use-cache customers.parquet --parquet-record customer
-          nq --use-cache data.json --relation-alias '/0=customers'
 
       SEE ALSO
           nq --help cache
@@ -235,19 +215,17 @@ public final class Help {
 
       SYNOPSIS
           nq --clear-cache [--cache-dir path]
-          nq --clear-cache <source-id-or-cache-filename> [--cache-dir path]
-          nq --clear-cache=<source-id-or-cache-filename> [--cache-dir path]
+          nq --clear-cache <cache-filename> [--cache-dir path]
+          nq --clear-cache=<cache-filename> [--cache-dir path]
           nq --clear-cache-older-than <age> [--cache-dir path]
 
       DESCRIPTION
-          With no target, --clear-cache removes every cache. A source identifier
-          removes every cache variant belonging to that source. A bare cache
-          filename removes that file from --cache-dir, or ~/.nq/cache by
-          default. Ages accept minutes, hours, or days, including 30m, 6h, and 7d.
+          With no target, --clear-cache removes every cache. A cache filename
+          removes that file from --cache-dir, or ~/.nq/cache by default. Ages
+          accept minutes, hours, or days, including 30m, 6h, and 7d.
 
       EXAMPLES
           nq --clear-cache
-          nq --clear-cache customers.json
           nq --clear-cache bright-otter.mv.db
           nq --clear-cache-older-than 7d
       """;
@@ -260,9 +238,8 @@ public final class Help {
           nq --list-caches [--cache-dir path]
 
       DESCRIPTION
-          Displays each cache's input type, creation time, materialization
-          variant, and source identifier. The active cache is marked with an asterisk.
-          Incompatible old input layouts are marked outdated and cannot be used.
+          Displays each cache's filename and modification time. The active cache
+          is marked with an asterisk.
 
       EXAMPLE
           nq --list-caches --cache-dir /tmp/nq-cache
@@ -373,9 +350,9 @@ public final class Help {
           nq catalog [table-pattern] [connection/cache options]
           nq <input-file> [-o|--output type]
           nq -c|--cache <input-file> [--cache-dir path]
-          nq --use-cache <source-id-or-cache-filename> [--cache-dir path]
+          nq --use-cache <cache-filename> [--cache-dir path]
           nq --list-caches [--cache-dir path]
-          nq --clear-cache [source-id-or-cache-filename] [--cache-dir path]
+          nq --clear-cache [cache-filename] [--cache-dir path]
           nq --clear-cache-older-than age [--cache-dir path]
           nq -h | --help | --help <topic>
 
@@ -389,9 +366,8 @@ public final class Help {
           Arguments may appear in any unambiguous order. A script may be a file
           or inline text. The input file type is selected by its extension. An
           input type supplied with -i or --input reads standard input instead.
-          Standard input is temporary unless --cache is supplied; persistent
-          stdin caches are identified by input type and content hash. An
-          input file on its own is converted directly to JSON or the format
+          Standard input is temporary unless --cache is supplied. An input file
+          on its own is converted directly to JSON or the format
           selected by --output. Supplying a script disables direct conversion.
           Persistent caching requires -c or --cache. Named JSON/YAML collections
           become same-named relations; anonymous JSON, JSON Lines, and CSV record
@@ -442,42 +418,23 @@ public final class Help {
               Disable automatic DQL structure-key inference and preserve
               row-first output for paths without explicit structure keys.
 
-          --metadata-refresh
-              Rebuild cached database key and relationship metadata for the
-              selected JDBC or input-cache target, then exit.
-
-          --metadata-expiry-hours hours
-              Persist the selected target's metadata expiry. Zero refreshes
-              metadata on every use; the default is 24 hours.
-
           --cache, -c
-              Persist, select, or query a file-backed local H2 cache. Standard
-              input is content-addressed by type and hash. Without this option,
-              a script and input source use temporary in-memory H2. An explicit
-              cache takes precedence over JDBC settings.
+              Create and activate a fresh file-backed local H2 cache. Without
+              this option, a script and input source use temporary in-memory H2.
+              An explicit cache takes precedence over JDBC settings.
 
-          --use-cache source-id-or-cache-filename
+          --use-cache cache-filename
               Make an existing input cache active without loading or
               rebuilding it.
 
           --cache-dir path
               Store caches somewhere other than ~/.nq/cache.
 
-          --anonymous-collections merge|error
-              Merge several unresolved anonymous paths into ITEM with a warning,
-              or reject that ambiguous materialization. The default is merge.
-
-          --relation-alias source-path=relation-name
-              Assign a stable relation name to a source path. Repeat for more
-              paths. This option and the anonymous policy select cache variants.
-
           --list-caches
-              List persistent caches, variants, and source identifiers. Incompatible
-              old input layouts are marked outdated.
+              List persistent cache filenames and modification times.
 
-          --clear-cache [source-id-or-cache-filename]
-              Clear all caches, every variant for one input source, or one named
-              cache file.
+          --clear-cache [cache-filename]
+              Clear all caches or one named cache file.
 
           --clear-cache-older-than age
               Clear caches older than an age such as 30m, 6h, or 7d.
@@ -500,7 +457,7 @@ public final class Help {
           nq update.nq customers.json -p database.properties region=EMEA
           nq customers.xml --output json
           nq --cache customers.json
-          nq --use-cache customers.json
+          nq --use-cache bright-otter.mv.db
           nq catalog
           nq catalog 'customer*' --output json
           nq query.nq

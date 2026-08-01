@@ -18,20 +18,6 @@ class ParameterParserConnectionTest {
   Path tempDir;
 
   @Test
-  void metadataCommandCanSelectAnExplicitInputCacheWithoutAScript() throws Exception {
-    Path input = tempDir.resolve("input.json");
-    Files.writeString(input, "{}");
-
-    Map<String, String> params = ParameterParser.parse(
-        "--metadata-refresh", "--cache", input.toString());
-
-    assertEquals("true", params.get(METADATA_REFRESH_PARAM));
-    assertEquals("true", params.get(CACHE_MODE_PARAM));
-    assertEquals(input.toString(), params.get(INPUT_FILENAME));
-    assertFalse(params.containsKey(SCRIPT_FILE_PARAM));
-  }
-
-  @Test
   void buildsMinimalPostgresqlConnection() throws Exception {
     Map<String, String> params = ParameterParser.parse(
         script().toString(),

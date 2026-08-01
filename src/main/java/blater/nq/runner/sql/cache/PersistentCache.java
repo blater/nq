@@ -7,21 +7,10 @@ import blater.nq.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,10 +26,7 @@ import static blater.nq.ParameterParser.*;
  */
 public final class PersistentCache {
   private static final String H2_DATABASE_SUFFIX = ".mv.db";
-  private static final String CACHE_NAME_PATTERN = "[a-z0-9]{1,8}-[a-z0-9]{1,8}";
-  private static final int METADATA_ROW_ID = 1;
   private static final String ACTIVE_CACHE_FILE = "active.cache.file";
-  private static final int ARTIFACT_ROW_ID = 1;
 
   private PersistentCache() { }
 
@@ -48,7 +34,7 @@ public final class PersistentCache {
   public static int clear(Map<String, String> params) {
     int cnt = 0;
     if (params.containsKey(CACHE_CLEAR_TARGET_PARAM)) {
-      cnt = PersistentCache.clearForInput(params.get(CACHE_CLEAR_TARGET_PARAM), params);
+      cnt = PersistentCache.clearNamed(params.get(CACHE_CLEAR_TARGET_PARAM), params);
     }
     else if (params.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)) {
       Duration duration = PersistentCache.parseDuration(params.get(CACHE_CLEAR_OLDER_THAN_PARAM));
@@ -69,211 +55,43 @@ public final class PersistentCache {
       return;
     }
 
-    Log.info("  name\tinputType\tcreated\tvariant\tsource");
+    Log.info("  name\tmodified");
     for (var entry : entries) {
       Log.info((entry.active() ? "* " : "  ") + entry.cacheFilename()
-          + "\t" + entry.inputType()
-          + "\t" + ((entry.createdMillis()  <= 0) ? "-": Instant.ofEpochMilli(entry.createdMillis()).toString())
-          + "\t" + entry.variantId()
-          + (entry.outdated() ? " (outdated)" : "")
-          + "\t" + entry.sourcePath());
+          + "\t" + Instant.ofEpochMilli(entry.modifiedMillis()));
     }
   }
 
 
-  public static CacheHandle prepare(CacheSource source, Map<String, String> params)
-  {
+  public static CacheHandle prepare(Map<String, String> params) {
     Path root = cacheRoot(params);
     createDirectories(root);
-    Optional<Path> existing = cacheFiles(params).stream()
-        .filter(cacheFile -> readMetadata(cacheFile).filter(source::matches).isPresent())
-        .findFirst();
-    if (existing.isPresent()) {
-      Path cacheFile = existing.get();
-      return new CacheHandle(cacheFile, jdbcUrl(cacheFile), false, source);
-    }
-
     Path cacheFile = unusedCacheFile(root, PersistentCache::generateCacheName);
-    return new CacheHandle(cacheFile, jdbcUrl(cacheFile), true, source);
-  }
-
-  public static void markLoaded(CacheHandle handle) {
-    writeMetadata(handle.cacheFile(), handle.source());
-  }
-
-  public static Optional<CachedArtifact> readArtifact(
-      Path cacheFile,
-      String identityText) {
-    if (!Files.exists(cacheFile)) return Optional.empty();
-    String sql = """
-        select payload, artifact_version, refreshed_millis, expiry_hours
-        from nq_internal.cache_artifact
-        where id = ? and identity_text = ?
-        """;
-    try (Connection connection = connect(cacheFile, true);
-         PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setInt(1, ARTIFACT_ROW_ID);
-      statement.setString(2, identityText);
-      try (ResultSet resultSet = statement.executeQuery()) {
-        if (!resultSet.next()) return Optional.empty();
-        return Optional.of(new CachedArtifact(
-            resultSet.getBytes("payload"),
-            resultSet.getInt("artifact_version"),
-            resultSet.getLong("refreshed_millis"),
-            resultSet.getLong("expiry_hours")));
-      }
-    } catch (SQLException ex) {
-      Log.debug("Could not read cached artifact [{}]: {}", cacheFile, ex.getMessage());
-      return Optional.empty();
-    }
-  }
-
-  public static boolean writeArtifact(
-      Path cacheFile,
-      String identityText,
-      String displayName,
-      int version,
-      long expiryHours,
-      byte[] payload) {
-    try {
-      Files.createDirectories(cacheFile.getParent());
-    } catch (IOException ex) {
-      Log.warn("Could not create database-structure cache directory [{}]: {}", cacheFile.getParent(), ex.getMessage());
-      return false;
-    }
-    try (Connection connection = connect(cacheFile, false)) {
-      connection.setAutoCommit(false);
-      try {
-        createMetadataTable(connection);
-        createArtifactTable(connection);
-        Optional<Metadata> existingMetadata = readMetadata(connection);
-        if (existingMetadata.isEmpty()
-            || "DATABASE_STRUCTURE".equals(existingMetadata.get().inputType())) {
-          writeArtifactMetadata(connection, identityText, displayName);
-        }
-        try (PreparedStatement delete = connection.prepareStatement(
-            "delete from nq_internal.cache_artifact where id = ?")) {
-          delete.setInt(1, ARTIFACT_ROW_ID);
-          delete.executeUpdate();
-        }
-        try (PreparedStatement insert = connection.prepareStatement("""
-            insert into nq_internal.cache_artifact (
-              id, identity_text, artifact_version, refreshed_millis, expiry_hours, payload
-            ) values (?, ?, ?, ?, ?, ?)
-            """)) {
-          insert.setInt(1, ARTIFACT_ROW_ID);
-          insert.setString(2, identityText);
-          insert.setInt(3, version);
-          insert.setLong(4, Instant.now().toEpochMilli());
-          insert.setLong(5, expiryHours);
-          insert.setBytes(6, payload);
-          insert.executeUpdate();
-        }
-        connection.commit();
-      } catch (SQLException ex) {
-        connection.rollback();
-        throw ex;
-      }
-      return true;
-    } catch (SQLException ex) {
-      Log.warn("Could not write cached database structure [{}]: {}", cacheFile, ex.getMessage());
-      return false;
-    }
-  }
-
-  public static void setArtifactExpiry(
-      Path cacheFile,
-      String identityText,
-      long expiryHours) {
-    try (Connection connection = connect(cacheFile, true);
-         PreparedStatement statement = connection.prepareStatement(
-             "update nq_internal.cache_artifact set expiry_hours = ? where id = ? and identity_text = ?")) {
-      statement.setLong(1, expiryHours);
-      statement.setInt(2, ARTIFACT_ROW_ID);
-      statement.setString(3, identityText);
-      statement.executeUpdate();
-    } catch (SQLException ex) {
-      Log.warn("Could not update cached database structure expiry [{}]: {}", cacheFile, ex.getMessage());
-    }
+    return new CacheHandle(cacheFile, jdbcUrl(cacheFile), true);
   }
 
   public static void activate(CacheHandle handle) {
-    Properties config = readConfig();
-    config.setProperty(ACTIVE_CACHE_FILE, handle.cacheFile().toAbsolutePath().normalize().toString());
-    writeConfig(config);
+    configureActiveCacheFile(handle.cacheFile());
   }
 
   public static CacheHandle use(String target, Map<String, String> params) {
     Optional<Path> namedCacheFile = resolveCacheFilename(target, params);
-    if (namedCacheFile.isPresent()) {
-      if (MaterializationConfiguration.from(params).explicitlyConfigured()) {
-        return Log.fatal(IllegalArgumentException.class,
-            "Materialization options cannot be combined with --use-cache <cache-file>.");
-      }
-      Path cacheFile = namedCacheFile.get();
-      CacheHandle handle = readMetadata(cacheFile)
-          .map(metadata -> currentHandle(cacheFile, metadata))
-          .orElseGet(() -> Log.fatal(
-              IllegalArgumentException.class,
-              "No existing cache found at " + cacheFile + "."));
-      activate(handle);
-      return handle;
+    if (namedCacheFile.isEmpty()) {
+      return Log.fatal(IllegalArgumentException.class,
+          "--use-cache requires a cache filename such as bright-otter.mv.db.");
     }
-
-    String sourcePath = CacheSource.normalizedSourceIdentity(target);
-    boolean variantSpecified = params.containsKey(PARQUET_RECORD_PARAM)
-        || MaterializationConfiguration.from(params).explicitlyConfigured();
-    CacheSource requested = CacheSource.from(target, params);
-
-    List<CacheHandle> sourceMatches = cacheFiles(params).stream()
-        .map(cacheFile -> readMetadata(cacheFile)
-            .filter(metadata -> !metadata.databaseStructure())
-            .filter(metadata -> sourcePath.equals(metadata.sourcePath()))
-            .map(metadata -> new CacheHandle(
-                cacheFile, jdbcUrl(cacheFile), false, metadata.source())))
-        .flatMap(Optional::stream)
-        .toList();
-    List<CacheHandle> matches = sourceMatches.stream()
-        .filter(handle -> handle.source().currentLayout())
-        .filter(handle -> !variantSpecified || requested.identityText().equals(handle.source().identityText()))
-        .toList();
-
-    if (matches.isEmpty()) {
-      boolean hasCurrent = sourceMatches.stream().anyMatch(handle -> handle.source().currentLayout());
-      if (!hasCurrent && sourceMatches.stream().anyMatch(handle -> !handle.source().currentLayout())) {
-        return Log.fatal(
-            IllegalArgumentException.class,
-            "Existing cache layout is outdated for " + sourcePath + "; reload the source file.");
-      }
-      return Log.fatal(
-          IllegalArgumentException.class,
-          "No existing cache found for " + sourcePath + ".");
+    Path cacheFile = namedCacheFile.get();
+    if (!isCacheFile(cacheFile)) {
+      return Log.fatal(IllegalArgumentException.class,
+          "No existing cache found at " + cacheFile + ".");
     }
-    if (matches.size() > 1) {
-      return Log.fatal(
-          IllegalArgumentException.class,
-          "Multiple caches found for " + sourcePath
-              + "; specify --parquet-record and materialization options to select one. Variants: "
-              + matches.stream().map(handle -> handle.source().displayVariantId())
-                  .distinct().collect(java.util.stream.Collectors.joining(", ")) + ".");
-    }
-
-    CacheHandle handle = matches.getFirst();
+    CacheHandle handle = currentHandle(cacheFile);
     activate(handle);
     return handle;
   }
 
-  private static CacheHandle currentHandle(Path cacheFile, Metadata metadata) {
-    if (metadata.databaseStructure()) {
-      return Log.fatal(IllegalArgumentException.class,
-          "Cache file is a database-structure metadata cache, not an input cache: " + cacheFile + ".");
-    }
-    CacheSource source = metadata.source();
-    if (!source.currentLayout()) {
-      return Log.fatal(IllegalArgumentException.class,
-          "Cache layout is outdated; reload " + source.sourcePath() + ".");
-    }
-    return new CacheHandle(cacheFile, jdbcUrl(cacheFile), false, source);
+  private static CacheHandle currentHandle(Path cacheFile) {
+    return new CacheHandle(cacheFile, jdbcUrl(cacheFile), false);
   }
 
   public static Optional<CacheHandle> active() {
@@ -283,33 +101,11 @@ public final class PersistentCache {
     }
 
     Path cacheFile = configured.get();
-    Optional<Metadata> metadata = readMetadata(cacheFile);
-    if (metadata.isEmpty()) {
+    if (!isCacheFile(cacheFile)) {
       clearActiveSelection();
       return Optional.empty();
     }
-
-    Metadata selected = metadata.get();
-    if (selected.databaseStructure()) {
-      clearActiveSelection();
-      return Log.fatal(
-          IllegalStateException.class,
-          "The active cache is database-structure metadata, not an input cache.");
-    }
-    CacheSource source;
-    try {
-      source = selected.source();
-    } catch (RuntimeException ex) {
-      clearActiveSelection();
-      return Optional.empty();
-    }
-    if (!source.currentLayout()) {
-      clearActiveSelection();
-      return Log.fatal(
-          IllegalStateException.class,
-          "The active input cache layout is outdated; reload " + source.sourcePath() + ".");
-    }
-    return Optional.of(new CacheHandle(cacheFile, jdbcUrl(cacheFile), false, source));
+    return Optional.of(new CacheHandle(cacheFile, jdbcUrl(cacheFile), false));
   }
 
   static int clearAll(Map<String, String> params) {
@@ -325,59 +121,33 @@ public final class PersistentCache {
   static List<CacheEntry> listCaches(Map<String, String> params) {
     Optional<Path> activeCache = configuredActiveCacheFile();
     return cacheFiles(params).stream()
-        .map(cacheFile -> readMetadata(cacheFile).map(metadata -> {
-          if (metadata.databaseStructure()) {
-            return new CacheEntry(
-                cacheFile.getFileName().toString(),
-                metadata.sourcePath(), metadata.inputType(), metadata.createdMillis(),
-                activeCache.map(cacheFile::equals).orElse(false), "database-metadata", false);
-          }
-          CacheSource source = metadata.source();
-          return new CacheEntry(
-              cacheFile.getFileName().toString(),
-              metadata.sourcePath(),
-              metadata.inputType(),
-              metadata.createdMillis(),
-              activeCache.map(cacheFile::equals).orElse(false),
-              source.displayVariantId(),
-              !source.currentLayout());
-        }))
-        .flatMap(Optional::stream)
-        .sorted(Comparator.comparing(CacheEntry::sourcePath))
+        .map(cacheFile -> new CacheEntry(
+            cacheFile.getFileName().toString(),
+            modifiedMillis(cacheFile),
+            activeCache.map(cacheFile::equals).orElse(false)))
         .toList();
   }
 
-  public static int clearForInput(String target, Map<String, String> params) {
+  public static int clearNamed(String target, Map<String, String> params) {
     Optional<Path> namedCacheFile = resolveCacheFilename(target, params);
-    if (namedCacheFile.isPresent()) {
-      Path cacheFile = namedCacheFile.get();
-      if (!isCacheFile(cacheFile)) {
-        return 0;
-      }
-      deleteCache(cacheFile);
-      clearActiveIfMissing();
-      return 1;
+    if (namedCacheFile.isEmpty()) {
+      return Log.fatal(IllegalArgumentException.class,
+          "--clear-cache requires a cache filename such as bright-otter.mv.db.");
     }
-
-    String sourcePath = CacheSource.normalizedSourceIdentity(target);
-    int cleared = 0;
-    for (Path cacheFile : cacheFiles(params)) {
-      if (readMetadata(cacheFile)
-          .map(metadata -> sourcePath.equals(metadata.sourcePath()))
-          .orElse(false)) {
-        deleteCache(cacheFile);
-        cleared++;
-      }
+    Path cacheFile = namedCacheFile.get();
+    if (!isCacheFile(cacheFile)) {
+      return 0;
     }
+    deleteCache(cacheFile);
     clearActiveIfMissing();
-    return cleared;
+    return 1;
   }
 
   public static int clearOlderThan(Duration duration, Map<String, String> params) {
     long cutoffMillis = Instant.now().minus(duration).toEpochMilli();
     int cleared = 0;
     for (Path cacheFile : cacheFiles(params)) {
-      if (readMetadata(cacheFile).map(metadata -> metadata.createdMillis() < cutoffMillis).orElse(false)) {
+      if (modifiedMillis(cacheFile) < cutoffMillis) {
         deleteCache(cacheFile);
         cleared++;
       }
@@ -416,24 +186,9 @@ public final class PersistentCache {
     return Path.of(configured).toAbsolutePath().normalize();
   }
 
-  public static Path cacheFile(String identityText, Map<String, String> params) {
-    Path root = cacheRoot(params);
-    createDirectories(root);
-    return cacheFiles(params).stream()
-        .filter(cacheFile -> readMetadata(cacheFile)
-            .map(metadata -> identityText.equals(metadata.identityText()))
-            .orElse(false))
-        .findFirst()
-        .orElseGet(() -> unusedCacheFile(root, PersistentCache::generateCacheName));
-  }
-
   static Path unusedCacheFile(Path root, Supplier<String> names) {
     while (true) {
       String name = names.get();
-      if (name == null || !name.matches(CACHE_NAME_PATTERN)) {
-        return Log.fatal(IllegalStateException.class,
-            "Jname generated an invalid cache name: " + name);
-      }
       Path candidate = root.resolve(name + H2_DATABASE_SUFFIX);
       if (!Files.exists(candidate)) {
         return candidate;
@@ -458,139 +213,12 @@ public final class PersistentCache {
     return "jdbc:h2:file:" + databasePath(cacheFile) + ";MODE=MySQL;NON_KEYWORDS=VALUE";
   }
 
-  private static String existingJdbcUrl(Path cacheFile) {
-    return jdbcUrl(cacheFile) + ";IFEXISTS=TRUE";
-  }
-
   private static String databasePath(Path cacheFile) {
     String path = cacheFile.toAbsolutePath().normalize().toString();
     if (!path.endsWith(H2_DATABASE_SUFFIX)) {
       return Log.fatal(IllegalArgumentException.class, "Invalid H2 cache filename: " + cacheFile);
     }
     return path.substring(0, path.length() - H2_DATABASE_SUFFIX.length());
-  }
-
-  private static Optional<Metadata> readMetadata(Path cacheFile) {
-    if (!Files.exists(cacheFile)) {
-      return Optional.empty();
-    }
-
-    try (Connection connection = connect(cacheFile, true)) {
-      return readMetadata(connection);
-    } catch (SQLException ex) {
-      Log.debug("Could not read cache metadata [{}]: {}", cacheFile, ex.getMessage());
-      return Optional.empty();
-    }
-  }
-
-  private static Optional<Metadata> readMetadata(Connection connection) {
-    String sql = """
-        select source_path, input_type, identity_text, created_millis
-        from cache_metadata
-        where id = ?
-        """;
-    try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setInt(1, METADATA_ROW_ID);
-      try (ResultSet resultSet = statement.executeQuery()) {
-        if (!resultSet.next()) {
-          return Optional.empty();
-        }
-        return Optional.of(new Metadata(
-            resultSet.getString("source_path"),
-            resultSet.getString("input_type"),
-            resultSet.getString("identity_text"),
-            resultSet.getLong("created_millis")));
-      }
-    } catch (SQLException ex) {
-      return Optional.empty();
-    }
-  }
-
-  private static void writeMetadata(Path cacheFile, CacheSource source) {
-    try (Connection connection = connect(cacheFile, false)) {
-      createMetadataTable(connection);
-      long now = Instant.now().toEpochMilli();
-      try (PreparedStatement delete = connection.prepareStatement("delete from cache_metadata where id = ?")) {
-        delete.setInt(1, METADATA_ROW_ID);
-        delete.executeUpdate();
-      }
-      String sql = """
-          insert into cache_metadata (
-            id, source_path, input_type, identity_text, created_millis
-          ) values (?, ?, ?, ?, ?)
-          """;
-      try (PreparedStatement insert = connection.prepareStatement(sql)) {
-        insert.setInt(1, METADATA_ROW_ID);
-        insert.setString(2, source.sourcePath());
-        insert.setString(3, source.inputType().name());
-        insert.setString(4, source.identityText());
-        insert.setLong(5, now);
-        insert.executeUpdate();
-      }
-    } catch (SQLException ex) {
-      Log.fatal(IllegalStateException.class, "Could not write cache metadata: " + cacheFile, ex);
-    }
-  }
-
-  private static void createMetadataTable(Connection connection) throws SQLException {
-    try (Statement statement = connection.createStatement()) {
-      statement.execute("""
-          create table if not exists cache_metadata (
-            id integer primary key,
-            source_path varchar(4096) not null,
-            input_type varchar(32) not null,
-            identity_text varchar(65535) not null,
-            created_millis bigint not null
-          )
-          """);
-    }
-  }
-
-  private static void createArtifactTable(Connection connection) throws SQLException {
-    try (Statement statement = connection.createStatement()) {
-      statement.execute("create schema if not exists nq_internal");
-      statement.execute("""
-          create table if not exists nq_internal.cache_artifact (
-            id integer primary key,
-            identity_text varchar(65535) not null,
-            artifact_version integer not null,
-            refreshed_millis bigint not null,
-            expiry_hours bigint not null,
-            payload blob not null
-          )
-          """);
-    }
-  }
-
-  private static void writeArtifactMetadata(
-      Connection connection,
-      String identityText,
-      String displayName) throws SQLException {
-    try (PreparedStatement delete = connection.prepareStatement("delete from cache_metadata where id = ?")) {
-      delete.setInt(1, METADATA_ROW_ID);
-      delete.executeUpdate();
-    }
-    try (PreparedStatement insert = connection.prepareStatement("""
-        insert into cache_metadata (
-          id, source_path, input_type, identity_text, created_millis
-        ) values (?, ?, ?, ?, ?)
-        """)) {
-      insert.setInt(1, METADATA_ROW_ID);
-      insert.setString(2, displayName);
-      insert.setString(3, "DATABASE_STRUCTURE");
-      insert.setString(4, identityText);
-      insert.setLong(5, Instant.now().toEpochMilli());
-      insert.executeUpdate();
-    }
-  }
-
-  private static Connection connect(Path cacheFile, boolean existingOnly) throws SQLException {
-    try {
-      Class.forName("org.h2.Driver");
-    } catch (ClassNotFoundException ex) {
-      return Log.fatal(IllegalStateException.class, "H2 driver is not available", ex);
-    }
-    return DriverManager.getConnection(existingOnly ? existingJdbcUrl(cacheFile) : jdbcUrl(cacheFile), "sa", "");
   }
 
   private static List<Path> cacheFiles(Map<String, String> params) {
@@ -612,6 +240,14 @@ public final class PersistentCache {
         && isCacheFilename(filename);
   }
 
+  private static long modifiedMillis(Path path) {
+    try {
+      return Files.getLastModifiedTime(path).toMillis();
+    } catch (IOException ex) {
+      return Log.fatal(IllegalStateException.class, "Could not read cache timestamp: " + path, ex);
+    }
+  }
+
   private static Optional<Path> resolveCacheFilename(
       String target,
       Map<String, String> params) {
@@ -626,7 +262,8 @@ public final class PersistentCache {
   }
 
   private static boolean isCacheFilename(String filename) {
-    return filename.matches(CACHE_NAME_PATTERN + "\\.mv\\.db");
+    return filename.length() > H2_DATABASE_SUFFIX.length()
+        && filename.endsWith(H2_DATABASE_SUFFIX);
   }
 
   private static Optional<Path> configuredActiveCacheFile() {
@@ -642,6 +279,12 @@ public final class PersistentCache {
       clearActiveSelection();
       return Optional.empty();
     }
+  }
+
+  private static void configureActiveCacheFile(Path cacheFile) {
+    Properties config = readConfig();
+    config.setProperty(ACTIVE_CACHE_FILE, cacheFile.toAbsolutePath().normalize().toString());
+    writeConfig(config);
   }
 
   private static Properties readConfig() {
@@ -671,8 +314,8 @@ public final class PersistentCache {
   }
 
   private static void clearActiveIfMissing() {
-    Optional<Path> activeCache = configuredActiveCacheFile();
-    if (activeCache.isPresent() && !Files.exists(activeCache.get())) {
+    Optional<Path> cache = configuredActiveCacheFile();
+    if (cache.isPresent() && !Files.exists(cache.get())) {
       clearActiveSelection();
     }
   }
@@ -716,16 +359,6 @@ public final class PersistentCache {
       Files.deleteIfExists(path);
     } catch (IOException ex) {
       Log.fatal(IllegalStateException.class, "Could not delete cache path: " + path, ex);
-    }
-  }
-
-  static String sha256(String value) {
-    try {
-      byte[] digest = MessageDigest.getInstance("SHA-256")
-          .digest(value.getBytes(StandardCharsets.UTF_8));
-      return HexFormat.of().formatHex(digest);
-    } catch (NoSuchAlgorithmException ex) {
-      return Log.fatal(IllegalStateException.class, "SHA-256 is not available", ex);
     }
   }
 

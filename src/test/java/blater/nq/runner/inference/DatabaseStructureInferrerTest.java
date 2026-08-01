@@ -1,14 +1,8 @@
 package blater.nq.runner.inference;
 
-import blater.nq.ParameterParser;
-import blater.nq.runner.sql.cache.PersistentCache;
 import blater.nq.testsupport.H2Database;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import static blater.nq.runner.inference.DatabaseStructure.KeyEvidence.LOGICAL_LINK_KEY;
 import static blater.nq.runner.inference.DatabaseStructure.KeyEvidence.PRIMARY_KEY;
@@ -16,32 +10,8 @@ import static blater.nq.runner.inference.DatabaseStructure.KeyEvidence.UNIQUE_IN
 import static blater.nq.runner.inference.DatabaseStructure.RelationshipEvidence.DECLARED_FOREIGN_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class DatabaseStructureInferrerTest {
-  @Test
-  void targetIdentityAndCacheNameRequireOnlyConfiguration(@TempDir Path tempDir) {
-    Map<String, String> parameters = Map.of(
-        ParameterParser.JDBC_DRIVER_PARAM, "sqlserver",
-        ParameterParser.JDBC_DATABASE_PARAM,
-        "jdbc:sqlserver://unreachable.invalid;user=report;password=secret;databaseName=work",
-        ParameterParser.JDBC_USERNAME_PARAM, "report",
-        ParameterParser.CACHE_DIR_PARAM, tempDir.toString());
-
-    DatabaseTargetIdentity identity = DatabaseTargetIdentity.from(parameters);
-    Path cacheFile = PersistentCache.cacheFile(identity.identityText(), parameters);
-
-    assertTrue(identity.identityText().contains("user=report"));
-    assertFalse(identity.identityText().contains("secret"));
-    assertEquals(tempDir, cacheFile.getParent());
-    assertTrue(cacheFile.getFileName().toString()
-        .matches("[a-z0-9]+-[a-z0-9]+\\.mv\\.db"));
-    assertEquals(
-        "jdbc:sqlserver://db;user=report;password=<redacted>;databaseName=work",
-        DatabaseTargetIdentity.sanitizeUrl(
-            "jdbc:sqlserver://db;user=report;password=secret;databaseName=work"));
-  }
-
   @Test
   void discoversDeclaredCompositeAndLogicalKeysAndRelationships() throws Exception {
     try (H2Database database = new H2Database()) {

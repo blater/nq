@@ -280,7 +280,7 @@ nq -i|--input type [script-file-or-text] [param=value ...] [--output type] [--ca
 nq catalog [table-pattern] [connection/cache options]
 nq load-file [--output type]
 nq -c|--cache load-file [--cache-dir path]
-nq --use-cache source-id-or-cache-filename [--cache-dir path]
+nq --use-cache cache-filename [--cache-dir path]
 ```
 
 Arguments can appear in any unambiguous order.
@@ -289,10 +289,10 @@ Cache maintenance commands do not require a script:
 
 ```bash
 nq --clear-cache
-nq --clear-cache customers.json
+nq --clear-cache bright-otter.mv.db
 nq --clear-cache-older-than 6h
 nq --list-caches
-nq --use-cache customers.json
+nq --use-cache bright-otter.mv.db
 ```
 
 Standalone cache loading also does not require a script:
@@ -369,13 +369,11 @@ script falls back to the active persistent cache.
 | `--output type`, `-o type` | Write output as `xml`, `json`, `jsonl`, `csv`, `yaml`, or `markdown`. |
 | `--debug`                  | Log each query's inferred output-path, relation, key, and parent relationship decisions to stderr. |
 | `--no-key-inference`       | Disable automatic DQL keys and preserve row-first output for paths without explicit `structure` keys. |
-| `--metadata-refresh`       | Rebuild cached key and relationship metadata for the selected target, then exit. |
-| `--metadata-expiry-hours hours` | Persist metadata expiry for the selected target; zero refreshes every use. |
-| `--cache`, `-c`            | Persist and reuse a file or content-addressed standard-input H2 cache. Persistent caching is always explicit. |
-| `--use-cache source-id-or-cache-filename` | Make an existing cache active without loading or rebuilding it. |
+| `--cache`, `-c`            | Create and activate a fresh persistent H2 cache from a file or standard input. |
+| `--use-cache cache-filename` | Make an existing named cache active without loading or rebuilding it. |
 | `--cache-dir path`         | Use a non-default cache directory.                |
-| `--clear-cache`            | Clear all caches, all variants for one input source, or one named cache file. |
-| `--clear-cache-older-than duration` | Clear caches not used within a duration such as `30m`, `6h`, or `7d`. |
+| `--clear-cache`            | Clear all caches or one named cache file. |
+| `--clear-cache-older-than duration` | Clear caches not modified within a duration such as `30m`, `6h`, or `7d`. |
 | `--list-caches`            | List known local query caches.                    |
 | `--parquet-root name`      | Override the Parquet hierarchy root name. Also supports `--parquet-root=name`. |
 | `--parquet-record name`    | Override the repeated Parquet record node name. Also supports `--parquet-record=name`. |
@@ -496,10 +494,8 @@ Extension matching is case-insensitive. Blank or missing input filenames preserv
 
 For pipelines and redirected input, specify the format explicitly with `-i` or
 `--input`. NQ spools standard input only for the duration of the command and
-uses its normal direct-conversion or query path. With `--cache`, the persistent
-cache identity includes the input type, a SHA-256 hash of the stream content,
-and materialization configuration. Identical input reuses the same cache;
-changed input creates and activates a different cache.
+uses its normal direct-conversion or query path. With `--cache`, NQ creates and
+activates a fresh persistent cache from that stream.
 
 ```bash
 cat customers.json | nq -i json "select id, name from customers;"
@@ -507,7 +503,7 @@ nq -i json "select id, name from customers;" < customers.json
 cat customers.json | nq -i json --cache "select id, name from customers;"
 ```
 
-### Source Relation Names and Aliases
+### Source Relation Names
 
 For JSON and YAML, NQ names a materialized object-record relation from the
 source member that declares it. The rule applies at every depth:
@@ -521,74 +517,14 @@ source member that declares it. The rule applies at every depth:
 | JSON Lines object records | `ITEM` |
 | CSV records | `ITEM` |
 
-A non-empty object-record collection becomes a relation; materializable
-singleton objects and existing scalar-owner layouts also retain their current
-tables. Explicit empty collections keep their source paths for aliases and
-collision validation but do not invent a schema or create a table. A completely
-empty file has no relation path. Repeated scalar fields retain value relations
-named from their effective owner, such as `CUSTOMER_TAG`; scalar collections
-are not converted to object rows.
-
-Distinct source paths never share a named relation implicitly. For example,
-`/crm/profile` and `/support/profile` both request `PROFILE`, so loading fails
-before table creation. Assign stable names with the repeatable option:
-
-```bash
-nq query.nq data.json \
-  --relation-alias '/crm/profile=crm_profile' \
-  --relation-alias '/support/profile=support_profile'
-```
-
-An alias target must match `[A-Za-z_][A-Za-z0-9_]*`. It can name an object
-collection, singleton object, anonymous root, scalar collection owner, or
-explicit empty collection. Aliasing an owner also renames derived scalar value
-relations and generated containment columns. Derived value relations are not
-direct alias targets.
-
-Source paths use a small JSON-Pointer-like grammar:
-
-- `/` is an anonymous or format-defined root relation.
-- `/name` addresses an object member.
-- `/*` represents every record occurrence when continuing below a collection.
-- `/0`, `/1`, and so on distinguish positional anonymous containers.
-- `~0` escapes `~`, and `~1` escapes `/` in member names.
-
-For example, nested orders use `/customers/*/orders`; the two inner record
-relations in `[[{"customerId":"C1"}],[{"sku":"P1"}]]` use `/0` and `/1`.
-Aliases are split at the final `=`, so a source member containing `=` remains
-addressable. Unknown, ambiguous, conflicting, or colliding aliases fail before
-NQ issues table DDL.
-
-One anonymous relation uses `ITEM` normally. If several unresolved anonymous
-paths would use `ITEM`, the default `merge` policy preserves compatibility by
-unioning their columns and emitting one warning. That merge is lossy: rows do
-not retain query-visible source provenance. Strict operation is available with:
-
-```bash
-nq query.nq data.json --anonymous-collections error
-```
-
-`error` still accepts one ordinary anonymous stream; it rejects only a
-cross-path `ITEM` merge. Aliasing anonymous paths removes them from that check:
-
-```bash
-nq query.nq batches.json \
-  --anonymous-collections error \
-  --relation-alias '/=batches' \
-  --relation-alias '/0=customers' \
-  --relation-alias '/1=products'
-```
-
-JSON and YAML have identical relation-path behavior. JSON Lines and CSV accept
-a root alias at `/`. XML and Parquet retain their existing naming behavior and
-reject these two materialization options rather than ignoring them. The options
-configure temporary and persistent input loading; they do not apply to
-JDBC-backed mapped DML, an already active cache query, list/clear commands, or
-metadata commands.
+A non-empty object-record collection becomes a relation. Repeated scalar fields
+use value relations named from their owner, such as `CUSTOMER_TAG`. If two
+different parts of a document produce the same table name, their compatible
+rows share that table; incompatible SQL identifier collisions fail clearly.
 
 ### Querying Input Documents: Temporary and Persistent H2
 
-NQ materializes the same SQL tables for both modes. The difference is how long the H2 database lives and whether it can be reused.
+NQ creates the same SQL tables for both modes. The difference is how long the H2 database lives.
 
 #### Temporary loading by default
 
@@ -614,31 +550,26 @@ Temporary loading avoids cache files, stale results, H2 file locking, and active
 
 #### Persistent caching with `--cache`
 
-Add `--cache` when repeated queries or a larger input make reuse more valuable than automatic freshness:
+Add `--cache` to keep the loaded database for later queries:
 
 ```bash
 nq totals.nq customers.json --cache --output json
 ```
 
-Standard input can also create or reuse a persistent cache:
+Standard input can also create a persistent cache:
 
 ```bash
 cat customers.json | nq -i json --cache totals.nq --output json
 ```
 
-NQ hashes the exact input bytes before cache selection. Its stdin cache identity
-contains the input type, SHA-256 content hash, and materialization configuration.
-Replaying identical bytes reuses the cache; different content creates a distinct
-cache and makes it active. The temporary spool file is deleted after the command.
-
-On first use, NQ loads the input into a file-backed H2 database. Later commands
-reuse that database without rereading the source, and it becomes the active
-cache. Persistent caching avoids repeated parsing and loading and can handle
+Each explicit `--cache` invocation creates a new file-backed H2 database and
+makes it active. The temporary standard-input spool file is deleted after the
+command. Later commands can query the active database without rereading the
+source. Persistent caching avoids repeated parsing and loading and can handle
 data without requiring the complete database to remain in memory. It uses disk
 space and can encounter H2 file-lock contention between processes. File-backed
 sources may return stale data because their caches are not automatically
-synchronized when the source file changes; content-addressed stdin caches do
-not reuse a cache when their input bytes change.
+synchronized when the source file changes.
 
 A standalone persistent load also requires `--cache` or `-c`:
 
@@ -647,18 +578,16 @@ nq --cache customers.json
 cat customers.json | nq -i json --cache
 ```
 
-The command reports either `Loaded cache for <source>` or
-`Using existing cache for <source>`. Query the active cache without repeating
-the input source or option:
+The command reports `Loaded cache for <source>`. Query the active cache without
+repeating the input source or option:
 
 ```bash
 nq totals.nq --output json
 ```
 
-A persistent cache becomes active for later queries. The source identifier shown
-by `--list-caches` is an absolute path for file input or
-`stdin:<type>:sha256:<hash>` for standard input. Either identifier can be passed
-to `--use-cache` or `--clear-cache`; cache names and aliases are not required. An
+A persistent cache becomes active for later queries. `--list-caches` shows its
+generated filename and records the source for information. Use the filename
+with `--use-cache` or targeted `--clear-cache`. An
 explicit `--cache` wins over JDBC settings. Without `--cache`, JDBC settings
 make an accompanying input file a mapped-DML source; without JDBC settings, a
 script queries that file through temporary H2. With no input source, JDBC
@@ -668,22 +597,13 @@ To switch the active selection without running a query or loading the source
 file, use:
 
 ```bash
-nq --use-cache customers.json
+nq --use-cache bright-otter.mv.db
 ```
 
-`--use-cache` only selects an existing cache. Its argument can be the source
-identifier reported by `--list-caches` or a bare cache filename such as
-`bright-otter.mv.db`. A bare cache filename is resolved under
-`--cache-dir`, or under `~/.nq/cache` by default. A referenced source file need
-not still exist, and no cache is created or rebuilt when a match is missing. If the
-source has multiple Parquet cache variants, add the matching
-`--parquet-record` value. Relation aliases and the anonymous policy are also
-part of cache identity. If a source has several materialization variants,
-repeat the exact `--relation-alias` and `--anonymous-collections` options to
-select one. With no selector, a sole current variant is selected; several
-variants are ambiguous. Materialization selectors cannot be combined with an
-explicit bare cache filename because that filename already identifies one
-exact variant.
+`--use-cache` only selects an existing cache by a bare filename such as
+`bright-otter.mv.db`. The filename is resolved under `--cache-dir`, or under
+`~/.nq/cache` by default. The source file need not still exist, and no cache is
+created or rebuilt when the name is missing.
 
 By default, cache files are stored under:
 
@@ -702,24 +622,18 @@ The active selection is stored in:
 It records the generated cache file, so a cache loaded with a custom
 `--cache-dir` remains active without repeating that option. New cache files use
 two-word jnames such as `bright-otter.mv.db`. If a generated name already
-exists, NQ generates another. Source identity remains in the cache metadata, so
-the filename does not control reuse.
+exists, NQ generates another. The filename is the cache's selection key.
 
-Persistent cache creation and input-source reuse are always explicit. Use
-`--cache` or `-c` to create or reuse a cache for an input source, or `--use-cache`
-to select an existing cache. After that explicit selection, a script with no
+Persistent cache creation and selection are always explicit. Use `--cache` or
+`-c` to create a fresh cache, or `--use-cache` to select an existing cache by
+filename. After that explicit selection, a script with no
 input source can use the active-cache fallback. A script supplied with an input
 file or typed standard input but without `--cache` always performs a fresh
 temporary load, even when a persistent cache already exists for that source.
 
-File-backed persistent caches are not synchronized with source-file changes. Run the query
-with its input file and without `--cache` for a fresh temporary load, or clear
-the persistent cache before rebuilding it. Stdin caches avoid this ambiguity by
-using the content hash: changed bytes select a different cache. An explicit Parquet
-`--parquet-record` name is part of the persistent cache identity because it
-changes the generated table name; `--parquet-root` is not, because the
-hierarchy root is not materialized as a cache table. Clearing a Parquet input
-path clears all record-name variants for that source file.
+File-backed persistent caches are not synchronized with source-file changes.
+Run the query with its input file and without `--cache` for a fresh temporary
+load, or run `--cache` again to create and activate a fresh persistent cache.
 
 When a cache is built, nq creates input-structure tables. Object names become table names, direct scalar children become columns, and nested objects become related tables.
 
@@ -855,7 +769,7 @@ from customer_tag tag
 where tag.customer_id = 'C1';
 ```
 
-Input-structure tables are materialized into the persistent cache. Secondary path/value indexes are deferred to a later `--index` enhancement.
+Input-structure tables are loaded into the persistent cache. Secondary path/value indexes are deferred to a later `--index` enhancement.
 
 ### Cache Maintenance
 
@@ -865,44 +779,19 @@ List caches:
 nq --list-caches
 ```
 
-The listing shows input type, cache creation time, variant, and source
-identifier. File sources appear as absolute paths; standard-input sources
-appear as `stdin:<type>:sha256:<hash>`. The active cache is marked with `*`.
-The default materialization variant is
-`default-v2`; configured variants use `config-<12 hex>`. Parquet selection is
-shown alongside that label. Cache metadata is stored inside each H2 cache
-database.
-
-Caches created with an incompatible earlier input layout remain listable and
-clearable but are marked `outdated`. NQ does not rename their tables in place;
-reload the source to build a current layout. Selection by source, explicit
-cache filename, or active pointer rejects an outdated input cache with reload
-guidance.
+The listing shows each cache filename and timestamp. The active cache is marked
+with `*`.
 
 Switch the active cache without loading or rebuilding it:
 
 ```bash
-nq --use-cache customers.json
+nq --use-cache bright-otter.mv.db
 ```
 
 Clear all caches:
 
 ```bash
 nq --clear-cache
-```
-
-Clear one input file's cache:
-
-```bash
-nq --clear-cache customers.json
-```
-
-Select or clear a standard-input cache by copying its identifier from
-`--list-caches`:
-
-```bash
-nq --use-cache 'stdin:json:sha256:<full-hash-from-list>'
-nq --clear-cache 'stdin:json:sha256:<full-hash-from-list>'
 ```
 
 Clear one cache by its bare filename:
@@ -912,10 +801,9 @@ nq --clear-cache bright-otter.mv.db
 ```
 
 Bare cache filenames are resolved under `--cache-dir`, or under
-`~/.nq/cache` by default. A source identifier continues to clear all variants
-for that source.
+`~/.nq/cache` by default.
 
-Clear caches not used within a duration:
+Clear caches not modified within a duration:
 
 ```bash
 nq --clear-cache-older-than 30m

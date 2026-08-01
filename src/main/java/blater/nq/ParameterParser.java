@@ -19,7 +19,6 @@ import java.util.stream.Stream;
 public final class ParameterParser {
   public static final String INPUT_FILENAME = "NSQL_INPUTFILE";
   public static final String INPUT_TYPE_PARAM = "NSQL_INPUT_TYPE";
-  public static final String STDIN_SOURCE_PARAM = "NSQL_STDIN_SOURCE";
   public static final String STDIN_INPUT = "-";
 
   public static final String SCRIPT_FILE_PARAM = "NSQL_SCRIPTFILE";
@@ -40,13 +39,9 @@ public final class ParameterParser {
   public static final String OUTPUT_TYPE_PARAM = "NSQL_OUTPUT_TYPE";
   public static final String DEBUG_PARAM = "NSQL_DEBUG";
   public static final String NO_KEY_INFERENCE_PARAM = "NSQL_NO_KEY_INFERENCE";
-  public static final String METADATA_REFRESH_PARAM = "NSQL_METADATA_REFRESH";
-  public static final String METADATA_EXPIRY_HOURS_PARAM = "NSQL_METADATA_EXPIRY_HOURS";
   public static final String CACHE_MODE_PARAM = "NSQL_CACHE";
   public static final String PARQUET_ROOT_PARAM = "NSQL_PARQUET_ROOT";
   public static final String PARQUET_RECORD_PARAM = "NSQL_PARQUET_RECORD";
-  public static final String ANONYMOUS_COLLECTIONS_PARAM = "NSQL_ANONYMOUS_COLLECTIONS";
-  public static final String RELATION_ALIAS_PREFIX = "NSQL_RELATION_ALIAS.";
   public static final String JDBC_DRIVER_PARAM = "jdbc.driver";
   public static final String JDBC_CLASS_NAME_PARAM = "jdbc.class.name";
   public static final String JDBC_DATABASE_PARAM = "jdbc.database";
@@ -118,13 +113,6 @@ public final class ParameterParser {
         case "--parquet-record" -> i = putValue(
             commandParameters, PARQUET_RECORD_PARAM,
             args, i, attachedValue, "no parquet record supplied");
-        case "--anonymous-collections" -> i = putValue(
-            commandParameters, ANONYMOUS_COLLECTIONS_PARAM,
-            args, i, attachedValue, "no anonymous collection mode supplied");
-        case "--relation-alias" -> i = putRepeatedValue(
-            commandParameters, RELATION_ALIAS_PREFIX,
-            args, i, attachedValue, "no relation alias supplied");
-
         case "--output", "-o" -> i = putValue(
             commandParameters, OUTPUT_TYPE_PARAM,
             args, i, attachedValue, "no output type supplied");
@@ -144,23 +132,6 @@ public final class ParameterParser {
           requireNoAttachedValue(argument, attachedValue);
           commandParameters.put(NO_KEY_INFERENCE_PARAM, "true");
         }
-        case "--metadata-refresh" -> {
-          requireNoAttachedValue(argument, attachedValue);
-          commandParameters.put(METADATA_REFRESH_PARAM, "true");
-        }
-        case "--metadata-expiry-hours" -> {
-          String value = requiredValue(
-              args, i, attachedValue, "no metadata expiry supplied");
-          i = nextIndex(i, attachedValue);
-          try {
-            if (Long.parseLong(value) < 0) throw new NumberFormatException();
-          } catch (NumberFormatException ex) {
-            Log.fatal(IllegalArgumentException.class,
-                "--metadata-expiry-hours requires a non-negative whole number.");
-          }
-          commandParameters.put(METADATA_EXPIRY_HOURS_PARAM, value);
-        }
-
         case "--db" -> {
           databaseType = requiredValue(args, i, attachedValue, "no value supplied for --db");
           i = nextIndex(i, attachedValue);
@@ -218,7 +189,6 @@ public final class ParameterParser {
     resolvePositionals(parameters, positionals);
     validateStandardInputOptions(parameters);
     validateStandaloneInputOptions(parameters);
-    validateMaterializationOptions(parameters);
     return parameters;
   }
 
@@ -229,11 +199,9 @@ public final class ParameterParser {
         || parameters.containsKey(CACHE_USE_PARAM)
         || parameters.containsKey(CACHE_CLEAR_TARGET_PARAM)
         || parameters.containsKey(CACHE_CLEAR_ALL_PARAM)
-        || parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)
-        || parameters.containsKey(METADATA_REFRESH_PARAM)
-        || parameters.containsKey(METADATA_EXPIRY_HOURS_PARAM)) {
+        || parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)) {
       Log.fatal(IllegalArgumentException.class,
-          "--input is not valid for cache or metadata commands.");
+          "--input is not valid for cache maintenance commands.");
     }
   }
 
@@ -254,64 +222,12 @@ public final class ParameterParser {
   private static boolean isStandaloneInputCommand(Map<String, String> parameters) {
     return parameters.containsKey(INPUT_FILENAME)
         && !hasScript(parameters)
-        && !parameters.containsKey(CATALOG_PATTERN_PARAM)
-        && !parameters.containsKey(METADATA_REFRESH_PARAM)
-        && !parameters.containsKey(METADATA_EXPIRY_HOURS_PARAM);
+        && !parameters.containsKey(CATALOG_PATTERN_PARAM);
   }
 
   static boolean hasScript(Map<String, String> parameters) {
     return parameters.containsKey(SCRIPT_FILE_PARAM)
         || parameters.containsKey(SCRIPT_TEXT_PARAM);
-  }
-
-  private static void validateMaterializationOptions(Map<String, String> parameters) {
-    boolean configured = parameters.containsKey(ANONYMOUS_COLLECTIONS_PARAM)
-        || parameters.keySet().stream().anyMatch(key -> key.startsWith(RELATION_ALIAS_PREFIX));
-    if (!configured) return;
-
-    if (parameters.containsKey(INPUT_FILENAME)
-        && !hasScript(parameters)
-        && !Boolean.parseBoolean(parameters.get(CACHE_MODE_PARAM))) {
-      Log.fatal(IllegalArgumentException.class,
-          "Materialization options require a script or --cache.");
-    }
-
-    String anonymousMode = parameters.get(ANONYMOUS_COLLECTIONS_PARAM);
-    if (anonymousMode != null
-        && !anonymousMode.equalsIgnoreCase("merge")
-        && !anonymousMode.equalsIgnoreCase("error")) {
-      Log.fatal(IllegalArgumentException.class,
-          "--anonymous-collections must be one of: merge, error");
-    }
-
-    if (parameters.containsKey(CACHE_LIST_PARAM)
-        || parameters.containsKey(CACHE_CLEAR_ALL_PARAM)
-        || parameters.containsKey(CACHE_CLEAR_TARGET_PARAM)
-        || parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)
-        || parameters.containsKey(METADATA_REFRESH_PARAM)
-        || parameters.containsKey(METADATA_EXPIRY_HOURS_PARAM)) {
-      Log.fatal(IllegalArgumentException.class,
-          "Materialization options are not valid for this cache or metadata command.");
-    }
-    if (parameters.containsKey(CACHE_USE_PARAM)) return;
-    if (!parameters.containsKey(INPUT_FILENAME)) {
-      Log.fatal(IllegalArgumentException.class,
-          "Materialization options require an input file load or --use-cache source selection.");
-    }
-    if (!Boolean.parseBoolean(parameters.get(CACHE_MODE_PARAM))
-        && (parameters.containsKey(JDBC_DRIVER_PARAM)
-        || parameters.containsKey(JDBC_CLASS_NAME_PARAM)
-        || parameters.containsKey(JDBC_DATABASE_PARAM))) {
-      Log.fatal(IllegalArgumentException.class,
-          "Materialization options do not apply to JDBC-backed mapped DML input.");
-    }
-    InputType inputType = parameters.containsKey(INPUT_TYPE_PARAM)
-        ? InputType.fromName(parameters.get(INPUT_TYPE_PARAM))
-        : InputType.fromFilename(parameters.get(INPUT_FILENAME));
-    if (inputType == InputType.XML || inputType == InputType.PARQUET) {
-      Log.fatal(IllegalArgumentException.class,
-          "Materialization options are supported for JSON, JSON Lines, YAML, and CSV input.");
-    }
   }
 
   private static String helpTopic(String[] args) {
@@ -353,19 +269,6 @@ public final class ParameterParser {
       String attachedValue,
       String missingMessage) {
     parameters.put(key, requiredValue(args, index, attachedValue, missingMessage));
-    return nextIndex(index, attachedValue);
-  }
-
-  private static int putRepeatedValue(
-      Map<String, String> parameters,
-      String keyPrefix,
-      String[] args,
-      int index,
-      String attachedValue,
-      String missingMessage) {
-    long count = parameters.keySet().stream().filter(key -> key.startsWith(keyPrefix)).count();
-    parameters.put(keyPrefix + String.format("%06d", count),
-        requiredValue(args, index, attachedValue, missingMessage));
     return nextIndex(index, attachedValue);
   }
 
@@ -551,13 +454,10 @@ public final class ParameterParser {
         || key.equals(CATALOG_PATTERN_PARAM)
         || key.equals(INPUT_FILENAME)
         || key.equals(INPUT_TYPE_PARAM)
-        || key.equals(STDIN_SOURCE_PARAM)
         || key.equals(JDBC_PROPS_FILE_PARAM)
         || key.equals(OUTPUT_TYPE_PARAM)
         || key.equals(DEBUG_PARAM)
         || key.equals(NO_KEY_INFERENCE_PARAM)
-        || key.equals(METADATA_REFRESH_PARAM)
-        || key.equals(METADATA_EXPIRY_HOURS_PARAM)
         || key.equals(CACHE_MODE_PARAM)
         || key.equals(CACHE_DIR_PARAM)
         || key.equals(CACHE_CLEAR_ALL_PARAM)
@@ -566,9 +466,7 @@ public final class ParameterParser {
         || key.equals(CACHE_LIST_PARAM)
         || key.equals(CACHE_USE_PARAM)
         || key.equals(PARQUET_ROOT_PARAM)
-        || key.equals(PARQUET_RECORD_PARAM)
-        || key.equals(ANONYMOUS_COLLECTIONS_PARAM)
-        || key.startsWith(RELATION_ALIAS_PREFIX));
+        || key.equals(PARQUET_RECORD_PARAM));
   }
 
   static void addParametersFromPropFile(Map<String, String> parameters, String filename) {
@@ -610,17 +508,6 @@ public final class ParameterParser {
       return;
     }
 
-    if (params.containsKey(METADATA_REFRESH_PARAM)
-        || params.containsKey(METADATA_EXPIRY_HOURS_PARAM)) {
-      if (positionArguments.size() == 1
-          && Boolean.parseBoolean(params.get(CACHE_MODE_PARAM))
-          && isInputFile(positionArguments.getFirst())) {
-        params.put(INPUT_FILENAME, positionArguments.getFirst());
-      } else if (!positionArguments.isEmpty()) {
-        Log.fatal(IllegalArgumentException.class, "Unexpected argument: " + positionArguments.getFirst());
-      }
-      return;
-    }
     if ( params.containsKey(CACHE_LIST_PARAM)
       || params.containsKey(CACHE_USE_PARAM)
       || params.containsKey(CACHE_CLEAR_TARGET_PARAM)

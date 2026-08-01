@@ -1,7 +1,8 @@
 package blater.nq.runner.sql.cache;
 
-import blater.nq.inputreader.InputDocument;
+import blater.nq.domain.Hierarchy;
 import blater.nq.inputreader.InputReader;
+import blater.nq.inputreader.InputType;
 import blater.nq.runner.sql.SqlExecutor;
 import blater.nq.util.Log;
 
@@ -17,6 +18,7 @@ import static blater.nq.ParameterParser.JDBC_DATABASE_PARAM;
 import static blater.nq.ParameterParser.JDBC_DRIVER_PARAM;
 import static blater.nq.ParameterParser.JDBC_PASSWORD_PARAM;
 import static blater.nq.ParameterParser.JDBC_USERNAME_PARAM;
+import static blater.nq.ParameterParser.INPUT_TYPE_PARAM;
 
 /*
  * Responsibility: Selects and prepares a cache-backed SQL execution
@@ -25,17 +27,11 @@ import static blater.nq.ParameterParser.JDBC_USERNAME_PARAM;
 public final class CacheExecution {
   private CacheExecution() { }
 
-  public static boolean loadAndActivate(Map<String, String> parameters) {
+  public static void loadAndActivate(Map<String, String> parameters) {
     CacheHandle handle = explicitHandle(parameters);
-    if (!handle.needsLoad()) {
-      PersistentCache.activate(handle);
-      return false;
-    }
-
     SqlExecutor executor = open(handle, parameters);
     try {
       PersistentCache.activate(handle);
-      return true;
     } finally {
       executor.close();
     }
@@ -78,8 +74,8 @@ public final class CacheExecution {
   }
 
   private static CacheHandle explicitHandle(Map<String, String> parameters) {
-    String inputFilename = requiredInput(parameters);
-    return PersistentCache.prepare(CacheSource.from(inputFilename, parameters), parameters);
+    requiredInput(parameters);
+    return PersistentCache.prepare(parameters);
   }
 
   private static CacheHandle activeHandle() {
@@ -91,10 +87,7 @@ public final class CacheExecution {
   private static SqlExecutor open(
       CacheHandle handle,
       Map<String, String> parameters) {
-    SqlExecutor executor = new SqlExecutor(
-        jdbcParameters(parameters, handle.jdbcUrl()),
-        handle.cacheFile(),
-        handle.source().identityText());
+    SqlExecutor executor = new SqlExecutor(jdbcParameters(parameters, handle.jdbcUrl()));
     try {
       loadIfNeeded(handle, parameters, executor);
       return executor;
@@ -110,10 +103,10 @@ public final class CacheExecution {
     SqlExecutor executor = new SqlExecutor(jdbcParameters(parameters, jdbcUrl));
     try {
       String inputFilename = requiredInput(parameters);
-      CacheSource source = CacheSource.from(inputFilename, parameters);
-      InputDocument input = InputReader.of(source.inputType())
-          .read(inputFilename, parameters);
-      new HierarchyCacheLoader(executor).load(input, MaterializationConfiguration.from(parameters));
+      InputType inputType = inputType(inputFilename, parameters);
+      Hierarchy input = InputReader.of(inputType)
+          .load(inputFilename, parameters);
+      new HierarchyCacheLoader(executor).load(input);
       return executor;
     } catch (RuntimeException | Error ex) {
       executor.close();
@@ -128,10 +121,16 @@ public final class CacheExecution {
     if (!handle.needsLoad()) {
       return;
     }
-    InputDocument input = InputReader.of(handle.source().inputType())
-        .read(requiredInput(parameters), parameters);
-    new HierarchyCacheLoader(executor).load(input, MaterializationConfiguration.from(parameters));
-    PersistentCache.markLoaded(handle);
+    String inputFilename = requiredInput(parameters);
+    InputType inputType = inputType(inputFilename, parameters);
+    Hierarchy input = InputReader.of(inputType).load(inputFilename, parameters);
+    new HierarchyCacheLoader(executor).load(input);
+  }
+
+  private static InputType inputType(String inputFilename, Map<String, String> parameters) {
+    return parameters.containsKey(INPUT_TYPE_PARAM)
+        ? InputType.fromName(parameters.get(INPUT_TYPE_PARAM))
+        : InputType.fromFilename(inputFilename);
   }
 
   private static Map<String, String> jdbcParameters(
