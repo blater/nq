@@ -1,47 +1,56 @@
-# Example Data Files
+# Example data and scripts
 
-These files provide the same sample identity/customer/KYC domain in JSON, YAML, and XML:
+All paths below are relative to the repository root. Promoted examples are
+covered by end-to-end tests.
 
-- `identity-customers.json`
-- `identity-customers.yaml`
-- `identity-customers.xml`
+## Identity/customer/KYC documents
 
-The examples are shaped for `--cache` query mode. Object names are singular so generated cache tables are easy to query:
+The same sanitized domain is available in three equivalent formats:
 
-- `identity_data`
-- `auth`
-- `auth_user`
-- `login`
-- `customer`
-- `email_address`
-- `address`
-- `kyc`
-- `status_event`
+- [`identity-customers.json`](identity-customers.json)
+- [`identity-customers.yaml`](identity-customers.yaml)
+- [`identity-customers.xml`](identity-customers.xml)
 
-Most customers have an `auth_user_id` that joins to `auth_user.id`; one customer intentionally has no login. KYC records include a current `status` and a nested `status_event` history for flow-style queries.
+They contain customer, address, authentication, and KYC relations. Run the
+country summary against any boundary format:
 
-`identity-country-counts.nq` queries these files in cache mode and counts customers by residential address country, excluding customers whose KYC status is `not_started`.
-
-## Independent hierarchies with person references
-
-`person-reference-hierarchies.json` contains two separately rooted domain hierarchies and a people hierarchy. Objects refer to people by ID, and each of the five festivals assigns one rigging team and one catering team from the organisation hierarchy. Every festival's event manager is also a department manager.
-
-```text
-root
-|-- organisation
-|   `-- department[] (manager_person_id -> people.person.id)
-|       `-- team[] (lead_person_id/member_person_ids -> people.person.id)
-|-- festival[] (event_manager_person_id -> people.person.id)
-|   |-- event_team[] (team_id -> organisation.department.team.id)
-|   `-- venue[] (contact_person_id -> people.person.id)
-|       `-- session[] (host_person_id/performer_person_ids -> people.person.id)
-`-- people
-    `-- person[]
-        `-- address[]
+```bash
+nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.json
+nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.yaml
+nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.xml
 ```
 
-See `person-reference-reports.md` for three reports and runnable NQ queries over this cache:
+## Festival and people hierarchy
 
-- `person-resource-chart.nq`
-- `person-festival-summary.nq`
-- `person-work-chart.nq`
+[`festival/festival-dataset.json`](festival/festival-dataset.json) contains two
+separately rooted domain hierarchies: organisations/festivals and people.
+Objects refer to people by ID. Each festival assigns rigging and catering teams,
+venues, sessions, managers, hosts, and performers.
+
+Load and activate the cache:
+
+```bash
+nq --cache docs/examples/festival/festival-dataset.json
+```
+
+Then run the reports described in
+[`festival/person-reference-reports.md`](festival/person-reference-reports.md):
+
+- [`festival/person-resource-chart.nq`](festival/person-resource-chart.nq)
+- [`festival/person-festival-summary.nq`](festival/person-festival-summary.nq)
+- [`festival/person-work-chart.nq`](festival/person-work-chart.nq)
+
+## Format scenarios
+
+[`formats/README.md`](formats/README.md) describes small JSON, YAML, and XML
+fixtures that exercise numeric and temporal scalar handling.
+
+## Wikidata
+
+[`wikidata/README.md`](wikidata/README.md) describes hierarchy mapping and key
+examples over a generated company dataset.
+
+## jq comparison
+
+[`jq/README.md`](jq/README.md) contains a deliberately small task expressed in
+both jq and NQ. It demonstrates syntax, not a performance claim.

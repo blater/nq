@@ -1,0 +1,45 @@
+name: Use-case or feature request
+description: Describe a real data task before proposing syntax.
+title: "[Use case]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Who has the problem, how often, and what happens today?
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Minimal sanitized input or schema
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Desired output or database effect
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround and adjacent tools tried
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Optional syntax or implementation idea
+      description: The problem evidence matters more than a proposed syntax.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, personal data, internal hostnames, and proprietary values.
+          required: true

@@ -57,7 +57,7 @@ public final class SqlExecutor {
       Statement statement = context.connection().createStatement();
       sqlCursor = new SqlRowCursor(statement, statement.executeQuery(SqlCommentFilter.filterOutComments(selectSql)));
     } catch (SQLException ex) {
-      Log.fatal(SQLException.class, "Error running sql: " + selectSql + ": " + ex.getMessage());
+      Log.fatal(SQLException.class, queryErrorMessage(selectSql, ex));
     }
     return sqlCursor;
   }
@@ -69,7 +69,7 @@ public final class SqlExecutor {
       bind(statement, parameters);
       sqlCursor = new SqlRowCursor(statement, statement.executeQuery());
     } catch (SQLException ex) {
-      Log.fatal(SQLException.class, "Error running sql: " + selectSql + ": " + ex.getMessage());
+      Log.fatal(SQLException.class, queryErrorMessage(selectSql, ex));
     }
     return sqlCursor;
   }
@@ -220,6 +220,18 @@ public final class SqlExecutor {
     for (int index = 0; index < parameters.size(); index++) {
       statement.setObject(index + 1, parameters.get(index));
     }
+  }
+
+  private String queryErrorMessage(String selectSql, SQLException exception) {
+    String message = "Error running sql: " + selectSql + ": " + exception.getMessage();
+    String databaseMessage = exception.getMessage() == null
+        ? ""
+        : exception.getMessage().toLowerCase(Locale.ROOT);
+    if (databaseMessage.contains("table") && databaseMessage.contains("not found")
+        || databaseMessage.contains("column") && databaseMessage.contains("not found")) {
+      message += " Inspect discovered names with nq catalog '*' using the same input/cache or connection options.";
+    }
+    return message;
   }
 
   /*

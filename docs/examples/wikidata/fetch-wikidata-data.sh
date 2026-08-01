@@ -5,12 +5,12 @@ usage() {
   cat <<'USAGE'
 Usage: fetch-wikidata-data.sh [-q FILE | -o FILE | -e URL | -h | <long option>]
 
-Runs docs/data/getData.sparql against the Wikidata Query Service and writes a
-NQ-friendly JSON file under docs/data.
+Runs docs/examples/wikidata/getData.sparql against the Wikidata Query Service
+and writes an NQ-friendly JSON file beside this script.
 
 Options:
-  -q, --query FILE       SPARQL query file. Default: docs/data/getData.sparql
-  -o, --output FILE      Output JSON file. Default: docs/data/wikidata-companies.json
+  -q, --query FILE       SPARQL query file. Default: getData.sparql beside this script
+  -o, --output FILE      Output JSON file. Default: wikidata-companies.json beside this script
   -e, --endpoint URL     SPARQL endpoint. Default: https://query.wikidata.org/sparql
       --raw-output FILE  Also save the raw SPARQL JSON response.
   -h, --help            Show this help.

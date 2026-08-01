@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560">
+  <rect width="1000" height="560" rx="22" fill="#0b1020"/>
+  <rect width="1000" height="58" rx="22" fill="#182036"/>
+  <rect y="38" width="1000" height="20" fill="#182036"/>
+  <circle cx="31" cy="29" r="8" fill="#ff5f57"/>
+  <circle cx="57" cy="29" r="8" fill="#febc2e"/>
+  <circle cx="83" cy="29" r="8" fill="#28c840"/>
+  <text x="500" y="36" text-anchor="middle" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">NQ — SQL for nested data</text>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22">
+    <text x="34" y="103" fill="#65d1ff">$</text>
+    <text x="58" y="103" fill="#f8fafc">cat identity-customers.json</text>
+    <text x="34" y="151" fill="#94a3b8">{</text>
+    <text x="58" y="187" fill="#f9a8d4">"identity_data"</text><text x="254" y="187" fill="#94a3b8">: {</text>
+    <text x="82" y="223" fill="#f9a8d4">"customer"</text><text x="226" y="223" fill="#94a3b8">: [ ... ],</text>
+    <text x="82" y="259" fill="#f9a8d4">"address"</text><text x="214" y="259" fill="#94a3b8">: [ ... ],</text>
+    <text x="82" y="295" fill="#f9a8d4">"kyc"</text><text x="154" y="295" fill="#94a3b8">: [ ... ]</text>
+    <text x="58" y="331" fill="#94a3b8">}</text>
+    <text x="34" y="367" fill="#94a3b8">}</text>
+    <text x="34" y="441" fill="#cbd5e1">Nested collections become related SQL tables.</text>
+    <rect x="34" y="481" width="12" height="25" fill="#65d1ff"/>
+  </g>
+</svg>

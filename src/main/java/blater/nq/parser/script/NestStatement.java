@@ -119,7 +119,7 @@ public class NestStatement {
 
 
   public boolean isSelectProducingOutput() {
-    // if the plan root isn't empty then its going to dump some hierachical output....
+    // If the plan root isn't empty, it is going to produce hierarchical output.
     return getPlan().rootName() != null;
   }
 

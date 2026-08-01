@@ -319,7 +319,7 @@ class ParameterParserConnectionTest {
         script.toString(),
         "--cache",
         "-p", properties.toString());
-    Map<String, String> implicit = ParameterParser.parse(
+    Map<String, String> conversion = ParameterParser.parse(
         "input.json",
         "--db", "h2",
         "--database", "mem:demo");
@@ -327,7 +327,8 @@ class ParameterParserConnectionTest {
         "--list-caches", "--jdbc-username=cache_user");
 
     assertFalse(simple.containsKey(JDBC_DATABASE_PARAM));
-    assertFalse(implicit.containsKey(JDBC_DATABASE_PARAM));
+    assertEquals("jdbc:h2:mem:demo", conversion.get(JDBC_DATABASE_PARAM));
+    assertFalse(conversion.containsKey(CACHE_MODE_PARAM));
     assertEquals("cache_user", property.get(JDBC_USERNAME_PARAM));
     assertEquals("cache_user", list.get(JDBC_USERNAME_PARAM));
   }

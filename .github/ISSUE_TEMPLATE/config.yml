@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Usage questions and “Help me query this”
+    url: https://github.com/blater/nq/discussions/categories/q-a
+    about: Bring a sanitized input sample and the output you want.
+  - name: Private security report
+    url: https://github.com/blater/nq/security/advisories/new
+    about: Do not disclose suspected vulnerabilities in a public issue.

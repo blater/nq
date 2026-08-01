@@ -62,8 +62,8 @@ public final class XmlTestHelpers {
   public static Element runScript(H2Database database, NestScript script, Map<String, String> additionalParameters) {
     Map<String, String> parameters = new HashMap<>(database.jdbcProperties());
     parameters.putAll(additionalParameters);
-    Hierarchy hierachy = ScriptRunner.run(script, parameters);
-    Document document = XmlOutputWriter.map(hierachy);
+    Hierarchy hierarchy = ScriptRunner.run(script, parameters);
+    Document document = XmlOutputWriter.map(hierarchy);
     // DML-only scripts produce no output hierarchy, so there is no root element to return
     return document.hasRootElement() ? document.getRootElement() : null;
   }

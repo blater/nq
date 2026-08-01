@@ -6,13 +6,14 @@ public final class Help {
       Usage:
         nq <script-file-or-text> [input-file] [name=value ...] [options]
         nq catalog [table-pattern] [options]
-        nq <input-file> [cache-options]
-        nq --cache <input-file> [cache-options]
+        nq <input-file> [-o|--output <type>]
+        nq -c|--cache <input-file> [cache-options]
         nq --use-cache <input-file-or-cache-filename> [cache-options]
         nq --list-caches [cache-options]
         nq --clear-cache [input-file-or-cache-filename] [cache-options]
         nq --clear-cache-older-than <age> [cache-options]
         nq -h | --help [topic]
+        nq --version
 
       Connection options:
         -p <properties-file>
@@ -30,7 +31,7 @@ public final class Help {
         --no-key-inference
 
       Cache options:
-        --cache
+        -c, --cache
         --cache-dir <path>
         --anonymous-collections <merge|error>
         --relation-alias <source-path>=<relation-name>  (repeatable)
@@ -45,7 +46,13 @@ public final class Help {
         name=value
         -h
         --help [topic]
+        --version
       """;
+
+  public static void printVersion() {
+    String version = Help.class.getPackage().getImplementationVersion();
+    System.out.println("nq " + (version == null || version.isBlank() ? "development" : version));
+  }
 
   static final String HELP_ON_HELP = """
       HELP
@@ -150,17 +157,17 @@ public final class Help {
           Load and query a structured input file through persistent local H2.
 
       SYNOPSIS
-          nq <input-file> [--cache-dir path]
-          nq --cache <input-file> [--cache-dir path]
+          nq -c|--cache <input-file> [--cache-dir path]
           nq <script> <input-file> --cache [--cache-dir path] [--output type]
           nq <script> [--output type]
 
       DESCRIPTION
           Supported input types are XML, JSON, JSON Lines, YAML, CSV, and Parquet. --cache
           persists, reuses, and activates a file-backed H2 database under
-          ~/.nq/cache. A lone input file also loads and activates its
-          persistent cache. A script with no input or JDBC connection queries
-          the active cache. Explicit --cache takes precedence over JDBC settings.
+          ~/.nq/cache. Persistent caching is always explicit; a lone input file
+          instead converts directly to the selected output format. A script
+          with no input or JDBC connection queries the active cache. Explicit
+          --cache takes precedence over JDBC settings.
 
           JSON and YAML relation names come from collection member names.
           Anonymous JSON arrays, JSON Lines, and CSV use ITEM. Configure source
@@ -170,7 +177,8 @@ public final class Help {
           Materialization configuration is part of persistent cache identity.
 
       EXAMPLES
-          nq customers.json
+          nq --cache customers.json
+          nq -c customers.json
           nq totals.nq
           nq totals.nq customers.json --cache --output json
 
@@ -283,17 +291,24 @@ public final class Help {
           Select the document format written by nq.
 
       SYNOPSIS
+          nq <input-file> --output <type>
+          nq <input-file> -o <type>
           nq <script> [other arguments] --output <type>
           nq <script> [other arguments] -o <type>
 
       DESCRIPTION
           Accepted types are xml, json, jsonl, yaml, csv, and markdown,
-          case-insensitively. The
-          command-line option overrides the script's first 'output type;'
-          directive. JSON is the default when neither is supplied. The
-          command-line catalog command defaults to Markdown.
+          case-insensitively. A lone input file is read into NQ's neutral
+          hierarchy and written directly in the selected format without H2
+          materialization. When a script is supplied, its result replaces that
+          direct conversion; the command-line option overrides the script's
+          first 'output type;' directive. JSON is the default when neither is
+          supplied. The command-line catalog command defaults to Markdown.
 
       EXAMPLES
+          nq customers.xml --output json
+          nq customers.json -o yaml
+          nq customers.csv -o markdown
           nq report.nq -p database.properties --output json
           nq query.nq customers.csv --cache -o yaml
       """;
@@ -343,8 +358,8 @@ public final class Help {
       SYNOPSIS
           nq <script-file-or-text> [input-file] [name=value ...] [options]
           nq catalog [table-pattern] [connection/cache options]
-          nq <input-file> [--cache-dir path]
-          nq --cache <input-file> [--cache-dir path]
+          nq <input-file> [-o|--output type]
+          nq -c|--cache <input-file> [--cache-dir path]
           nq --use-cache <input-file-or-cache-filename> [--cache-dir path]
           nq --list-caches [--cache-dir path]
           nq --clear-cache [input-file-or-cache-filename] [--cache-dir path]
@@ -360,9 +375,11 @@ public final class Help {
 
           Arguments may appear in any unambiguous order. A script may be a file
           or inline text. The input file type is selected by its extension. An
-          input file on its own is loaded into the cache and made active. Named
-          JSON/YAML collections become same-named relations; anonymous JSON,
-          JSON Lines, and CSV record streams use ITEM.
+          input file on its own is converted directly to JSON or the format
+          selected by --output. Supplying a script disables direct conversion.
+          Persistent caching requires -c or --cache. Named JSON/YAML collections
+          become same-named relations; anonymous JSON, JSON Lines, and CSV record
+          streams use ITEM.
 
       HELP
           -h
@@ -414,7 +431,7 @@ public final class Help {
               Persist the selected target's metadata expiry. Zero refreshes
               metadata on every use; the default is 24 hours.
 
-          --cache
+          --cache, -c
               Persist, select, or query a file-backed local H2 cache. Without
               this option, a script and input file use temporary in-memory H2.
               An explicit cache takes precedence over JDBC settings.
@@ -461,7 +478,8 @@ public final class Help {
       EXAMPLES
           nq report.nq -p database.properties
           nq update.nq customers.json -p database.properties region=EMEA
-          nq customers.json
+          nq customers.xml --output json
+          nq --cache customers.json
           nq --use-cache customers.json
           nq catalog
           nq catalog 'customer*' --output json

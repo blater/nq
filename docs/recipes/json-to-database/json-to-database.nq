@@ -1,0 +1,12 @@
+output json;
+
+literal drop table if exists person;
+
+literal create table person (
+  id integer auto_increment primary key,
+  first_name varchar(80) not null,
+  city varchar(80) not null
+);
+
+insert into person (first_name, city)
+values ({message.person.firstName}, {message.person.city});

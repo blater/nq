@@ -1,5 +1,7 @@
 package blater.nq;
 
+import blater.nq.inputreader.InputReader;
+import blater.nq.inputreader.InputType;
 import blater.nq.outputwriter.OutputType;
 import blater.nq.runner.inference.KeyInference;
 import blater.nq.parser.ScriptLoader;
@@ -24,7 +26,9 @@ public class Main {
     var params = ParameterParser.parse(args);
     Log.debug(Boolean.parseBoolean(params.get(DEBUG_PARAM)));
 
-    if (params.containsKey(HELP_PARAM)) {
+    if (params.containsKey(VERSION_PARAM)) {
+      Help.printVersion();
+    } else if (params.containsKey(HELP_PARAM)) {
       String topic = params.get(HELP_PARAM);
       if (BRIEF_HELP.equals(topic)) {
         Help.printBriefHelp();
@@ -64,12 +68,14 @@ public class Main {
       String pattern = params.get(CATALOG_PATTERN_PARAM);
       NestScript script = new NestScript(List.of(NestStatement.catalog(pattern.isEmpty() ? null : pattern)));
       execute(script, params);
-    } else if (Boolean.parseBoolean(params.get(CACHE_MODE_PARAM))
-        && !params.containsKey(SCRIPT_FILE_PARAM)
-        && !params.containsKey(SCRIPT_TEXT_PARAM)) {
-      boolean loaded = CacheExecution.loadAndActivate(params);
-      String source = CacheSource.normalizedSourcePath(params.get(INPUT_FILENAME)).toString();
-      System.out.println((loaded ? "Loaded cache for " : "Using existing cache for ") + source);
+    } else if (!ParameterParser.hasScript(params)) {
+      if (Boolean.parseBoolean(params.get(CACHE_MODE_PARAM))) {
+        boolean loaded = CacheExecution.loadAndActivate(params);
+        String source = CacheSource.normalizedSourcePath(params.get(INPUT_FILENAME)).toString();
+        System.out.println((loaded ? "Loaded cache for " : "Using existing cache for ") + source);
+      } else {
+        convertInput(params);
+      }
     } else {
       String inputScript = params.containsKey(SCRIPT_TEXT_PARAM)
           ? ScriptLoader.loadText(params.get(SCRIPT_TEXT_PARAM))
@@ -81,5 +87,11 @@ public class Main {
 
   private static void execute(NestScript script, Map<String, String> params) {
     OutputType.get(script, params).write(ScriptRunner.run(script, params));
+  }
+
+  private static void convertInput(Map<String, String> params) {
+    String inputFilename = params.get(INPUT_FILENAME);
+    var hierarchy = InputReader.of(InputType.fromFilename(inputFilename)).load(inputFilename, params);
+    OutputType.get(null, params).write(hierarchy);
   }
 }

@@ -9,9 +9,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /*
  * Responsibility: Verifies that SqlExecutor owns the active JDBC
@@ -87,6 +89,23 @@ class SqlExecutorConnectionContextTest {
       sqlExecutor.connect(second.jdbcProperties());
       try {
         assertEquals(SqlType.STRING, sqlExecutor.columnTypes("person").get("personid"));
+      } finally {
+        sqlExecutor.close();
+      }
+    }
+  }
+
+  @Test
+  void missingRelationErrorsSuggestCatalogDiscovery() throws Exception {
+    try (H2Database database = new H2Database()) {
+      SqlExecutor sqlExecutor = new SqlExecutor(database.jdbcProperties());
+      try {
+        SQLException thrown = assertThrows(
+            SQLException.class,
+            () -> sqlExecutor.query("select id from missing_relation"));
+
+        assertTrue(thrown.getMessage().contains("nq catalog '*'"));
+        assertTrue(thrown.getMessage().contains("same input/cache or connection options"));
       } finally {
         sqlExecutor.close();
       }

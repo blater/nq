@@ -1,1 +1,6 @@
-select id from item where a in ( select max(a) from item);
+output json;
+
+select id
+from item
+where a in (select max(a) from item)
+order by id;

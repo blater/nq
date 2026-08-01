@@ -4,7 +4,8 @@ These scripts query `wikidata-companies.json` through NQ cache mode. For
 example:
 
 ```bash
-nq --cache docs/data/wikidata-row-first.nq docs/data/wikidata-companies.json
+nq docs/examples/wikidata/wikidata-row-first.nq \
+  docs/examples/wikidata/wikidata-companies.json
 ```
 
 The examples use the cache tables created from the dataset:
@@ -20,3 +21,10 @@ The examples use the cache tables created from the dataset:
 | `wikidata-composite-nested-keys.nq` | Composite role keys nested below keyed companies. |
 | `wikidata-sibling-keys.nq` | Keyed industry and role siblings from one join-expanded result. |
 | `wikidata-hierarchy-union.nq` | Explicit `hierarchy union` branch composition. |
+
+Regenerate the dataset only when network access and Wikidata’s service policy
+permit it:
+
+```bash
+docs/examples/wikidata/fetch-wikidata-data.sh
+```

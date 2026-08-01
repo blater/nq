@@ -50,6 +50,8 @@ class MaterializationOptionsTest {
     assertThrows(IllegalArgumentException.class,
         () -> ParameterParser.parse(script.toString(), json.toString(),
             "--jdbc-database", "jdbc:h2:mem:test", "--relation-alias", "/=records"));
+    assertThrows(IllegalArgumentException.class,
+        () -> ParameterParser.parse(json.toString(), "--relation-alias", "/=records"));
   }
 
   @Test

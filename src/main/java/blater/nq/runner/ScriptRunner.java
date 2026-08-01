@@ -74,7 +74,8 @@ public final class ScriptRunner {
               //  todo:
               //   add captures at time of capture into in-memory temp table & reformulate the dml
               //   statement dynamically to reference the temp table.
-              //   for small row sets, similar or less efficent, for >1K rows, 100s of times more efficent, for >100k rows thousands of times more efficient
+              //   for small row sets, similar or less efficient; for >1K rows, hundreds of times more efficient;
+              //   for >100K rows, thousands of times more efficient
               for (Map<String, Object> capturedRow : rows)
                 runDml(stmt, Capture.toSqlRow(stmt.getMappings(), capturedRow, params), sqlExecutor);
             }

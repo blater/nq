@@ -1,0 +1,94 @@
+name: Bug report
+description: Report reproducible incorrect NQ behaviour.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Remove credentials, personal data, internal hostnames, and proprietary values before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: NQ version
+      description: Release version, commit, or output identifying the build.
+      placeholder: 0.9.3
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation method
+      options:
+        - Homebrew
+        - macOS release archive
+        - Linux release archive
+        - Windows release archive
+        - JVM build
+        - Built from source
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system and architecture
+      placeholder: Ubuntu 22.04 x64
+    validations:
+      required: true
+  - type: dropdown
+    id: format
+    attributes:
+      label: Input format
+      options:
+        - No input file / JDBC only
+        - JSON
+        - JSON Lines
+        - YAML
+        - XML
+        - CSV
+        - Parquet
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Minimal sanitized input
+      description: Paste the smallest safe fixture or link to a small reproduction repository.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Exact command and NQ script
+      description: Replace secrets with explicit placeholders.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual stdout, stderr, and exit status
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Database/driver version, cache mode, frequency, regression version, or other useful detail.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, personal data, internal hostnames, and proprietary values.
+          required: true

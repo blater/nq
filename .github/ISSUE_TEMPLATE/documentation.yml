@@ -1,0 +1,28 @@
+name: Documentation problem
+description: Report missing, stale, confusing, or incorrect documentation.
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Page or section
+      description: Link to the file, heading, help topic, or command output.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or unclear?
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Suggested correction
+      description: Optional. A pull request is also welcome.
+  - type: input
+    id: version
+    attributes:
+      label: NQ version, if the problem is version-specific

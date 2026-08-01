@@ -1,0 +1,55 @@
+output json;
+
+literal create table customer (
+  id integer primary key,
+  name varchar(80) not null
+);
+
+literal create table customer_order (
+  id integer primary key,
+  customer_id integer not null,
+  ordered_on date not null,
+  foreign key (customer_id) references customer(id)
+);
+
+literal create table order_item (
+  id integer primary key,
+  order_id integer not null,
+  sku varchar(40) not null,
+  quantity integer not null,
+  foreign key (order_id) references customer_order(id)
+);
+
+literal insert into customer values
+  (1, 'Alice'),
+  (2, 'Bob');
+
+literal insert into customer_order values
+  (1001, 1, date '2026-07-01'),
+  (1002, 1, date '2026-07-15'),
+  (1003, 2, date '2026-07-20');
+
+literal insert into order_item values
+  (1, 1001, 'TEA', 2),
+  (2, 1001, 'CAKE', 1),
+  (3, 1002, 'MUG', 2),
+  (4, 1003, 'COFFEE', 1);
+
+select
+  c.id as customer_key,
+  o.id as order_key,
+  i.id as item_key,
+  c.id into {customers.customer.id},
+  c.name into {customers.customer.name},
+  o.id into {customers.customer.orders.order.id},
+  o.ordered_on into {customers.customer.orders.order.orderedOn},
+  i.sku into {customers.customer.orders.order.items.item.sku},
+  i.quantity into {customers.customer.orders.order.items.item.quantity}
+from customer c
+join customer_order o on o.customer_id = c.id
+join order_item i on i.order_id = o.id
+order by c.id, o.id, i.id
+structure
+  {customers.customer} key (customer_key),
+  {customers.customer.orders.order} key (customer_key, order_key),
+  {customers.customer.orders.order.items.item} key (customer_key, order_key, item_key);

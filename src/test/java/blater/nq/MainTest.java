@@ -801,13 +801,23 @@ class MainTest {
   }
 
   @Test
-  void inputFileAloneIsAStandaloneCacheCommand() {
+  void shortCacheFlagSelectsStandaloneCacheCommand() throws Exception {
+    Path input = write("standalone.json", "{}");
+
+    var params = ParameterParser.parse("-c", input.toString());
+
+    assertEquals("true", params.get(ParameterParser.CACHE_MODE_PARAM));
+    assertEquals(input.toString(), params.get(ParameterParser.INPUT_FILENAME));
+  }
+
+  @Test
+  void inputFileAloneSelectsDirectConversion() {
     for (String extension : List.of("xml", "csv", "json", "yaml", "yml", "parquet")) {
       String input = "standalone." + extension;
 
       var params = ParameterParser.parse(input);
 
-      assertEquals("true", params.get(ParameterParser.CACHE_MODE_PARAM));
+      assertFalse(params.containsKey(ParameterParser.CACHE_MODE_PARAM));
       assertEquals(input, params.get(ParameterParser.INPUT_FILENAME));
       assertFalse(params.containsKey(ParameterParser.SCRIPT_FILE_PARAM));
       assertFalse(params.containsKey(ParameterParser.SCRIPT_TEXT_PARAM));
@@ -815,7 +825,22 @@ class MainTest {
   }
 
   @Test
-  void inlineQueryAutomaticallyUsesItsDataFileCache() throws Exception {
+  void standaloneCacheRejectsOutputAndDirectConversionRejectsCacheDirectory() throws Exception {
+    Path input = write("standalone.json", "{}");
+
+    IllegalArgumentException outputProblem = assertThrows(
+        IllegalArgumentException.class,
+        () -> ParameterParser.parse("--cache", input.toString(), "--output", "yaml"));
+    IllegalArgumentException directoryProblem = assertThrows(
+        IllegalArgumentException.class,
+        () -> ParameterParser.parse(input.toString(), "--cache-dir", tempDir.toString()));
+
+    assertEquals("--output is not valid when loading a cache without a script.", outputProblem.getMessage());
+    assertEquals("--cache-dir requires --cache when no script is supplied.", directoryProblem.getMessage());
+  }
+
+  @Test
+  void inlineQueryUsesEphemeralCacheWithoutExplicitCacheFlag() throws Exception {
     String query = "select id from item where a in (select max(a) from item);";
     Path input = write("elements.json", """
         [
@@ -882,7 +907,8 @@ class MainTest {
   void catalogCommandStoresItsOptionalPatternAndConnectionSelection() {
     var summary = ParameterParser.parse("catalog");
     var details = ParameterParser.parse("--output=json", "catalog", "customer*");
-    var cache = ParameterParser.parse("catalog", "customer*", "--cache", "customers.json");
+    var cache = ParameterParser.parse(
+        "catalog", "customer*", "--cache", "customers.json", "--output", "json");
     var jdbc = ParameterParser.parse("catalog", "*", "--db", "h2", "--database", "mem:catalog");
 
     assertEquals("", summary.get(ParameterParser.CATALOG_PATTERN_PARAM));
@@ -892,6 +918,7 @@ class MainTest {
     assertEquals("json", details.get(ParameterParser.OUTPUT_TYPE_PARAM));
     assertEquals("customer*", cache.get(ParameterParser.CATALOG_PATTERN_PARAM));
     assertEquals("customers.json", cache.get(ParameterParser.INPUT_FILENAME));
+    assertEquals("json", cache.get(ParameterParser.OUTPUT_TYPE_PARAM));
     assertEquals("*", jdbc.get(ParameterParser.CATALOG_PATTERN_PARAM));
     assertEquals("jdbc:h2:mem:catalog", jdbc.get(ParameterParser.JDBC_DATABASE_PARAM));
   }
@@ -1060,9 +1087,9 @@ class MainTest {
         """);
 
     String loaded = captureStdout(() -> Main.main(
-        "--cache-dir", cacheDir.toString(), input.toString()));
+        "--cache", "--cache-dir", cacheDir.toString(), input.toString()));
     String reused = captureStdout(() -> Main.main(
-        "--cache-dir", cacheDir.toString(), input.toString()));
+        "--cache", "--cache-dir", cacheDir.toString(), input.toString()));
     String queryOutput = captureStdout(() -> Main.main(script.toString()));
 
     String source = input.toAbsolutePath().normalize().toString();

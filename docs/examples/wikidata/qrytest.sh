@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_dir/../../.." && pwd)"
+nq_command="${NQ_COMMAND:-nq}"
 
-../target/nq-common /dev/stdin --cache --cache-dir data/cache data/wikidata-companies.json <<'EOF'
-  output json;
-  select id into {companies.company.id},
-        company_label into {companies.company.label},
-        company_id into {companies.company.compid},
-        country_label into {companies.company.country}
-  from company
-  order by id createsnew {companies.company}
-;
-EOF
+"$nq_command" \
+  "$script_dir/wikidata-keyed-companies.nq" \
+  "$script_dir/wikidata-companies.json" \
+  --cache-dir "$repo_root/target/wikidata-cache"

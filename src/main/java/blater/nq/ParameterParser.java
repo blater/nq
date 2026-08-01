@@ -22,6 +22,7 @@ public final class ParameterParser {
   public static final String SCRIPT_FILE_PARAM = "NSQL_SCRIPTFILE";
   public static final String SCRIPT_TEXT_PARAM = "NSQL_SCRIPT";
   public static final String HELP_PARAM = "NSQL_HELP";
+  public static final String VERSION_PARAM = "NSQL_VERSION";
   public static final String BRIEF_HELP = "-h";
   public static final String CATALOG_PATTERN_PARAM = "NSQL_CATALOG_PATTERN";
 
@@ -51,6 +52,9 @@ public final class ParameterParser {
 
   // Returns the runtime parameter map assembled from CLI arguments and property files.
   public static Map<String, String> parse(String... args) {
+    if (args.length == 1 && "--version".equals(args[0])) {
+      return Map.of(VERSION_PARAM, "true");
+    }
     String helpTopic = helpTopic(args);
     if (helpTopic != null) {
       return Map.of(HELP_PARAM, helpTopic);
@@ -78,7 +82,7 @@ public final class ParameterParser {
           addParametersFromFile(propertyParameters, filename);
         }
 
-        case "--cache" -> {
+        case "--cache", "-c" -> {
           requireNoAttachedValue(argument, attachedValue);
           commandParameters.put(CACHE_MODE_PARAM, "true");
         }
@@ -191,12 +195,6 @@ public final class ParameterParser {
       }
     }
 
-    if (!commandParameters.containsKey(CACHE_MODE_PARAM)
-        && positionals.size() == 1
-        && isInputFile(positionals.getFirst())) {
-      commandParameters.put(CACHE_MODE_PARAM, "true");
-    }
-
     boolean cacheCommand = isCacheCommand(commandParameters);
     Map<String, String> parameters = new LinkedHashMap<>(propertyParameters);
     if (!cacheCommand) {
@@ -208,14 +206,49 @@ public final class ParameterParser {
       normalizeJdbcDriver(parameters);
     }
     resolvePositionals(parameters, positionals);
+    validateStandaloneInputOptions(parameters);
     validateMaterializationOptions(parameters);
     return parameters;
+  }
+
+  private static void validateStandaloneInputOptions(Map<String, String> parameters) {
+    if (!isStandaloneInputCommand(parameters)) return;
+
+    boolean cacheMode = Boolean.parseBoolean(parameters.get(CACHE_MODE_PARAM));
+    if (cacheMode && parameters.containsKey(OUTPUT_TYPE_PARAM)) {
+      Log.fatal(IllegalArgumentException.class,
+          "--output is not valid when loading a cache without a script.");
+    }
+    if (!cacheMode && parameters.containsKey(CACHE_DIR_PARAM)) {
+      Log.fatal(IllegalArgumentException.class,
+          "--cache-dir requires --cache when no script is supplied.");
+    }
+  }
+
+  private static boolean isStandaloneInputCommand(Map<String, String> parameters) {
+    return parameters.containsKey(INPUT_FILENAME)
+        && !hasScript(parameters)
+        && !parameters.containsKey(CATALOG_PATTERN_PARAM)
+        && !parameters.containsKey(METADATA_REFRESH_PARAM)
+        && !parameters.containsKey(METADATA_EXPIRY_HOURS_PARAM);
+  }
+
+  static boolean hasScript(Map<String, String> parameters) {
+    return parameters.containsKey(SCRIPT_FILE_PARAM)
+        || parameters.containsKey(SCRIPT_TEXT_PARAM);
   }
 
   private static void validateMaterializationOptions(Map<String, String> parameters) {
     boolean configured = parameters.containsKey(ANONYMOUS_COLLECTIONS_PARAM)
         || parameters.keySet().stream().anyMatch(key -> key.startsWith(RELATION_ALIAS_PREFIX));
     if (!configured) return;
+
+    if (parameters.containsKey(INPUT_FILENAME)
+        && !hasScript(parameters)
+        && !Boolean.parseBoolean(parameters.get(CACHE_MODE_PARAM))) {
+      Log.fatal(IllegalArgumentException.class,
+          "Materialization options require a script or --cache.");
+    }
 
     String anonymousMode = parameters.get(ANONYMOUS_COLLECTIONS_PARAM);
     if (anonymousMode != null
@@ -486,6 +519,7 @@ public final class ParameterParser {
     return !(key.equals(SCRIPT_FILE_PARAM)
         || key.equals(SCRIPT_TEXT_PARAM)
         || key.equals(HELP_PARAM)
+        || key.equals(VERSION_PARAM)
         || key.equals(CATALOG_PATTERN_PARAM)
         || key.equals(INPUT_FILENAME)
         || key.equals(JDBC_PROPS_FILE_PARAM)

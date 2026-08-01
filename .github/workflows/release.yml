@@ -115,15 +115,55 @@ jobs:
       - name: Build native executable
         run: mvn --batch-mode --no-transfer-progress "-Pnative,jdbc-common" -DskipTests clean package
 
-      - name: Smoke-test executable
+      - name: Smoke-test Unix executable
         if: runner.os != 'Windows'
         shell: bash
-        run: ${{ matrix.executable }} -h
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          executable="${{ matrix.executable }}"
+          "$executable" -h >/dev/null
+          test "$("$executable" --version)" = "nq $VERSION"
+          "$executable" docs/examples/identity-country-counts.nq \
+            docs/examples/identity-customers.json > actual.json
+          diff -u \
+            <(printf '%s\n' '{"result":{"region":[{"country":"GB","customerCount":"2"},{"country":"US","customerCount":"4"}]}}') \
+            actual.json
+          "$executable" --cache docs/examples/customers.json \
+            --cache-dir "$RUNNER_TEMP/nq-cache" >/dev/null
+          "$executable" catalog '*' \
+            --cache-dir "$RUNNER_TEMP/nq-cache" >/dev/null
+          "$executable" 'output json; select 1 into {result.value};' \
+            --db h2 --database mem:release_smoke > jdbc.json
+          grep -Fx '{"result":{"value":"1"}}' jdbc.json
 
       - name: Smoke-test Windows executable
         if: runner.os == 'Windows'
         shell: pwsh
-        run: '& ".\target\nq.exe" -h'
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $executable = ".\target\nq.exe"
+          & $executable -h | Out-Null
+          if ((& $executable --version) -ne "nq $env:VERSION") {
+            throw "Version output does not match release version"
+          }
+          $actual = & $executable `
+            docs/examples/identity-country-counts.nq `
+            docs/examples/identity-customers.json
+          $expected = '{"result":{"region":[{"country":"GB","customerCount":"2"},{"country":"US","customerCount":"4"}]}}'
+          if ($actual -ne $expected) { throw "Hero query output mismatch" }
+          & $executable --cache docs/examples/customers.json `
+            --cache-dir "$env:RUNNER_TEMP\nq-cache" | Out-Null
+          & $executable catalog '*' `
+            --cache-dir "$env:RUNNER_TEMP\nq-cache" | Out-Null
+          $jdbc = & $executable 'output json; select 1 into {result.value};' `
+            --db h2 --database mem:release_smoke
+          if ($jdbc -ne '{"result":{"value":"1"}}') {
+            throw "JDBC smoke output mismatch"
+          }
 
       - name: Package Unix executable
         if: matrix.archive == 'tar'
@@ -154,10 +194,60 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  jvm:
+    needs:
+      - validate
+      - test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Build and smoke-test JVM artifact
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mvn --batch-mode --no-transfer-progress -DskipTests package
+          jar="target/nq-${VERSION}.jar"
+          test "$(java -jar "$jar" --version)" = "nq $VERSION"
+          java -jar "$jar" docs/examples/identity-country-counts.nq \
+            docs/examples/identity-customers.json > actual.json
+          diff -u \
+            <(printf '%s\n' '{"result":{"region":[{"country":"GB","customerCount":"2"},{"country":"US","customerCount":"4"}]}}') \
+            actual.json
+          java -jar "$jar" --cache docs/examples/customers.json \
+            --cache-dir "$RUNNER_TEMP/nq-cache" >/dev/null
+          java -jar "$jar" catalog '*' \
+            --cache-dir "$RUNNER_TEMP/nq-cache" >/dev/null
+          java -jar "$jar" 'output json; select 1 into {result.value};' \
+            --db h2 --database mem:release_smoke > jdbc.json
+          grep -Fx '{"result":{"value":"1"}}' jdbc.json
+          mkdir -p dist
+          cp "$jar" "dist/nq-${VERSION}-jvm.jar"
+
+      - name: Upload packaged JVM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-jvm
+          path: dist/*
+          if-no-files-found: error
+
   publish:
     needs:
       - validate
       - build
+      - jvm
     runs-on: ubuntu-22.04
     permissions:
       contents: write

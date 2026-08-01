@@ -1,0 +1,40 @@
+#compdef nq
+
+local -a help_topics outputs drivers
+help_topics=(help query catalog cache use-cache clear-cache list-caches connection output parameters parquet)
+outputs=(json jsonl yaml xml csv markdown)
+drivers=(h2 mysql mariadb postgresql oracle sqlserver db2 hana informix)
+
+_arguments -s \
+  '-h[show brief help]' \
+  '--help=-[show full or topic help]:topic:($help_topics)' \
+  '--version[show NQ version]' \
+  '-p[read JDBC properties]:properties file:_files' \
+  '(-o --output)'{-o,--output}'[select output format]:format:($outputs)' \
+  '--debug[enable debug diagnostics]' \
+  '--no-key-inference[disable query-output key inference]' \
+  '(-c --cache)'{-c,--cache}'[materialize input in a persistent cache]' \
+  '--cache-dir=[select cache directory]:directory:_directories' \
+  '--use-cache=[activate an existing cache]:cache source:_files' \
+  '--list-caches[list persistent caches]' \
+  '--clear-cache=-[clear caches]:cache source:_files' \
+  '--clear-cache-older-than=[clear caches older than an age]:age:' \
+  '--anonymous-collections=[select anonymous collection policy]:policy:(merge error)' \
+  '*--relation-alias=[map a source path to a relation name]:path=name:' \
+  '--metadata-refresh[refresh database key metadata]' \
+  '--metadata-expiry-hours=[set metadata expiry]:hours:' \
+  '--parquet-root=[override Parquet hierarchy root]:name:' \
+  '--parquet-record=[override Parquet record name]:name:' \
+  '--db=[select logical database driver]:driver:($drivers)' \
+  '--database=[select database name or H2 URL suffix]:database:' \
+  '--host=[select database host]:host:' \
+  '--port=[select database port]:port:' \
+  '--user=[select database username]:username:' \
+  '--password=[select database password]:password:' \
+  '--jdbc-driver=[select exact logical JDBC driver]:driver:($drivers)' \
+  '--jdbc-class-name=[select JDBC class]:class:' \
+  '--jdbc-database=[select JDBC URL]:url:' \
+  '--jdbc-username=[select JDBC username]:username:' \
+  '--jdbc-password=[select JDBC password]:password:' \
+  '1:script, command, or input file:_files' \
+  '*:input file, parameter, or option:_files'

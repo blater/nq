@@ -185,7 +185,8 @@ public class InputFileRowMapper {
     try {
       return HierarchyPath.fromSlashPath(sourcePath);
     } catch (IllegalArgumentException ex) {
-      Log.error("Unsupported source path [{}]: {}", sourcePath, ex.getMessage());
+      Log.error("Unsupported source path [{}]: {} Use a simple hierarchy path such as "
+          + "{message.person.id}; NQ paths are not XPath, JSONPath, or YAMLPath.", sourcePath, ex.getMessage());
       return null;
     }
   }

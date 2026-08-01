@@ -11,6 +11,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HelpTest {
   @Test
+  void versionHasStableCliPrefix() throws Exception {
+    String output = captureStdout(() -> Main.main("--version"));
+
+    assertTrue(output.startsWith("nq "));
+    assertTrue(output.endsWith(System.lineSeparator()));
+  }
+
+  @Test
   void noArgumentsPrintsShortHelp() throws Exception {
     assertFalse(captureStdout(Main::main).isBlank());
   }
@@ -24,7 +32,8 @@ class HelpTest {
     assertTrue(shortHelp.contains("Connection options:"));
     assertTrue(shortHelp.contains("-p <properties-file>"));
     assertTrue(shortHelp.contains("--jdbc-database <url>"));
-    assertTrue(shortHelp.contains("nq <input-file> [cache-options]"));
+    assertTrue(shortHelp.contains("nq <input-file> [-o|--output <type>]"));
+    assertTrue(shortHelp.contains("-c, --cache"));
     assertTrue(shortHelp.contains("--use-cache <input-file-or-cache-filename>"));
     assertTrue(shortHelp.contains("--parquet-record <name>"));
     assertTrue(shortHelp.contains("--anonymous-collections <merge|error>"));
