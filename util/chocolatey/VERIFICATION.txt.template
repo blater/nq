@@ -1,5 +1,17 @@
 VERIFICATION
 
+DISTRIBUTION RIGHTS
+
+NQ is released under the GNU Affero General Public License version 3. The
+license grants the right to redistribute nq.exe. A complete copy of the
+license is included in this package as LICENSE.txt.
+
+The corresponding source code for this exact build is available at:
+
+https://github.com/blater/nq/tree/v__VERSION__
+
+BINARY VERIFICATION
+
 The nq.exe included in this package is built from the tagged NQ source by the
 official GitHub Actions release workflow. The same executable is included in:
 
