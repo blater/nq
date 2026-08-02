@@ -46,9 +46,11 @@ echo '{
 {"summary":{"activeUsers":"2"}}
 ```
 
-## Extractng data from a database
+## Select data as Yaml/JSON/XML from a database
 
-Queries can be run against databases as well as directly against data files. Use the --output or -o option to specify the output format
+Queries can be run against databases as well as directly against data files. 
+Use the --output or -o option to specify the output format. 
+It supports markdown, csv, yaml, xml, jsonl, and json. The default output format is json.
 
 ```bash
 nq "select id, name, city
@@ -67,6 +69,7 @@ nq "select id, name, city
   name: Bob
   city: Bristol
 ```
+
 
 Use the ***into*** clause to name fields or place individual values into specific places in the output:
 ```sql
