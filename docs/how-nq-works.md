@@ -8,9 +8,9 @@ relational representations.
 
 ```mermaid
 flowchart LR
-    A[JSON / YAML / XML / CSV / JSONL / Parquet] --> B[Format reader]
+    A[JSON / YAML / TOML / XML / CSV / TSV / JSONL / Parquet] --> B[Format reader]
     B --> C[Neutral hierarchy]
-    C --> D[JSON / YAML / XML / CSV / JSONL / Markdown]
+    C --> D[JSON / YAML / TOML / XML / CSV / TSV / JSONL / Markdown]
 ```
 
 A lone input file follows this direct path. Supplying a script instead enters
@@ -20,14 +20,14 @@ the query or mapped-DML flow; there is no automatic conversion fallback.
 
 ```mermaid
 flowchart LR
-    A[JSON / YAML / XML / CSV / JSONL / Parquet] --> B[Format reader]
+    A[JSON / YAML / TOML / XML / CSV / TSV / JSONL / Parquet] --> B[Format reader]
     B --> C[Neutral hierarchy]
     C --> D[Relation discovery]
     D --> E[(Temporary or persistent H2)]
     E --> F[SQL query]
     F --> G[Row cursor]
     G --> H[Hierarchy mapping and identity]
-    H --> I[JSON / YAML / XML / CSV / JSONL / Markdown]
+    H --> I[JSON / YAML / TOML / XML / CSV / TSV / JSONL / Markdown]
 ```
 
 Readers preserve a common tree of named nodes and repeated collections.

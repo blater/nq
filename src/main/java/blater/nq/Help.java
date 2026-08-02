@@ -27,8 +27,8 @@ public final class Help {
         --jdbc-password <password>
 
       Output and query options:
-        -i, --input <xml|json|jsonl|yaml|csv|parquet>
-        -o, --output <xml|json|jsonl|csv|yaml|markdown>
+        -i, --input <xml|json|jsonl|yaml|toml|csv|tsv|parquet>
+        -o, --output <xml|json|jsonl|csv|tsv|yaml|toml|markdown>
         --debug
         --no-key-inference
 
@@ -74,7 +74,7 @@ public final class Help {
           clear-cache    Remove all caches, one named cache, or old caches.
           list-caches    List persistent input-file caches.
           connection     Configure JDBC connections from options or properties.
-          output         Select XML, JSON, JSON Lines, YAML, CSV, or Markdown output.
+          output         Select XML, JSON, JSON Lines, YAML, TOML, CSV, TSV, or Markdown output.
           parameters     Supply runtime template parameters.
           parquet        Override Parquet hierarchy and record names.
 
@@ -163,7 +163,8 @@ public final class Help {
           nq <script> [--output type]
 
       DESCRIPTION
-          Supported input types are XML, JSON, JSON Lines, YAML, CSV, and Parquet. --cache
+          Supported input types are XML, JSON, JSON Lines, YAML, TOML, CSV, TSV, and Parquet.
+          --cache
           creates and activates a fresh file-backed H2 database under
           ~/.nq/cache. Persistent caching is always explicit; a lone input file
           instead converts directly to the selected output format. A script
@@ -171,7 +172,7 @@ public final class Help {
           --cache takes precedence over JDBC settings.
 
           JSON and YAML relation names come from collection member names.
-          Anonymous JSON arrays, JSON Lines, and CSV use ITEM.
+          Anonymous JSON arrays, JSON Lines, CSV, and TSV use ITEM.
 
       EXAMPLES
           nq --cache customers.json
@@ -286,7 +287,7 @@ public final class Help {
           nq <script> [other arguments] -o <type>
 
       DESCRIPTION
-          Accepted types are xml, json, jsonl, yaml, csv, and markdown,
+          Accepted types are xml, json, jsonl, yaml, toml, csv, tsv, and markdown,
           case-insensitively. A lone input file is read into NQ's neutral
           hierarchy and written directly in the selected format without H2
           materialization. When a script is supplied, its result replaces that
@@ -358,7 +359,8 @@ public final class Help {
 
       DESCRIPTION
           NQ is a SQL-like language for moving data between relational
-          databases and XML, JSON, JSON Lines, YAML, CSV, or Parquet documents. It can run
+          databases and XML, JSON, JSON Lines, YAML, TOML, CSV, TSV, or Parquet
+          documents. It can run
           scripts against an external JDBC database, apply mapped DML from an
           input document, or query an input file through temporary or persistent
           H2.
@@ -369,8 +371,8 @@ public final class Help {
           Standard input is temporary unless --cache is supplied. An input file
           on its own is converted directly to JSON or the format
           selected by --output. Supplying a script disables direct conversion.
-          Persistent caching requires -c or --cache. Named JSON/YAML collections
-          become same-named relations; anonymous JSON, JSON Lines, and CSV record
+          Persistent caching requires -c or --cache. Named JSON/YAML/TOML collections
+          become same-named relations; anonymous JSON, JSON Lines, CSV, and TSV record
           streams use ITEM.
 
       HELP
@@ -406,10 +408,10 @@ public final class Help {
               Set exact JDBC connection properties.
 
           --output type, -o type
-              Write xml, json, jsonl, yaml, csv, or markdown output.
+              Write xml, json, jsonl, yaml, toml, csv, tsv, or markdown output.
 
           --input type, -i type
-              Read xml, json, jsonl, yaml, csv, or parquet from standard input.
+              Read xml, json, jsonl, yaml, toml, csv, tsv, or parquet from standard input.
 
           --debug
               Log inference decisions and other diagnostic details to stderr.

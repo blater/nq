@@ -20,7 +20,7 @@ explicit hierarchical output mapping. See [the comparison guide](comparison.md).
 
 DuckDB is usually the stronger choice for high-performance analytics over
 large tabular, nested, lake, or cloud datasets. NQ’s focus is a neutral
-hierarchy model spanning JSON, YAML, XML, CSV, JSON Lines, Parquet, and JDBC,
+hierarchy model spanning JSON, YAML, TOML, XML, CSV, TSV, JSON Lines, Parquet, and JDBC,
 with `into {path}` mappings and mapped DML. The overlap is real; choose based on
 the workflow rather than the brand.
 

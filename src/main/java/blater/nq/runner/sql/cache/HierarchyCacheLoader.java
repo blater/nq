@@ -75,7 +75,7 @@ public final class HierarchyCacheLoader {
         && node.isArrayItem()
         && "item".equals(node.getName())
         && rootName != null
-        && !Set.of("json", "yaml", "csv").contains(rootName)) {
+        && !Set.of("json", "yaml", "csv", "tsv", "toml").contains(rootName)) {
       return rootName;
     }
     return node.getName();

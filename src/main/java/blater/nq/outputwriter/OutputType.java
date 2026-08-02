@@ -15,6 +15,8 @@ public enum OutputType {
   JSONL(new JsonLinesOutputWriter()),
   YAML(new YamlOutputWriter()),
   CSV(new CsvOutputWriter()),
+  TSV(new TsvOutputWriter()),
+  TOML(new TomlOutputWriter()),
   MARKDOWN(new MarkdownOutputWriter())
   ;
   final static OutputType DEFAULT_OUTPUT_TYPE = JSON;
@@ -50,6 +52,8 @@ public enum OutputType {
       case "json" -> JSON;
       case "jsonl" -> JSONL;
       case "csv" -> CSV;
+      case "tsv" -> TSV;
+      case "toml" -> TOML;
       case "yaml" -> YAML;
       case "markdown" -> MARKDOWN;
       default -> DEFAULT_OUTPUT_TYPE;

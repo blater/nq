@@ -25,8 +25,8 @@ Inspect the schema NQ discovered:
 nq catalog '*' --cache input.json
 ```
 
-Named JSON/YAML collections normally become tables with their member names.
-Top-level anonymous JSON arrays, JSON Lines, and CSV use `ITEM`. See
+Named JSON/YAML/TOML collections normally become tables with their member names.
+Top-level anonymous JSON arrays, JSON Lines, CSV, and TSV use `ITEM`. See
 [Source relation names](user-manual.md#source-relation-names).
 
 ## A file changed but a cached query shows old data

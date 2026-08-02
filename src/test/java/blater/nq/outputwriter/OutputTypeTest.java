@@ -40,4 +40,16 @@ class OutputTypeTest {
     assertEquals(OutputType.JSONL, OutputType.fromName("jsonl"));
     assertEquals(OutputType.JSONL, OutputType.fromName("JSONL"));
   }
+
+  @Test
+  void selectsTabSeparatedOutputByNameCaseInsensitively() {
+    assertEquals(OutputType.TSV, OutputType.fromName("tsv"));
+    assertEquals(OutputType.TSV, OutputType.fromName("TSV"));
+  }
+
+  @Test
+  void selectsTomlOutputByNameCaseInsensitively() {
+    assertEquals(OutputType.TOML, OutputType.fromName("toml"));
+    assertEquals(OutputType.TOML, OutputType.fromName("TOML"));
+  }
 }

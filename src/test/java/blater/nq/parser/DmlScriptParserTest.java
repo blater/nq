@@ -134,6 +134,26 @@ class DmlScriptParserTest {
   }
 
   @Test
+  void parsesTabSeparatedOutputDirective() throws Exception {
+    NestScript script = ScriptParser.parse("""
+        output tsv;
+        select 1 into {result.value};
+        """);
+
+    assertEquals(OutputType.TSV, script.outputType());
+  }
+
+  @Test
+  void parsesTomlOutputDirective() throws Exception {
+    NestScript script = ScriptParser.parse("""
+        output toml;
+        select 1 into {result.value};
+        """);
+
+    assertEquals(OutputType.TOML, script.outputType());
+  }
+
+  @Test
   void parsesCatalogStatement() throws Exception {
     NestScript script = ScriptParser.parse("""
         output json;

@@ -7,13 +7,13 @@ NQ is a SQL-like scripting language for moving data between relational databases
 Typical uses are:
 
 - Query a database and render hierarchical output.
-- Convert XML, JSON, JSON Lines, YAML, CSV, or Parquet files or standard input directly to any supported output format.
+- Convert XML, JSON, JSON Lines, YAML, TOML, CSV, TSV, or Parquet files or standard input directly to any supported output format.
 - Query those input formats from files or standard input through temporary H2, or persistent H2 with `--cache`.
-- Load XML, JSON, JSON Lines, YAML, CSV, or Parquet input and apply `insert`, `update`, `delete`, or stored-procedure calls.
+- Load XML, JSON, JSON Lines, YAML, TOML, CSV, TSV, or Parquet input and apply `insert`, `update`, `delete`, or stored-procedure calls.
 - Capture database rows into an in-memory temp rowset and use those rows in later DML.
 - Write returned database values, such as generated keys, back into the input hierarchy.
 
-The core mapping model is format-neutral. XML, JSON, JSON Lines, YAML, CSV, and Parquet are boundary adapters around the same `Hierarchy` structure.
+The core mapping model is format-neutral. XML, JSON, JSON Lines, YAML, TOML, CSV, TSV, and Parquet are boundary adapters around the same `Hierarchy` structure.
 
 ## Quick Start
 
@@ -156,7 +156,7 @@ Run:
 nq update-person.nq input.xml -p database.properties
 ```
 
-### Use JSON, YAML, CSV, Or Parquet Input
+### Use JSON, YAML, TOML, CSV, TSV, Or Parquet Input
 
 The input file extension selects the input reader when a mapped DML statement needs file input.
 
@@ -189,6 +189,14 @@ insert into person (personid, firstname)
 values ({message.person.id}, {message.person.firstname});
 ```
 
+TOML uses the same paths and hierarchical mapping:
+
+```toml
+[message.person]
+id = "7"
+firstname = "Fred"
+```
+
 CSV uses a synthetic root and repeated `item` nodes:
 
 ```csv
@@ -203,6 +211,10 @@ Paths:
 insert into person (personid, firstname)
 values ({csv.item.person.id}, {csv.item.person.firstname});
 ```
+
+TSV has exactly the same structure and behavior, with tabs as delimiters and a
+`tsv` synthetic root. Replace `.csv` with `.tsv` and `csv` with `tsv` in the
+paths above.
 
 Parquet uses domain names from the file stem and schema message name by
 default. For `customers.parquet` with `message customer`, DML paths look like:
@@ -330,7 +342,7 @@ With no pattern, the command lists table names only. A table name or `*` pattern
 | Argument      | Meaning                                                  |
 |---------------|----------------------------------------------------------|
 | `script-file` | The nq script to load and run. Not required for direct conversion, standalone cache loading, or maintenance. |
-| `load-file`   | XML, JSON, JSON Lines, YAML, CSV, or Parquet input. On its own, it is converted directly to the selected output format. With a script, it is queried through temporary H2 unless `--cache` or JDBC settings select another destination. |
+| `load-file`   | XML, JSON, JSON Lines, YAML, TOML, CSV, TSV, or Parquet input. On its own, it is converted directly to the selected output format. With a script, it is queried through temporary H2 unless `--cache` or JDBC settings select another destination. |
 
 When JDBC settings select an external database, a load file is not read by a select-only script. Mapped DML reads it when the statement needs input, and reports a missing file at that point. Without JDBC settings, the file is loaded immediately as the temporary database being queried.
 
@@ -365,8 +377,8 @@ script falls back to the active persistent cache.
 | `--jdbc-database url`      | Set the complete `jdbc.database` JDBC URL. |
 | `--jdbc-username username` | Set the exact `jdbc.username` value. |
 | `--jdbc-password password` | Set the exact `jdbc.password` value. |
-| `--input type`, `-i type`  | Read `xml`, `json`, `jsonl`, `yaml`, `csv`, or `parquet` from standard input. |
-| `--output type`, `-o type` | Write output as `xml`, `json`, `jsonl`, `csv`, `yaml`, or `markdown`. |
+| `--input type`, `-i type`  | Read `xml`, `json`, `jsonl`, `yaml`, `toml`, `csv`, `tsv`, or `parquet` from standard input. |
+| `--output type`, `-o type` | Write output as `xml`, `json`, `jsonl`, `csv`, `tsv`, `yaml`, `toml`, or `markdown`. |
 | `--debug`                  | Log each query's inferred output-path, relation, key, and parent relationship decisions to stderr. |
 | `--no-key-inference`       | Disable automatic DQL keys and preserve row-first output for paths without explicit `structure` keys. |
 | `--cache`, `-c`            | Create and activate a fresh persistent H2 cache from a file or standard input. |
@@ -487,7 +499,9 @@ Input file type is selected by file extension:
 | `.json`         | JSON         |
 | `.jsonl`        | JSON Lines   |
 | `.yaml`, `.yml` | YAML         |
+| `.toml`         | TOML         |
 | `.csv`          | CSV          |
+| `.tsv`          | TSV          |
 | `.parquet`      | Parquet      |
 
 Extension matching is case-insensitive. Blank or missing input filenames preserve the historical empty XML-input behavior.
@@ -505,7 +519,7 @@ cat customers.json | nq -i json --cache "select id, name from customers;"
 
 ### Source Relation Names
 
-For JSON and YAML, NQ names a materialized object-record relation from the
+For JSON, YAML, and TOML, NQ names a materialized object-record relation from the
 source member that declares it. The rule applies at every depth:
 
 | Source shape | SQL relation |
@@ -516,6 +530,7 @@ source member that declares it. The rule applies at every depth:
 | `regions -> customers -> orders` | `REGIONS`, `CUSTOMERS`, `ORDERS` |
 | JSON Lines object records | `ITEM` |
 | CSV records | `ITEM` |
+| TSV records | `ITEM` |
 
 A non-empty object-record collection becomes a relation. Repeated scalar fields
 use value relations named from their owner, such as `CUSTOMER_TAG`. If two
@@ -828,7 +843,7 @@ Output format is selected in this order:
 3. Markdown for the command-line `catalog` command.
 4. JSON otherwise.
 
-Accepted output types are `xml`, `json`, `jsonl`, `csv`, `yaml`, and `markdown`, case-insensitively. Markdown output renders
+Accepted output types are `xml`, `json`, `jsonl`, `csv`, `tsv`, `yaml`, `toml`, and `markdown`, case-insensitively. Markdown output renders
 the result as one space-padded table, using dotted columns for nested scalar values and rows for repeated objects.
 
 With no script, the input hierarchy is written directly in the selected output
@@ -847,6 +862,7 @@ Examples:
 nq people.xml --output json
 nq people.json --output yaml
 nq people.csv --output markdown
+nq people.tsv --output csv
 ```
 
 ```bash
@@ -893,7 +909,7 @@ Use `output` to set the script's preferred output format:
 output json;
 ```
 
-Accepted formats are `xml`, `json`, `csv`, `yaml`, and `markdown`. The keyword and format are case-insensitive. If multiple `output` directives appear, only the first one is used. A command-line `--output` or `-o` flag overrides the script directive.
+Accepted formats are `xml`, `json`, `jsonl`, `csv`, `tsv`, `yaml`, `toml`, and `markdown`. The keyword and format are case-insensitive. If multiple `output` directives appear, only the first one is used. A command-line `--output` or `-o` flag overrides the script directive.
 
 ### Comments
 
@@ -963,7 +979,7 @@ XML attributes use `@` on the terminal segment:
 into {people.person.@id}
 ```
 
-Only terminal attributes are supported. JSON, YAML, and CSV do not have attributes, so use ordinary property paths for those formats.
+Only terminal attributes are supported. JSON, YAML, TOML, CSV, and TSV do not have attributes, so use ordinary property paths for those formats.
 
 ## Query Output Reference
 
@@ -1079,7 +1095,7 @@ from person
 structure {people.person} key (personid);
 ```
 
-JSON, YAML, and CSV output adapters approximate attributes as ordinary fields.
+JSON, YAML, TOML, CSV, and TSV output adapters approximate attributes as ordinary fields.
 
 ### Appending Values
 
@@ -1260,16 +1276,16 @@ Paths:
 {message.person.firstname}
 ```
 
-JSON and YAML:
+JSON, YAML, and TOML:
 
 - A single top-level object key becomes the root.
-- Multiple top-level keys use synthetic roots `json` or `yaml`.
+- Multiple top-level keys use synthetic roots `json`, `yaml`, or `toml`.
 - Named arrays become repeated child nodes.
-- Null values become hierarchy null values.
+- JSON and YAML null values become hierarchy null values; TOML has no null literal.
 
-CSV:
+CSV and TSV:
 
-- Root is `csv`.
+- Root is `csv` or `tsv`, matching the input format.
 - Each record is a repeated `item`.
 - Headers become child paths under each item.
 - Dotted headers create nested nodes.
@@ -1287,6 +1303,8 @@ Paths:
 {csv.item.person.id}
 {csv.item.person.firstname}
 ```
+
+The equivalent TSV paths begin with `{tsv.item...}`.
 
 Parquet:
 
@@ -1550,13 +1568,27 @@ YAML input follows the same structure rules as JSON:
 - Numbers and booleans become string values.
 - YAML null becomes a null node.
 
-### CSV Input
+### TOML Input
 
-- Root is `csv`.
+TOML shares the parser-neutral hierarchy mapper used by YAML:
+
+- One top-level key becomes the hierarchy root.
+- Multiple top-level keys use synthetic root `toml`.
+- Tables become nested child nodes.
+- Arrays of tables become repeated child nodes.
+- Scalar arrays become repeated scalar nodes.
+- String values are template-expanded.
+- Numbers, booleans, dates, and times become string values.
+- TOML has no null literal.
+
+### CSV and TSV Input
+
+- Root is `csv` for CSV input and `tsv` for TSV input.
 - Rows are repeated `item` nodes.
 - Headers become child names.
 - Dotted headers become nested paths.
-- Quoted commas, quotes, and newlines are parsed as normal CSV.
+- CSV uses commas and TSV uses tabs as delimiters.
+- Quoted delimiters, quotes, and newlines are parsed identically in both formats.
 - Missing trailing cells become empty strings.
 - Empty filename or empty file returns an empty hierarchy.
 
@@ -1570,9 +1602,11 @@ person.id,person.firstname
 Paths:
 
 ```text
-/csv/row/person/id
-/csv/row/person/firstname
+/csv/item/person/id
+/csv/item/person/firstname
 ```
+
+For TSV, the equivalent paths start with `/tsv/item`.
 
 ### Parquet Input
 
@@ -1649,19 +1683,35 @@ Writer: `YamlOutputWriter`.
 - Attributes become ordinary properties.
 - Attribute/element name conflicts preserve both as a sequence.
 
-### CSV Output Adapter
+### TOML Output Adapter
 
-Writer: `CsvOutputWriter`.
+Writer: `TomlOutputWriter`.
 
-CSV is a flat format, so hierarchy is flattened:
+TOML shares hierarchy-to-map/list/scalar conversion with YAML, then uses its
+own syntax-aware renderer:
 
-- If the root contains only one repeated child group, those children become CSV records.
-- Keyed top-level records also become CSV records, including a single record.
+- Child containers become TOML tables.
+- Repeated object nodes become arrays of tables.
+- Repeated scalar nodes become TOML arrays.
+- Scalar hierarchy values are quoted strings, matching YAML's type-neutral output behavior.
+- Attributes become ordinary properties.
+- Null nodes become empty strings because TOML has no null literal.
+- Synthetic anonymous top-level arrays are emitted under `item`, because a TOML document must have a table-shaped root.
+
+### CSV and TSV Output Adapters
+
+Writers: `CsvOutputWriter` and `TsvOutputWriter`. They share the same flattening
+implementation and differ only in delimiter and format-specific error text.
+
+CSV and TSV are flat formats, so hierarchy is flattened:
+
+- If the root contains only one repeated child group, those children become records.
+- Keyed top-level records also become records, including a single record.
 - Otherwise, the root itself is written as one record.
 - Nested scalar nodes become dotted column names.
 - Repeated scalar and nested object nodes expand into rows, with parent values repeated on each row.
-- Independent repeated sibling groups produce their Cartesian product because CSV has no nested value type.
-- CSV cells never contain JSON arrays as a hierarchy fallback.
+- Independent repeated sibling groups produce their Cartesian product because neither format has a nested value type.
+- Cells never contain JSON arrays as a hierarchy fallback.
 - Attributes become ordinary columns.
 - Null nodes become empty cells.
 
@@ -1687,5 +1737,5 @@ Markdown renders one fixed-width, human-readable table:
 - `schema` and `xmlroot` metadata are parsed but do not currently perform validation or reshape output.
 - DML expressions currently support one mapped source path per SQL expression.
 - Core path support is simple path traversal, not full XPath, JSONPath, or YAMLPath.
-- CSV output approximates nested repeated objects because CSV has no native hierarchy.
+- CSV and TSV output approximate nested repeated objects because neither has a native hierarchy.
 - `--cache` input-structure tables do not infer parent-child joins. Use scalar fields present in the input for natural joins.

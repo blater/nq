@@ -789,7 +789,8 @@ class MainTest {
 
   @Test
   void inputFileAloneSelectsDirectConversion() {
-    for (String extension : List.of("xml", "csv", "json", "yaml", "yml", "parquet")) {
+    for (String extension : List.of(
+        "xml", "csv", "tsv", "toml", "json", "yaml", "yml", "parquet")) {
       String input = "standalone." + extension;
 
       var params = ParameterParser.parse(input);

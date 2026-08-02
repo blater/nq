@@ -75,12 +75,36 @@ class PromotedExamplesE2ETest {
   }
 
   @Test
-  void csvJsonLinesAndParquetFormatsHaveCliSmokeCoverage() throws Exception {
+  void delimitedJsonLinesAndParquetFormatsHaveCliSmokeCoverage() throws Exception {
     Path csv = tempDir.resolve("customers.csv");
     Files.writeString(csv, "id,city\n1,London\n2,Paris\n");
     assertEquals(
         "[{\"id\":\"1\"}]\n",
         captureStdout(() -> Main.main("select id from item where city = 'London';", csv.toString())));
+
+    Path tsv = tempDir.resolve("customers.tsv");
+    Files.writeString(tsv, "id\tcity\n1\tLondon\n2\tParis\n");
+    assertEquals(
+        "id\n2\n",
+        captureStdout(() -> Main.main(
+            "output tsv; select id from item where city = 'Paris';",
+            tsv.toString())));
+
+    Path toml = tempDir.resolve("customers.toml");
+    Files.writeString(toml, """
+        [[customers]]
+        id = 1
+        city = "London"
+
+        [[customers]]
+        id = 2
+        city = "Paris"
+        """);
+    assertEquals(
+        "[[item]]\n\n[item.result]\nid = \"1\"\n",
+        captureStdout(() -> Main.main(
+            "output toml; select id into {result.id} from customers where city = 'London';",
+            toml.toString())));
 
     Path jsonl = tempDir.resolve("customers.jsonl");
     Files.writeString(jsonl, "{\"id\":1,\"city\":\"London\"}\n{\"id\":2,\"city\":\"Paris\"}\n");

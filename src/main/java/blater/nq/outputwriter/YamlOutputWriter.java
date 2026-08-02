@@ -3,8 +3,6 @@ package blater.nq.outputwriter;
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.Node;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,56 +27,25 @@ public class YamlOutputWriter implements OutputWriter {
 
     StringBuilder yaml = new StringBuilder();
     switch (hierarchy.getRootKind()) {
-      case NAMED -> writeProperty(yaml, root.getName(), nodeValue(root), 0);
+      case NAMED -> writeProperty(
+          yaml,
+          root.getName(),
+          StructuredDataOutputMapper.nodeValue(root),
+          0);
       case SYNTHETIC_OBJECT -> {
-        Object value = nodeValue(root);
+        Object value = StructuredDataOutputMapper.nodeValue(root);
         if (isEmptyCollection(value)) return "{}";
         writeValueBlock(yaml, value, 0);
       }
       case SYNTHETIC_ARRAY -> {
-        List<Object> values = root.getChildren().stream().map(YamlOutputWriter::rootItemValue).toList();
+        List<Object> values = root.getChildren().stream()
+            .map(StructuredDataOutputMapper::rootItemValue)
+            .toList();
         if (values.isEmpty()) return "[]";
         writeList(yaml, values, 0);
       }
     }
     return yaml.toString();
-  }
-
-  private static Object nodeValue(Node node) {
-    if (node.isCollection()) {
-      return node.getChildren().stream().map(YamlOutputWriter::rootItemValue).toList();
-    }
-    if (node.isNull()) {
-      return null;
-    }
-    if (node.hasValue()) {
-      return node.getValue();
-    }
-
-    Map<String, Object> object = new LinkedHashMap<>();
-    for (Map.Entry<String, List<Node>> entry : groupedChildren(node).entrySet()) {
-      List<Node> children = entry.getValue();
-      if (children.size() == 1 && !children.getFirst().isArrayItem()) {
-        object.put(entry.getKey(), nodeValue(children.getFirst()));
-      } else {
-        object.put(entry.getKey(), children.stream()
-            .map(YamlOutputWriter::nodeValue)
-            .toList());
-      }
-    }
-    return object;
-  }
-
-  private static Object namedNodeValue(Node node) {
-    Map<String, Object> named = new LinkedHashMap<>();
-    named.put(node.getName(), nodeValue(node));
-    return named;
-  }
-
-  private static Object rootItemValue(Node node) {
-    return node.getName() == null || node.getName().isEmpty()
-        ? nodeValue(node)
-        : namedNodeValue(node);
   }
 
   private static void writeProperty(StringBuilder yaml, String key, Object value, int indent) {
@@ -138,44 +105,11 @@ public class YamlOutputWriter implements OutputWriter {
     if (value instanceof List<?>) {
       return "[]";
     }
-    return quote(value.toString());
-  }
-
-  private static Map<String, List<Node>> groupedChildren(Node node) {
-    Map<String, List<Node>> grouped = new LinkedHashMap<>();
-    for (Node child : node.getChildren()) {
-      grouped.computeIfAbsent(child.getName(), ignored -> new ArrayList<>()).add(child);
-    }
-    return grouped;
+    return DoubleQuotedStringEscaper.quote(value.toString());
   }
 
   private static String spaces(int count) {
     return " ".repeat(count);
   }
 
-  private static String quote(String value) {
-    StringBuilder escaped = new StringBuilder(value.length() + 2);
-    escaped.append('"');
-    for (int index = 0; index < value.length(); index++) {
-      char ch = value.charAt(index);
-      switch (ch) {
-        case '"' -> escaped.append("\\\"");
-        case '\\' -> escaped.append("\\\\");
-        case '\b' -> escaped.append("\\b");
-        case '\f' -> escaped.append("\\f");
-        case '\n' -> escaped.append("\\n");
-        case '\r' -> escaped.append("\\r");
-        case '\t' -> escaped.append("\\t");
-        default -> {
-          if (ch < 0x20) {
-            escaped.append(String.format("\\u%04x", (int) ch));
-          } else {
-            escaped.append(ch);
-          }
-        }
-      }
-    }
-    escaped.append('"');
-    return escaped.toString();
-  }
 }

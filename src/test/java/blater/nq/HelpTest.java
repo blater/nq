@@ -35,7 +35,7 @@ class HelpTest {
     assertTrue(shortHelp.contains("nq <input-file> [-o|--output <type>]"));
     assertTrue(shortHelp.contains("-c, --cache"));
     assertTrue(shortHelp.contains("--use-cache <cache-filename>"));
-    assertTrue(shortHelp.contains("-i, --input <xml|json|jsonl|yaml|csv|parquet>"));
+    assertTrue(shortHelp.contains("-i, --input <xml|json|jsonl|yaml|toml|csv|tsv|parquet>"));
     assertTrue(shortHelp.contains("--parquet-record <name>"));
     assertTrue(shortHelp.contains("Run 'nq --help' for the complete manual"));
     assertFalse(shortHelp.contains("NQ(1)"));

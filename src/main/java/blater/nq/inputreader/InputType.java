@@ -11,6 +11,8 @@ public enum InputType {
   JSONL(".jsonl"),
   YAML(".yaml", ".yml"),
   CSV(".csv"),
+  TSV(".tsv"),
+  TOML(".toml"),
   PARQUET(".parquet");
 
   private final List<String> extensions;
@@ -41,11 +43,13 @@ public enum InputType {
       case "jsonl", "json-lines", "ndjson" -> JSONL;
       case "yaml", "yml" -> YAML;
       case "csv" -> CSV;
+      case "tsv" -> TSV;
+      case "toml" -> TOML;
       case "parquet" -> PARQUET;
       default -> Log.fatal(
           IllegalArgumentException.class,
           "Unsupported input type: " + name
-              + ". Expected one of: xml, json, jsonl, yaml, csv, parquet");
+              + ". Expected one of: xml, json, jsonl, yaml, toml, csv, tsv, parquet");
     };
   }
 

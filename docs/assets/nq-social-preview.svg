@@ -10,6 +10,6 @@
   <circle cx="130" cy="126" r="10" fill="#ff5f57"/><circle cx="162" cy="126" r="10" fill="#febc2e"/><circle cx="194" cy="126" r="10" fill="#28c840"/>
   <text x="126" y="254" fill="#65d1ff" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-weight="700" font-size="104">NQ</text>
   <text x="126" y="341" fill="#f8fafc" font-family="Inter, system-ui, sans-serif" font-weight="700" font-size="62">SQL for nested data</text>
-  <text x="126" y="411" fill="#cbd5e1" font-family="Inter, system-ui, sans-serif" font-size="30">Query and reshape JSON · YAML · XML · CSV · JSONL · Parquet</text>
+  <text x="126" y="411" fill="#cbd5e1" font-family="Inter, system-ui, sans-serif" font-size="25">Query and reshape JSON · YAML · TOML · XML · CSV · TSV · JSONL · Parquet</text>
   <text x="126" y="468" fill="#86efac" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="28">files ⇄ SQL ⇄ hierarchical output ⇄ databases</text>
 </svg>

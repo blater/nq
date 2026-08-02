@@ -9,7 +9,7 @@ official documentation for current details.
 
 | Tool | Expression model | Formats highlighted by the project | Relational database workflow | Deliberately map joined rows into an arbitrary nested output hierarchy | Strong fit |
 |---|---|---|---|---|---|
-| **NQ** | SQL plus hierarchy paths | JSON, YAML, XML, CSV, JSON Lines, Parquet | JDBC queries plus mapped insert/update/delete/procedure calls | Yes; `into {path}` plus inferred or explicit `structure` keys coalesce rows by identity | Moving between nested documents and relational data with familiar SQL |
+| **NQ** | SQL plus hierarchy paths | JSON, YAML, TOML, XML, CSV, TSV, JSON Lines, Parquet | JDBC queries plus mapped insert/update/delete/procedure calls | Yes; `into {path}` plus inferred or explicit `structure` keys coalesce rows by identity | Moving between nested documents and relational data with familiar SQL |
 | [jq](https://jqlang.org/manual/) | jq filters | JSON | Not a core jq workflow | JSON construction is expressive, using jq rather than relational row identity | Focused, composable JSON transformation |
 | [yq](https://mikefarah.gitbook.io/yq/) | jq-like expressions | YAML, JSON, XML, CSV, TOML and others | Not a core yq workflow | Can construct/update documents, using yq expressions rather than SQL row mapping | Configuration-file reads and edits across formats |
 | [Dasel](https://daseldocs.tomwright.me/) | One selector/expression language across formats | JSON, YAML, XML, TOML, CSV, HCL and INI | Not a core Dasel workflow | Can construct and modify documents, without relational row-identity mapping | Consistent querying, editing, and conversion across formats |
@@ -48,7 +48,7 @@ identity-aware hierarchy output, and mapped document/database writes.
   configuration formats; choose Dasel.
 - The job is principally format conversion and you want potentially lossy
   conversions rejected or made explicit; choose Remarshal.
-- TOML, HCL, INI, CBOR, or MessagePack matters more than SQL or JDBC mapping.
+- HCL, INI, CBOR, or MessagePack matters more than SQL or JDBC mapping.
 
 ## Choose Miller when
 
@@ -59,7 +59,7 @@ identity-aware hierarchy output, and mapped document/database writes.
 
 ## Choose DuckDB when
 
-- Analytical performance over large CSV, JSON, Parquet, lake, or cloud data is
+- Analytical performance over large CSV, TSV, JSON, Parquet, lake, or cloud data is
   the primary requirement.
 - You need a broad analytical SQL engine, extensions, or embedded language APIs.
 - The result is primarily tabular or naturally represented with DuckDB nested
@@ -67,7 +67,7 @@ identity-aware hierarchy output, and mapped document/database writes.
 
 ## Choose another SQL-over-file tool when
 
-- The main requirement is a quick SQL query over CSV, JSON, YAML, Parquet, or
+- The main requirement is a quick SQL query over CSV, TSV, JSON, YAML, TOML, Parquet, or
   another supported record format.
 - Direct joins across several files or heterogeneous query sources matter more
   than mapping one result into a deliberate JSON, YAML, or XML contract.

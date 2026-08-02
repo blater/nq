@@ -79,6 +79,37 @@ class DocumentConversionCliTest {
   }
 
   @Test
+  void tsvConvertsDirectlyToTsv() throws Exception {
+    Path input = write("customers.tsv", "id\tname\n1\tAlice\n2\tBob\n");
+
+    String output = captureStdout(() -> Main.main(input.toString(), "--output", "tsv"));
+
+    assertEquals("id\tname\n1\tAlice\n2\tBob\n", output);
+  }
+
+  @Test
+  void tomlConvertsDirectlyToJsonAndJsonConvertsToToml() throws Exception {
+    Path toml = write("customer.toml", """
+        [customer]
+        id = 7
+        name = "Alice"
+        """);
+
+    assertEquals(
+        "{\"customer\":{\"id\":\"7\",\"name\":\"Alice\"}}\n",
+        captureStdout(() -> Main.main(toml.toString(), "--output", "json")));
+
+    Path json = write("customer-for-toml.json", """
+        {"customer":{"id":7,"name":"Alice"}}
+        """);
+    assertEquals("""
+        [customer]
+        id = "7"
+        name = "Alice"
+        """, captureStdout(() -> Main.main(json.toString(), "--output", "toml")));
+  }
+
+  @Test
   void inlineScriptSuppressesDirectConversion() throws Exception {
     Path input = write("customer.json", """
         {"customer":{"id":7,"name":"Alice"}}

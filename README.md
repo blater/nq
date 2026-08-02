@@ -1,6 +1,6 @@
 
-NQ is a command-line tool for querying and moving data between JSON,YAML,XML,CSV files and relational databases. 
-It provides a familiar SQL language for querying JSON, YAML, XML, CSV, JSONL, and Parquet files, extracting complex 
+NQ is a command-line tool for querying and moving data between JSON, YAML, TOML, XML, CSV, TSV files and relational databases.
+It provides a familiar SQL language for querying JSON, YAML, TOML, XML, CSV, TSV, JSONL, and Parquet files, extracting complex
 data structures into these formats from databases, and generally working with and reshaping data.
 
 ## Install
@@ -50,7 +50,7 @@ echo '{
 
 Queries can be run against databases as well as directly against data files. 
 Use the --output or -o option to specify the output format. 
-It supports markdown, csv, yaml, xml, jsonl, and json. The default output format is json.
+It supports markdown, csv, tsv, yaml, toml, xml, jsonl, and json. The default output format is json.
 
 ```bash
 nq "select id, name, city
@@ -83,7 +83,7 @@ from customer;
 {"summary":{"customerCount":"2","firstCustomer":"Alice"}}
 ```
 
-## Updating a database from a JSON, XML, YAML, JSONL, or CSV file
+## Updating a database from a JSON, XML, YAML, TOML, JSONL, CSV, or TSV file
 
 you can use all the usual SQL commands to insert/update/delete database data from a file or stream:
 
@@ -299,11 +299,13 @@ NQ reads these input formats:
 | JSON | `.json` or `--input json` |
 | JSON Lines | `.jsonl` or `--input jsonl` |
 | YAML | `.yaml`, `.yml`, or `--input yaml` |
+| TOML | `.toml` or `--input toml` |
 | XML | `.xml` or `--input xml` |
 | CSV | `.csv` or `--input csv` |
+| TSV | `.tsv` or `--input tsv` |
 | Parquet | `.parquet` or `--input parquet` |
 
-Output is available as JSON, JSON Lines, YAML, XML, CSV, or Markdown. JSON is
+Output is available as JSON, JSON Lines, YAML, TOML, XML, CSV, TSV, or Markdown. JSON is
 the default.
 
 A file supplied without SQL is converted directly and does not create a
@@ -343,7 +345,7 @@ failures, and SQL execution failures return a non-zero status. See the
 NQ is intended for work that crosses document and relational boundaries:
 
 - exporting joined database data into a deliberate JSON, YAML, or XML shape;
-- applying JSON, YAML, XML, CSV, or Parquet data through database DML;
+- applying JSON, YAML, TOML, XML, CSV, TSV, or Parquet data through database DML;
 - joining or aggregating related collections inside structured files;
 - replacing one-off data movement code with a checked-in SQL-like script.
 

@@ -18,6 +18,10 @@ public interface InputReader {
       return new YamlInputReader();
     else if (type == InputType.CSV)
       return new CsvInputReader();
+    else if (type == InputType.TSV)
+      return new TsvInputReader();
+    else if (type == InputType.TOML)
+      return new TomlInputReader();
     else if (type == InputType.PARQUET)
       return new ParquetInputReader();
     else
