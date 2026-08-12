@@ -8,7 +8,7 @@ inside a nested document, then counts eligible customers by country.
 From the repository root:
 
 ```bash
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.json
+nq run --script-file docs/examples/identity-country-counts.nq --input-file docs/examples/identity-customers.json
 ```
 
 Expected output:
@@ -20,8 +20,8 @@ Expected output:
 Run the same script against equivalent boundary formats:
 
 ```bash
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.yaml
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.xml
+nq run --script-file docs/examples/identity-country-counts.nq --input-file docs/examples/identity-customers.yaml
+nq run --script-file docs/examples/identity-country-counts.nq --input-file docs/examples/identity-customers.xml
 ```
 
 All three produce the same JSON result. Inspect the

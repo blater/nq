@@ -29,19 +29,19 @@ class HelpTest {
     String longHelp = captureStdout(() -> Main.main("--help"));
 
     assertTrue(shortHelp.startsWith("Usage:\n"));
-    assertTrue(shortHelp.contains("Connection options:"));
-    assertTrue(shortHelp.contains("-p <properties-file>"));
+    assertTrue(shortHelp.contains("Run and connection options:"));
+    assertTrue(shortHelp.contains("--properties <properties-file>"));
     assertTrue(shortHelp.contains("--jdbc-database <url>"));
-    assertTrue(shortHelp.contains("nq <input-file> [-o|--output <type>]"));
-    assertTrue(shortHelp.contains("-c, --cache"));
-    assertTrue(shortHelp.contains("--use-cache <cache-filename>"));
-    assertTrue(shortHelp.contains("-i, --input <xml|json|jsonl|yaml|toml|csv|tsv|parquet>"));
-    assertTrue(shortHelp.contains("--parquet-record <name>"));
-    assertTrue(shortHelp.contains("Run 'nq --help' for the complete manual"));
+    assertTrue(shortHelp.contains("nq convert --input-file"));
+    assertTrue(shortHelp.contains("nq cache load"));
+    assertTrue(shortHelp.contains("nq cache use --name"));
+    assertTrue(shortHelp.contains("--input-format <xml|json|jsonl|yaml|toml|csv|tsv|parquet>"));
+    assertTrue(shortHelp.contains("--input-format"));
+    assertTrue(shortHelp.contains("Run 'nq help' for topics"));
     assertFalse(shortHelp.contains("NQ(1)"));
     assertTrue(longHelp.startsWith("NQ(1)"));
     assertTrue(longHelp.contains("\nSYNOPSIS\n"));
-    assertTrue(longHelp.contains("--help <topic>"));
+    assertTrue(longHelp.contains("--help [topic]"));
   }
 
   @Test
@@ -49,9 +49,9 @@ class HelpTest {
     String output = captureStdout(() -> Main.main("--help", "help"));
 
     assertTrue(output.startsWith("HELP\n"));
-    assertTrue(output.contains("AVAILABLE HELP TOPICS"));
-    assertTrue(output.contains("nq --help query"));
-    assertTrue(output.contains("clear-cache"));
+    assertTrue(output.contains("TOPICS"));
+    assertTrue(output.contains("run"));
+    assertTrue(output.contains("convert"));
     assertTrue(output.contains("catalog"));
   }
 
@@ -59,9 +59,9 @@ class HelpTest {
   void commandHelpPrintsFocusedTopic() throws Exception {
     String output = captureStdout(() -> Main.main("--help", "query"));
 
-    assertTrue(output.startsWith("QUERY\n"));
-    assertTrue(output.contains("nq <script-file-or-text>"));
-    assertTrue(output.contains("nq --help connection"));
+    assertTrue(output.startsWith("RUN\n"));
+    assertTrue(output.contains("nq run --script-file"));
+    assertTrue(output.contains("--script-text"));
   }
 
   @Test
@@ -69,21 +69,18 @@ class HelpTest {
     String query = captureStdout(() -> Main.main("--help", "query"));
     String output = captureStdout(() -> Main.main("--help", "cache"));
 
-    assertTrue(query.contains("temporary in-memory H2"));
+    assertTrue(query.contains("temporary H2"));
     assertTrue(output.contains("persistent local H2"));
-    assertTrue(output.contains("file-backed H2"));
-    assertTrue(output.contains("fresh file-backed H2"));
-    assertFalse(output.contains("temporary in-memory H2"));
+    assertTrue(output.contains("--state-dir"));
   }
 
   @Test
   void useCacheHelpExplainsThatItOnlySelectsExistingCaches() throws Exception {
-    String output = captureStdout(() -> Main.main("--help", "use-cache"));
+    String output = captureStdout(() -> Main.main("--help", "cache"));
 
-    assertTrue(output.startsWith("USE-CACHE\n"));
-    assertTrue(output.contains("nq --use-cache <cache-filename>"));
-    assertTrue(output.contains("bare filename"));
-    assertTrue(output.contains("never creates one"));
+    assertTrue(output.startsWith("CACHE\n"));
+    assertTrue(output.contains("nq cache use --name"));
+    assertTrue(output.contains("--state-dir"));
   }
 
   @Test
@@ -91,7 +88,7 @@ class HelpTest {
     String output = captureStdout(() -> Main.main("--help=output"));
 
     assertTrue(output.startsWith("OUTPUT\n"));
-    assertTrue(output.contains("--output <type>"));
+    assertTrue(output.contains("--report-format"));
   }
 
   @Test
@@ -99,15 +96,15 @@ class HelpTest {
     String output = captureStdout(() -> Main.main("--help", "catalog"));
 
     assertTrue(output.startsWith("CATALOG\n"));
-    assertTrue(output.contains("nq catalog [table-pattern]"));
+    assertTrue(output.contains("nq catalog [--pattern"));
     assertTrue(output.contains("active cache"));
-    assertTrue(output.contains("Quote patterns"));
+    assertTrue(output.contains("ephemeral"));
   }
 
   @Test
   void helpShortCircuitsOtherCommandLineProcessing() throws Exception {
     String output = captureStdout(() -> Main.main(
-        "-p", "/file/that/does/not/exist.properties", "--help", "cache"));
+        "--properties", "/file/that/does/not/exist.properties", "--help", "cache"));
 
     assertTrue(output.startsWith("CACHE\n"));
   }
@@ -117,7 +114,7 @@ class HelpTest {
     String output = captureStdout(() -> Main.main("--help", "unknown"));
 
     assertTrue(output.startsWith("Unknown help topic: unknown"));
-    assertTrue(output.contains("nq --help help"));
+    assertTrue(output.contains("nq help"));
   }
 
   private String captureStdout(ThrowingRunnable runnable) throws Exception {

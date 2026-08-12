@@ -21,7 +21,8 @@ class CacheExecutionTest {
 
   @BeforeEach
   void clearActiveCacheSelection() throws Exception {
-    Files.deleteIfExists(PersistentCache.configFile());
+    Files.deleteIfExists(PersistentCache.configFile(Map.of(
+        ParameterParser.STATE_DIR_PARAM, tempDir.resolve("state").toString())));
   }
 
   @Test
@@ -32,10 +33,10 @@ class CacheExecutionTest {
     Map<String, String> parameters = cacheParameters(input, "standalone-cache");
 
     CacheExecution.loadAndActivate(parameters);
-    Path first = PersistentCache.active().orElseThrow().cacheFile();
+    Path first = PersistentCache.active(parameters).orElseThrow().cacheFile();
     CacheExecution.loadAndActivate(parameters);
 
-    CacheHandle active = PersistentCache.active().orElseThrow();
+    CacheHandle active = PersistentCache.active(parameters).orElseThrow();
     assertFalse(first.equals(active.cacheFile()));
   }
 
@@ -44,9 +45,11 @@ class CacheExecutionTest {
     Path input = write("active.json", """
         { "data": { "customer": [{ "id": "ACTIVE" }] } }
         """);
-    CacheExecution.loadAndActivate(cacheParameters(input, "active-cache"));
+    Map<String, String> parameters = cacheParameters(input, "active-cache");
+    CacheExecution.loadAndActivate(parameters);
 
-    SqlExecutor executor = CacheExecution.openForQuery(Map.of()).orElseThrow();
+    SqlExecutor executor = CacheExecution.openForQuery(Map.of(
+        ParameterParser.STATE_DIR_PARAM, parameters.get(ParameterParser.STATE_DIR_PARAM))).orElseThrow();
     try (var rows = executor.query("select id from customer")) {
       assertTrue(rows.next());
       assertEquals("ACTIVE", rows.stringValue(1));
@@ -83,7 +86,7 @@ class CacheExecutionTest {
     Path cacheDir = tempDir.resolve("ephemeral-cache");
     Map<String, String> parameters = Map.of(
         ParameterParser.INPUT_FILENAME, input.toString(),
-        ParameterParser.CACHE_DIR_PARAM, cacheDir.toString());
+        ParameterParser.STATE_DIR_PARAM, cacheDir.toString());
 
     SqlExecutor first = CacheExecution.openForQuery(parameters).orElseThrow();
     try (var rows = first.query("select id from customer")) {
@@ -105,7 +108,7 @@ class CacheExecutionTest {
     }
 
     assertFalse(Files.exists(cacheDir));
-    assertTrue(PersistentCache.active().isEmpty());
+    assertTrue(PersistentCache.active(parameters).isEmpty());
   }
 
   @Test
@@ -121,7 +124,7 @@ class CacheExecutionTest {
     return Map.of(
         ParameterParser.CACHE_MODE_PARAM, "true",
         ParameterParser.INPUT_FILENAME, input.toString(),
-        ParameterParser.CACHE_DIR_PARAM, tempDir.resolve(cacheDirectory).toString());
+        ParameterParser.STATE_DIR_PARAM, tempDir.resolve(cacheDirectory).toString());
   }
 
   private Path write(String name, String content) throws Exception {

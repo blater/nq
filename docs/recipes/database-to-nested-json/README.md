@@ -7,7 +7,7 @@ three-level JSON hierarchy.
 From the repository root:
 
 ```bash
-nq docs/recipes/database-to-nested-json/database-to-nested-json.nq \
+nq run --script-file docs/recipes/database-to-nested-json/database-to-nested-json.nq \
   --db h2 --database mem:nq_database_to_nested
 ```
 
@@ -19,6 +19,6 @@ options instead.
 Change the boundary output without changing the query:
 
 ```bash
-nq docs/recipes/database-to-nested-json/database-to-nested-json.nq \
+nq run --script-file docs/recipes/database-to-nested-json/database-to-nested-json.nq \
   --db h2 --database mem:nq_database_to_yaml --output yaml
 ```

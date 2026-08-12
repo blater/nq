@@ -65,8 +65,8 @@ hierarchy before output.
 
 - **Temporary:** a query plus input file builds a fresh H2 database for that
   execution.
-- **Persistent:** `--cache` or `-c` stores H2 files under `~/.nq/cache` or
-  `--cache-dir`.
+- **Persistent:** `cache load` or `run ... --cache` stores H2 files under
+  `<state-dir>/cache`. The active selection lives in the same state root.
 - **External JDBC:** query SQL runs against the configured database; an
   accompanying document supplies mapped DML values.
 

@@ -27,11 +27,12 @@ import static blater.nq.ParameterParser.INPUT_TYPE_PARAM;
 public final class CacheExecution {
   private CacheExecution() { }
 
-  public static void loadAndActivate(Map<String, String> parameters) {
+  public static CacheHandle loadAndActivate(Map<String, String> parameters) {
     CacheHandle handle = explicitHandle(parameters);
     SqlExecutor executor = open(handle, parameters);
     try {
-      PersistentCache.activate(handle);
+      PersistentCache.activate(handle, parameters);
+      return handle;
     } finally {
       executor.close();
     }
@@ -51,7 +52,7 @@ public final class CacheExecution {
     SqlExecutor executor = open(handle, parameters);
     try {
       if (cacheMode(parameters) && parameters.containsKey(INPUT_FILENAME)) {
-        PersistentCache.activate(handle);
+        PersistentCache.activate(handle, parameters);
       }
       return Optional.of(executor);
     } catch (RuntimeException | Error ex) {
@@ -65,10 +66,10 @@ public final class CacheExecution {
       if (parameters.containsKey(INPUT_FILENAME)) {
         return Optional.of(explicitHandle(parameters));
       }
-      return Optional.of(activeHandle());
+      return Optional.of(activeHandle(parameters));
     }
     if (!parameters.containsKey(INPUT_FILENAME) && !jdbcConfigured(parameters)) {
-      return Optional.of(activeHandle());
+      return Optional.of(activeHandle(parameters));
     }
     return Optional.empty();
   }
@@ -78,8 +79,8 @@ public final class CacheExecution {
     return PersistentCache.prepare(parameters);
   }
 
-  private static CacheHandle activeHandle() {
-    return PersistentCache.active().orElseGet(() -> Log.fatal(
+  private static CacheHandle activeHandle(Map<String, String> parameters) {
+    return PersistentCache.active(parameters).orElseGet(() -> Log.fatal(
         IllegalStateException.class,
         "No active cache or JDBC connection is configured."));
   }

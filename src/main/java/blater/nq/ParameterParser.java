@@ -1,14 +1,14 @@
 package blater.nq;
 
 import blater.nq.inputreader.InputType;
+import blater.nq.outputwriter.OutputType;
+import blater.nq.report.ReportFormat;
 import blater.nq.util.Log;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -26,6 +26,14 @@ public final class ParameterParser {
   public static final String HELP_PARAM = "NSQL_HELP";
   public static final String VERSION_PARAM = "NSQL_VERSION";
   public static final String BRIEF_HELP = "-h";
+  public static final String COMMAND_PARAM = "NSQL_COMMAND";
+  public static final String COMMAND_RUN = "run";
+  public static final String COMMAND_CONVERT = "convert";
+  public static final String COMMAND_CATALOG = "catalog";
+  public static final String COMMAND_CACHE_LOAD = "cache-load";
+  public static final String COMMAND_CACHE_USE = "cache-use";
+  public static final String COMMAND_CACHE_LIST = "cache-list";
+  public static final String COMMAND_CACHE_CLEAR = "cache-clear";
   public static final String CATALOG_PATTERN_PARAM = "NSQL_CATALOG_PATTERN";
 
   public static final String CACHE_CLEAR_ALL_PARAM = "NSQL_CACHE_CLEAR_ALL";
@@ -33,10 +41,14 @@ public final class ParameterParser {
   public static final String CACHE_CLEAR_OLDER_THAN_PARAM = "NSQL_CACHE_CLEAR_OLDER_THAN";
   public static final String CACHE_LIST_PARAM = "NSQL_CACHE_LIST";
   public static final String CACHE_USE_PARAM = "NSQL_CACHE_USE";
-  public static final String CACHE_DIR_PARAM = "NSQL_CACHE_DIR";
+  public static final String STATE_DIR_PARAM = "NSQL_STATE_DIR";
+  /** @deprecated use {@link #STATE_DIR_PARAM}. */
+  @Deprecated
+  public static final String CACHE_DIR_PARAM = STATE_DIR_PARAM;
 
   public static final String JDBC_PROPS_FILE_PARAM = "NSQL_JDBC_PROPS_FILE";
   public static final String OUTPUT_TYPE_PARAM = "NSQL_OUTPUT_TYPE";
+  public static final String REPORT_FORMAT_PARAM = "NSQL_REPORT_FORMAT";
   public static final String DEBUG_PARAM = "NSQL_DEBUG";
   public static final String NO_KEY_INFERENCE_PARAM = "NSQL_NO_KEY_INFERENCE";
   public static final String CACHE_MODE_PARAM = "NSQL_CACHE";
@@ -58,54 +70,84 @@ public final class ParameterParser {
       return Map.of(HELP_PARAM, helpTopic);
     }
 
-    List<String> positionals = new ArrayList<>();
+    Command command = command(args);
+    int firstOption = command.firstOption();
+
     Map<String, String> propertyParameters = new LinkedHashMap<>();
     Map<String, String> commandParameters = new LinkedHashMap<>();
+    commandParameters.put(COMMAND_PARAM, command.name);
+    applyCommandDefaults(command, commandParameters);
     String databaseType = null;
     String databaseName = null;
     String host = null;
     String port = null;
 
-    for (int i = 0; i < args.length; i++) {
+    for (int i = firstOption; i < args.length; i++) {
       String argument = args[i];
       int equals = argument.startsWith("--") ? argument.indexOf('=') : -1;
       String option = equals < 0 ? argument : argument.substring(0, equals);
       String attachedValue = equals < 0 ? null : argument.substring(equals + 1);
 
       switch (option) {
-        case "-p" -> {
+        case "-p", "--properties" -> {
           String filename = requiredValue(
               args, i, attachedValue, "no properties filename supplied");
           i = nextIndex(i, attachedValue);
           addParametersFromFile(propertyParameters, filename);
         }
 
-        case "--cache", "-c" -> {
+        case "--cache" -> {
           requireNoAttachedValue(argument, attachedValue);
           commandParameters.put(CACHE_MODE_PARAM, "true");
         }
-        case "--cache-dir" -> i = putValue(
-            commandParameters, CACHE_DIR_PARAM,
-            args, i, attachedValue, "no cache directory supplied");
-        case "--list-caches" -> {
-          requireNoAttachedValue(argument, attachedValue);
-          commandParameters.put(CACHE_LIST_PARAM, "true");
-        }
-        case "--use-cache" -> i = putValue(
-            commandParameters, CACHE_USE_PARAM,
-            args, i, attachedValue, "no cache source supplied");
-        case "--clear-cache" -> {
-          if (attachedValue != null) {
-            commandParameters.put(CACHE_CLEAR_TARGET_PARAM, attachedValue);
-          } else if (hasOptionalValue(args, i)) {
-            commandParameters.put(CACHE_CLEAR_TARGET_PARAM, args[++i]);
-          } else {
-            commandParameters.put(CACHE_CLEAR_ALL_PARAM, "true");
-          }
-        }
-        case "--clear-cache-older-than" -> i = putValue(
+        case "--state-dir" -> i = putValue(
+            commandParameters, STATE_DIR_PARAM,
+            args, i, attachedValue, "no state directory supplied");
+        case "--name" -> i = putValue(
+            commandParameters, command == Command.CACHE_USE ? CACHE_USE_PARAM : CACHE_CLEAR_TARGET_PARAM,
+            args, i, attachedValue, "no cache name supplied");
+        case "--older-than" -> i = putValue(
             commandParameters, CACHE_CLEAR_OLDER_THAN_PARAM,
             args, i, attachedValue, "no cache age supplied");
+        case "--all" -> {
+          requireNoAttachedValue(argument, attachedValue);
+          commandParameters.put(CACHE_CLEAR_ALL_PARAM, "true");
+        }
+
+        case "--script-file" -> i = putExclusiveValue(
+            commandParameters, SCRIPT_FILE_PARAM, SCRIPT_TEXT_PARAM,
+            args, i, attachedValue, "no script filename supplied");
+        case "--script-text" -> i = putExclusiveValue(
+            commandParameters, SCRIPT_TEXT_PARAM, SCRIPT_FILE_PARAM,
+            args, i, attachedValue, "no script text supplied");
+        case "--input-file" -> {
+          String value = attachedValue;
+          if (value == null && i + 1 < args.length && STDIN_INPUT.equals(args[i + 1])) {
+            value = args[++i];
+          } else if (value == null) {
+            value = requiredValue(args, i, null, "no input filename supplied");
+            i++;
+          }
+          commandParameters.put(INPUT_FILENAME, value);
+        }
+        case "--input-format" -> {
+          String value = requiredValue(
+              args, i, attachedValue, "no input format supplied");
+          i = nextIndex(i, attachedValue);
+          commandParameters.put(INPUT_TYPE_PARAM, InputType.fromName(value).name().toLowerCase());
+        }
+        case "--pattern" -> i = putValue(
+            commandParameters, CATALOG_PATTERN_PARAM,
+            args, i, attachedValue, "no catalog pattern supplied");
+        case "--param" -> {
+          String assignment = requiredValue(args, i, attachedValue, "no parameter assignment supplied");
+          i = nextIndex(i, attachedValue);
+          if (!isParameterAssignment(assignment)) {
+            Log.fatal(IllegalArgumentException.class,
+                "--param requires a name=value assignment: " + assignment);
+          }
+          addCommandParameter(commandParameters, assignment);
+        }
 
         case "--parquet-root" -> i = putValue(
             commandParameters, PARQUET_ROOT_PARAM,
@@ -113,15 +155,20 @@ public final class ParameterParser {
         case "--parquet-record" -> i = putValue(
             commandParameters, PARQUET_RECORD_PARAM,
             args, i, attachedValue, "no parquet record supplied");
-        case "--output", "-o" -> i = putValue(
-            commandParameters, OUTPUT_TYPE_PARAM,
-            args, i, attachedValue, "no output type supplied");
-
-        case "--input", "-i" -> {
-          String value = requiredValue(
-              args, i, attachedValue, "no standard input type supplied");
+        case "--output", "-o" -> {
+          String value = requiredValue(args, i, attachedValue, "no output type supplied");
           i = nextIndex(i, attachedValue);
-          commandParameters.put(INPUT_TYPE_PARAM, InputType.fromName(value).name().toLowerCase());
+          try {
+            commandParameters.put(OUTPUT_TYPE_PARAM, OutputType.fromName(value).name().toLowerCase());
+          } catch (IllegalArgumentException ex) {
+            Log.fatal(IllegalArgumentException.class, ex.getMessage());
+          }
+        }
+
+        case "--report-format" -> {
+          String value = requiredValue(args, i, attachedValue, "no report format supplied");
+          i = nextIndex(i, attachedValue);
+          commandParameters.put(REPORT_FORMAT_PARAM, reportFormat(value).name().toLowerCase());
         }
 
         case "--debug" -> {
@@ -165,18 +212,12 @@ public final class ParameterParser {
             args, i, attachedValue, "no value supplied for --jdbc-database");
 
         default -> {
-          if (argument.startsWith("-")) {
-            Log.fatal(IllegalArgumentException.class, "Unknown option: " + argument);
-          } else if (isParameterAssignment(argument) && !fileExists(argument)) {
-            addCommandParameter(commandParameters, argument);
-          } else {
-            positionals.add(argument);
-          }
+          Log.fatal(IllegalArgumentException.class, "Unexpected argument: " + argument);
         }
       }
     }
 
-    boolean cacheCommand = isCacheCommand(commandParameters);
+    boolean cacheCommand = command.isCacheCommand();
     Map<String, String> parameters = new LinkedHashMap<>(propertyParameters);
     if (!cacheCommand) {
       applySimpleConnection(parameters, databaseType, databaseName, host, port);
@@ -186,43 +227,11 @@ public final class ParameterParser {
       applyDriverClassPrecedence(parameters, commandParameters);
       normalizeJdbcDriver(parameters);
     }
-    resolvePositionals(parameters, positionals);
-    validateStandardInputOptions(parameters);
-    validateStandaloneInputOptions(parameters);
+    validateCommand(command, parameters);
+    if (command == Command.CATALOG) {
+      parameters.put(OUTPUT_TYPE_PARAM, reportFormat(parameters).name().toLowerCase());
+    }
     return parameters;
-  }
-
-  private static void validateStandardInputOptions(Map<String, String> parameters) {
-    if (!parameters.containsKey(INPUT_TYPE_PARAM)) return;
-
-    if (parameters.containsKey(CACHE_LIST_PARAM)
-        || parameters.containsKey(CACHE_USE_PARAM)
-        || parameters.containsKey(CACHE_CLEAR_TARGET_PARAM)
-        || parameters.containsKey(CACHE_CLEAR_ALL_PARAM)
-        || parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)) {
-      Log.fatal(IllegalArgumentException.class,
-          "--input is not valid for cache maintenance commands.");
-    }
-  }
-
-  private static void validateStandaloneInputOptions(Map<String, String> parameters) {
-    if (!isStandaloneInputCommand(parameters)) return;
-
-    boolean cacheMode = Boolean.parseBoolean(parameters.get(CACHE_MODE_PARAM));
-    if (cacheMode && parameters.containsKey(OUTPUT_TYPE_PARAM)) {
-      Log.fatal(IllegalArgumentException.class,
-          "--output is not valid when loading a cache without a script.");
-    }
-    if (!cacheMode && parameters.containsKey(CACHE_DIR_PARAM)) {
-      Log.fatal(IllegalArgumentException.class,
-          "--cache-dir requires --cache when no script is supplied.");
-    }
-  }
-
-  private static boolean isStandaloneInputCommand(Map<String, String> parameters) {
-    return parameters.containsKey(INPUT_FILENAME)
-        && !hasScript(parameters)
-        && !parameters.containsKey(CATALOG_PATTERN_PARAM);
   }
 
   static boolean hasScript(Map<String, String> parameters) {
@@ -230,9 +239,266 @@ public final class ParameterParser {
         || parameters.containsKey(SCRIPT_TEXT_PARAM);
   }
 
+  public static ReportFormat reportFormat(Map<String, String> parameters) {
+    return reportFormat(parameters.get(REPORT_FORMAT_PARAM));
+  }
+
+  public static ReportFormat requestedReportFormat(String... args) {
+    for (int index = 0; index < args.length; index++) {
+      String argument = args[index];
+      if (argument.startsWith("--report-format=")) {
+        return reportFormat(argument.substring("--report-format=".length()));
+      }
+      if ("--report-format".equals(argument) && index + 1 < args.length) {
+        return reportFormat(args[index + 1]);
+      }
+    }
+    return null;
+  }
+
+  private static ReportFormat reportFormat(String value) {
+    try {
+      return ReportFormat.fromName(value);
+    } catch (IllegalArgumentException ex) {
+      return Log.fatal(IllegalArgumentException.class, ex.getMessage());
+    }
+  }
+
+  private static Command command(String[] args) {
+    return switch (args[0]) {
+      case COMMAND_RUN -> Command.RUN;
+      case COMMAND_CONVERT -> Command.CONVERT;
+      case COMMAND_CATALOG -> Command.CATALOG;
+      case "cache" -> cacheCommand(args);
+      default -> Log.fatal(
+          IllegalArgumentException.class,
+          "Unknown command: " + args[0] + ". Expected one of: run, convert, catalog, cache");
+    };
+  }
+
+  private static Command cacheCommand(String[] args) {
+    if (args.length < 2 || args[1].startsWith("-")) {
+      return Log.fatal(IllegalArgumentException.class,
+          "cache requires a subcommand: load, use, list, or clear");
+    }
+    return switch (args[1]) {
+      case "load" -> Command.CACHE_LOAD;
+      case "use" -> Command.CACHE_USE;
+      case "list" -> Command.CACHE_LIST;
+      case "clear" -> Command.CACHE_CLEAR;
+      default -> Log.fatal(
+          IllegalArgumentException.class,
+          "Unknown cache subcommand: " + args[1] + ". Expected one of: load, use, list, clear");
+    };
+  }
+
+  private static void applyCommandDefaults(Command command, Map<String, String> parameters) {
+    switch (command) {
+      case CATALOG -> parameters.put(CATALOG_PATTERN_PARAM, "");
+      case CACHE_LOAD -> parameters.put(CACHE_MODE_PARAM, "true");
+      case CACHE_USE -> parameters.put(CACHE_USE_PARAM, "");
+      case CACHE_LIST -> parameters.put(CACHE_LIST_PARAM, "true");
+      case CACHE_CLEAR -> { }
+      case RUN, CONVERT -> { }
+    }
+  }
+
+  private static void validateCommand(Command command, Map<String, String> parameters) {
+    boolean hasInput = parameters.containsKey(INPUT_FILENAME);
+    boolean hasInputFormat = parameters.containsKey(INPUT_TYPE_PARAM);
+    boolean hasOutput = parameters.containsKey(OUTPUT_TYPE_PARAM);
+    boolean hasConnection = parameters.containsKey(JDBC_DRIVER_PARAM)
+        || parameters.containsKey(JDBC_CLASS_NAME_PARAM)
+        || parameters.containsKey(JDBC_DATABASE_PARAM)
+        || parameters.containsKey(JDBC_USERNAME_PARAM)
+        || parameters.containsKey(JDBC_PASSWORD_PARAM);
+
+    if (hasInputFormat && !hasInput) {
+      Log.fatal(IllegalArgumentException.class, "--input-format requires --input-file.");
+    }
+    if (STDIN_INPUT.equals(parameters.get(INPUT_FILENAME)) && !hasInputFormat) {
+      Log.fatal(IllegalArgumentException.class,
+          "--input-file - requires --input-format because standard input has no filename.");
+    }
+    if (command != Command.CATALOG && parameters.containsKey(CATALOG_PATTERN_PARAM)) {
+      Log.fatal(IllegalArgumentException.class, "--pattern is only valid for catalog.");
+    }
+    if (command != Command.RUN
+        && command != Command.CACHE_LOAD
+        && parameters.containsKey(CACHE_MODE_PARAM)) {
+      Log.fatal(IllegalArgumentException.class,
+          "--cache is only valid for run; use 'cache load' for standalone loading.");
+    }
+
+    switch (command) {
+      case RUN -> {
+        if (!hasScript(parameters)) {
+          Log.fatal(IllegalArgumentException.class,
+              "run requires exactly one of --script-file or --script-text.");
+        }
+        if (Boolean.parseBoolean(parameters.get(CACHE_MODE_PARAM)) && !hasInput) {
+          Log.fatal(IllegalArgumentException.class, "run --cache requires --input-file.");
+        }
+        if (Boolean.parseBoolean(parameters.get(CACHE_MODE_PARAM)) && hasConnection) {
+          Log.fatal(IllegalArgumentException.class,
+              "run cannot combine --cache with database connection options.");
+        }
+        rejectCacheMaintenance(parameters, "run");
+      }
+      case CONVERT -> {
+        requireInput(hasInput, "convert");
+        rejectScript(parameters, "convert");
+        rejectConnection(hasConnection, "convert");
+        reject(parameters, CACHE_MODE_PARAM, "--cache is not valid for convert.");
+        reject(parameters, NO_KEY_INFERENCE_PARAM, "--no-key-inference is not valid for convert.");
+        rejectCacheMaintenance(parameters, "convert");
+        reject(parameters, CATALOG_PATTERN_PARAM, "--pattern is not valid for convert.");
+      }
+      case CATALOG -> {
+        rejectScript(parameters, "catalog");
+        if (hasOutput) {
+          Log.fatal(IllegalArgumentException.class,
+              "catalog uses --report-format; --output is only for run and convert.");
+        }
+        reject(parameters, CACHE_MODE_PARAM,
+            "catalog reads --input-file through an ephemeral cache; --cache is not valid.");
+        if (hasInput && hasConnection) {
+          Log.fatal(IllegalArgumentException.class,
+              "catalog accepts exactly one source: --input-file, a database connection, or the active cache.");
+        }
+        rejectCacheMaintenance(parameters, "catalog");
+      }
+      case CACHE_LOAD -> {
+        requireInput(hasInput, "cache load");
+        rejectScript(parameters, "cache load");
+        rejectConnection(hasConnection, "cache load");
+        rejectOutput(hasOutput, "cache load");
+        rejectCacheMaintenance(parameters, "cache load");
+      }
+      case CACHE_USE -> {
+        rejectInput(hasInput, "cache use");
+        rejectScript(parameters, "cache use");
+        rejectConnection(hasConnection, "cache use");
+        rejectOutput(hasOutput, "cache use");
+        String name = parameters.get(CACHE_USE_PARAM);
+        if (name == null || name.isBlank()) {
+          Log.fatal(IllegalArgumentException.class, "cache use requires --name.");
+        }
+      }
+      case CACHE_LIST -> {
+        rejectInput(hasInput, "cache list");
+        rejectScript(parameters, "cache list");
+        rejectConnection(hasConnection, "cache list");
+        rejectOutput(hasOutput, "cache list");
+        rejectCacheTargets(parameters, "cache list");
+      }
+      case CACHE_CLEAR -> {
+        rejectInput(hasInput, "cache clear");
+        rejectScript(parameters, "cache clear");
+        rejectConnection(hasConnection, "cache clear");
+        rejectOutput(hasOutput, "cache clear");
+        int targets = (parameters.containsKey(CACHE_CLEAR_ALL_PARAM) ? 1 : 0)
+            + (parameters.containsKey(CACHE_CLEAR_TARGET_PARAM) ? 1 : 0)
+            + (parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM) ? 1 : 0);
+        if (targets != 1) {
+          Log.fatal(IllegalArgumentException.class,
+              "cache clear requires exactly one of --all, --name, or --older-than.");
+        }
+      }
+    }
+  }
+
+  private static void requireInput(boolean hasInput, String command) {
+    if (!hasInput) {
+      Log.fatal(IllegalArgumentException.class, command + " requires --input-file.");
+    }
+  }
+
+  private static void rejectConnection(boolean hasConnection, String command) {
+    if (hasConnection) {
+      Log.fatal(IllegalArgumentException.class,
+          "Database connection options are not valid for " + command + ".");
+    }
+  }
+
+  private static void rejectInput(boolean hasInput, String command) {
+    if (hasInput) {
+      Log.fatal(IllegalArgumentException.class, "--input-file is not valid for " + command + ".");
+    }
+  }
+
+  private static void rejectScript(Map<String, String> parameters, String command) {
+    if (hasScript(parameters)) {
+      Log.fatal(IllegalArgumentException.class,
+          "Script options are not valid for " + command + ".");
+    }
+  }
+
+  private static void rejectCacheMaintenance(Map<String, String> parameters, String command) {
+    if (parameters.containsKey(CACHE_USE_PARAM)
+        || parameters.containsKey(CACHE_LIST_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_TARGET_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_ALL_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)) {
+      Log.fatal(IllegalArgumentException.class,
+          "Cache maintenance options are not valid for " + command + ".");
+    }
+  }
+
+  private static void rejectCacheTargets(Map<String, String> parameters, String command) {
+    if (parameters.containsKey(CACHE_CLEAR_TARGET_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_ALL_PARAM)
+        || parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)) {
+      Log.fatal(IllegalArgumentException.class,
+          "Cache target options are not valid for " + command + ".");
+    }
+  }
+
+  private static void rejectOutput(boolean hasOutput, String command) {
+    if (hasOutput) {
+      Log.fatal(IllegalArgumentException.class,
+          command + " uses --report-format; --output is only for run and convert.");
+    }
+  }
+
+  private static void reject(Map<String, String> parameters, String key, String message) {
+    if (parameters.containsKey(key)) {
+      Log.fatal(IllegalArgumentException.class, message);
+    }
+  }
+
+  private enum Command {
+    RUN(COMMAND_RUN, 1),
+    CONVERT(COMMAND_CONVERT, 1),
+    CATALOG(COMMAND_CATALOG, 1),
+    CACHE_LOAD(COMMAND_CACHE_LOAD, 2),
+    CACHE_USE(COMMAND_CACHE_USE, 2),
+    CACHE_LIST(COMMAND_CACHE_LIST, 2),
+    CACHE_CLEAR(COMMAND_CACHE_CLEAR, 2);
+
+    private final String name;
+    private final int firstOption;
+
+    Command(String name, int firstOption) {
+      this.name = name;
+      this.firstOption = firstOption;
+    }
+
+    int firstOption() {
+      return firstOption;
+    }
+
+    boolean isCacheCommand() {
+      return this == CACHE_LOAD || this == CACHE_USE || this == CACHE_LIST || this == CACHE_CLEAR;
+    }
+  }
+
   private static String helpTopic(String[] args) {
     if (args.length == 0) {
       return BRIEF_HELP;
+    }
+    if ("help".equals(args[0])) {
+      return args.length == 1 ? "help" : args[1];
     }
     for (int index = 0; index < args.length; index++) {
       String argument = args[index];
@@ -272,6 +538,21 @@ public final class ParameterParser {
     return nextIndex(index, attachedValue);
   }
 
+  private static int putExclusiveValue(
+      Map<String, String> parameters,
+      String key,
+      String conflictingKey,
+      String[] args,
+      int index,
+      String attachedValue,
+      String missingMessage) {
+    if (parameters.containsKey(conflictingKey) || parameters.containsKey(key)) {
+      Log.fatal(IllegalArgumentException.class,
+          "run requires exactly one of --script-file or --script-text.");
+    }
+    return putValue(parameters, key, args, index, attachedValue, missingMessage);
+  }
+
   private static int nextIndex(int index, String attachedValue) {
     return attachedValue == null ? index + 1 : index;
   }
@@ -280,10 +561,6 @@ public final class ParameterParser {
     if (attachedValue != null) {
       Log.fatal(IllegalArgumentException.class, "Unknown option: " + argument);
     }
-  }
-
-  private static boolean hasOptionalValue(String[] args, int index) {
-    return index + 1 < args.length && !args[index + 1].startsWith("-");
   }
 
   private static void addParametersFromFile(Map<String, String> parameters, String filename) {
@@ -312,15 +589,6 @@ public final class ParameterParser {
         && !commandParameters.containsKey(JDBC_DRIVER_PARAM)) {
       parameters.remove(JDBC_DRIVER_PARAM);
     }
-  }
-
-  private static boolean isCacheCommand(Map<String, String> parameters) {
-    return Boolean.parseBoolean(parameters.get(CACHE_MODE_PARAM))
-        || parameters.containsKey(CACHE_CLEAR_ALL_PARAM)
-        || parameters.containsKey(CACHE_CLEAR_TARGET_PARAM)
-        || parameters.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)
-        || parameters.containsKey(CACHE_LIST_PARAM)
-        || parameters.containsKey(CACHE_USE_PARAM);
   }
 
   private static void applySimpleConnection(
@@ -449,6 +717,7 @@ public final class ParameterParser {
   static boolean isNotSystemParam(String key) {
     return !(key.equals(SCRIPT_FILE_PARAM)
         || key.equals(SCRIPT_TEXT_PARAM)
+        || key.equals(COMMAND_PARAM)
         || key.equals(HELP_PARAM)
         || key.equals(VERSION_PARAM)
         || key.equals(CATALOG_PATTERN_PARAM)
@@ -456,6 +725,7 @@ public final class ParameterParser {
         || key.equals(INPUT_TYPE_PARAM)
         || key.equals(JDBC_PROPS_FILE_PARAM)
         || key.equals(OUTPUT_TYPE_PARAM)
+        || key.equals(REPORT_FORMAT_PARAM)
         || key.equals(DEBUG_PARAM)
         || key.equals(NO_KEY_INFERENCE_PARAM)
         || key.equals(CACHE_MODE_PARAM)
@@ -500,159 +770,6 @@ public final class ParameterParser {
     if (index + 1 >= args.length || args[index + 1].startsWith("-")) {
       Log.fatal(IllegalArgumentException.class, missingMessage);
     }
-  }
-
-  private static void resolvePositionals(Map<String, String> params, List<String> positionArguments) {
-    if (params.containsKey(INPUT_TYPE_PARAM)) {
-      resolveStandardInputPositionals(params, positionArguments);
-      return;
-    }
-
-    if ( params.containsKey(CACHE_LIST_PARAM)
-      || params.containsKey(CACHE_USE_PARAM)
-      || params.containsKey(CACHE_CLEAR_TARGET_PARAM)
-      || params.containsKey(CACHE_CLEAR_ALL_PARAM)
-      || params.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM))
-    {
-      if (!positionArguments.isEmpty()) {
-        Log.fatal(IllegalArgumentException.class, "Unexpected argument: " + positionArguments.getFirst());
-      }
-      return;
-    }
-
-    if (!positionArguments.isEmpty() && "catalog".equalsIgnoreCase(positionArguments.getFirst())) {
-      resolveCatalog(params, positionArguments.subList(1, positionArguments.size()));
-      return;
-    }
-
-    switch (positionArguments.size()) {
-      case 0 -> {
-        if (Boolean.parseBoolean(params.get(CACHE_MODE_PARAM))) {
-          Log.fatal(IllegalArgumentException.class, "--cache requires an input file or script.");
-        }
-        Log.fatal(IllegalArgumentException.class, "No script filename supplied.");
-      }
-      case 1 -> {
-        String argument = positionArguments.getFirst();
-        if (isInputFile(argument)) {
-          params.put(INPUT_FILENAME, argument);
-        } else if (!fileExists(argument)) {
-          params.put(SCRIPT_TEXT_PARAM, argument);
-        } else {
-          params.put(SCRIPT_FILE_PARAM, argument);
-        }
-      }
-      case 2 -> {
-        String first = positionArguments.get(0);
-        String second = positionArguments.get(1);
-        boolean firstExists = fileExists(first);
-        boolean secondExists = fileExists(second);
-
-        if (!firstExists && !secondExists) {
-          Log.fatal(
-              IllegalArgumentException.class,
-              "Neither script nor input file exists: " + first + ", " + second);
-        } else if (firstExists && secondExists) {
-          boolean firstInput = isInputFile(first);
-          boolean secondInput = isInputFile(second);
-          if (firstInput == secondInput) {
-            Log.fatal(
-                IllegalArgumentException.class,
-                "Could not identify script and input file from: " + first + ", " + second);
-          }
-          params.put(SCRIPT_FILE_PARAM, firstInput ? second : first);
-          params.put(INPUT_FILENAME, firstInput ? first : second);
-        } else {
-          String existingFile = firstExists ? first : second;
-          String missingArgument = firstExists ? second : first;
-          if (isInputFile(existingFile)) {
-            params.put(INPUT_FILENAME, existingFile);
-            params.put(SCRIPT_TEXT_PARAM, missingArgument);
-          } else if (isInputFile(missingArgument)) {
-            params.put(SCRIPT_FILE_PARAM, existingFile);
-            params.put(INPUT_FILENAME, missingArgument);
-          } else {
-            Log.fatal(
-                IllegalArgumentException.class,
-                "Input file does not exist: " + missingArgument);
-          }
-        }
-      }
-      default -> Log.fatal(
-          IllegalArgumentException.class,
-          "Unexpected argument: " + positionArguments.get(2));
-    }
-  }
-
-  private static void resolveStandardInputPositionals(
-      Map<String, String> params, List<String> positionArguments) {
-    if (!positionArguments.isEmpty() && "catalog".equalsIgnoreCase(positionArguments.getFirst())) {
-      resolveCatalog(params, positionArguments.subList(1, positionArguments.size()));
-      params.put(INPUT_FILENAME, STDIN_INPUT);
-      return;
-    }
-
-    switch (positionArguments.size()) {
-      case 0 -> params.put(INPUT_FILENAME, STDIN_INPUT);
-      case 1 -> {
-        String script = positionArguments.getFirst();
-        if (isInputFile(script)) {
-          Log.fatal(IllegalArgumentException.class,
-              "--input reads standard input and cannot be combined with an input file: " + script);
-        }
-        if (fileExists(script)) {
-          params.put(SCRIPT_FILE_PARAM, script);
-        } else {
-          params.put(SCRIPT_TEXT_PARAM, script);
-        }
-        params.put(INPUT_FILENAME, STDIN_INPUT);
-      }
-      default -> Log.fatal(
-          IllegalArgumentException.class,
-          "Unexpected argument: " + positionArguments.get(1));
-    }
-  }
-
-  private static void resolveCatalog(Map<String, String> params, List<String> arguments) {
-    boolean selectedCache = Boolean.parseBoolean(params.get(CACHE_MODE_PARAM));
-    params.put(CATALOG_PATTERN_PARAM, "");
-
-    switch (arguments.size()) {
-      case 0 -> { }
-      case 1 -> {
-        String argument = arguments.getFirst();
-        if (selectedCache && isInputFile(argument)) {
-          params.put(INPUT_FILENAME, argument);
-        } else {
-          params.put(CATALOG_PATTERN_PARAM, argument);
-        }
-      }
-      case 2 -> {
-        if (!selectedCache) {
-          Log.fatal(IllegalArgumentException.class, "Unexpected argument: " + arguments.get(1));
-        }
-        String first = arguments.get(0);
-        String second = arguments.get(1);
-        boolean firstInput = isInputFile(first);
-        boolean secondInput = isInputFile(second);
-        if (firstInput == secondInput) {
-          Log.fatal(
-              IllegalArgumentException.class,
-              "Could not identify catalog pattern and input file from: " + first + ", " + second);
-        }
-        params.put(INPUT_FILENAME, firstInput ? first : second);
-        params.put(CATALOG_PATTERN_PARAM, firstInput ? second : first);
-      }
-      default -> Log.fatal(IllegalArgumentException.class, "Unexpected argument: " + arguments.get(2));
-    }
-  }
-
-  private static boolean fileExists(String value) {
-    return value != null && Files.exists(Path.of(value));
-  }
-
-  private static boolean isInputFile(String value) {
-    return InputType.supportsFilename(value);
   }
 
   private static boolean isParameterAssignment(String value) {

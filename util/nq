@@ -3,7 +3,7 @@ fatal() {
   echo "$1"; exit 1
 }
 DATAFILE="data/wikidata-companies.json"
-CACHEDIR="data/cache"
+STATE_DIR="data/state"
 
 ## cd "$(dirname "$0")"
 if [ "$1" = "" -o "$1" = "-h" ]; then
@@ -15,4 +15,8 @@ SCRIPTFILE="$1"
 [[ ! -f $SCRIPTFILE ]] && fatal "File [$SCRIPTFILE] not found"
 
 
-../target/nq --cache --cache-dir $CACHEDIR $DATAFILE $SCRIPTFILE
+../target/nq run \
+  --script-file "$SCRIPTFILE" \
+  --input-file "$DATAFILE" \
+  --cache \
+  --state-dir "$STATE_DIR"

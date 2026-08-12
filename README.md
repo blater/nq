@@ -23,7 +23,8 @@ echo '{
     {"id": 2, "name": "Bob", "active": false},
     {"id": 3, "name": "Charlie", "active": true}
   ]
-}' | nq "select name from users where active = 'true' order by id;"
+}' | nq run --script-text "select name from users where active = 'true' order by id;" \
+  --input-file - --input-format json
 ```
 
 ```json
@@ -39,7 +40,8 @@ echo '{
     {"id": 2, "name": "Bob", "active": false},
     {"id": 3, "name": "Charlie", "active": true}
    ]
-}' | nq "select count(*) into {summary.activeUsers} from users where active = 'true';" 
+}' | nq run --script-text "select count(*) into {summary.activeUsers} from users where active = 'true';" \
+  --input-file - --input-format json
 ```
 
 ```json
@@ -53,7 +55,7 @@ Use the --output or -o option to specify the output format.
 It supports markdown, csv, tsv, yaml, toml, xml, jsonl, and json. The default output format is json.
 
 ```bash
-nq "select id, name, city
+nq run --script-text "select id, name, city
     from customer
     order by id;" \
   --db h2 \
@@ -90,15 +92,20 @@ you can use all the usual SQL commands to insert/update/delete database data fro
 Insert:
 ```bash
 echo "person:{firstname:Barney, lastname:Rubble, city:London}" | \
-    nq "insert into person (firstname, lastname, city) values ({person.firstName}, {person.lastName}, {person.city});" 
+    nq run --script-text "insert into person (firstname, lastname, city) values ({person.firstName}, {person.lastName}, {person.city});" \
+      --input-file - --input-format yaml
 ```
 Update:
 ```bash
-echo "person:{id: 1, city:London}" | nq "update person set city = {person.city} where personid = {person.id};" -p mydb.properties
+echo "person:{id: 1, city:London}" | nq run \
+  --script-text "update person set city = {person.city} where personid = {person.id};" \
+  --input-file - --input-format yaml --properties mydb.properties
 ```
 Delete:
 ```bash
-echo "<person><id>1</id></person>" | nq -i xml  "delete from person where personid = {person.id};" 
+echo "<person><id>1</id></person>" | nq run \
+  --script-text "delete from person where personid = {person.id};" \
+  --input-file - --input-format xml
 ```
 
 
@@ -107,7 +114,7 @@ echo "<person><id>1</id></person>" | nq -i xml  "delete from person where person
 You can supply all the parameters on the command line
 
 ```bash
-nq myscript.nq \
+nq run --script-file myscript.nq \
   --db postgresql \
   --host db.example.com \
   --port 5432 \
@@ -118,7 +125,7 @@ nq myscript.nq \
 ```
 or supply the name of a properties file containing the connection details
 ```bash
-nq myscript.nq -p mydatabase.properties
+nq run --script-file myscript.nq --properties mydatabase.properties
 ```
 The [JDBC guide](docs/user-manual.md#jdbc-parameters) covers this in detail.
 
@@ -253,8 +260,8 @@ An insert can write database-assigned values back into its input hierarchy.
 This XML insert maps the generated key into `{person.id}`:
 
 ```bash
-nq --input xml \
-  "output xml;
+nq run --input-file - --input-format xml \
+  --script-text "output xml;
 
    insert into person (firstname, lastname, city)
    values ({person.firstName}, {person.lastName}, {person.city})
@@ -296,14 +303,14 @@ NQ reads these input formats:
 
 | Format | Extensions or selection |
 | --- | --- |
-| JSON | `.json` or `--input json` |
-| JSON Lines | `.jsonl` or `--input jsonl` |
-| YAML | `.yaml`, `.yml`, or `--input yaml` |
-| TOML | `.toml` or `--input toml` |
-| XML | `.xml` or `--input xml` |
-| CSV | `.csv` or `--input csv` |
-| TSV | `.tsv` or `--input tsv` |
-| Parquet | `.parquet` or `--input parquet` |
+| JSON | `.json` or `--input-format json` for stdin |
+| JSON Lines | `.jsonl` or `--input-format jsonl` for stdin |
+| YAML | `.yaml`, `.yml`, or `--input-format yaml` for stdin |
+| TOML | `.toml` or `--input-format toml` for stdin |
+| XML | `.xml` or `--input-format xml` for stdin |
+| CSV | `.csv` or `--input-format csv` for stdin |
+| TSV | `.tsv` or `--input-format tsv` for stdin |
+| Parquet | `.parquet` or `--input-format parquet` for stdin |
 
 Output is available as JSON, JSON Lines, YAML, TOML, XML, CSV, TSV, or Markdown. JSON is
 the default.
@@ -312,19 +319,19 @@ A file supplied without SQL is converted directly and does not create a
 database:
 
 ```bash
-nq customers.xml --output json
-nq customers.json --output yaml
-nq customers.csv --output markdown
+nq convert --input-file customers.xml --output json
+nq convert --input-file customers.json --output yaml
+nq convert --input-file customers.csv --output markdown
 ```
 
 A query and input file use a temporary local database for that command. Use
-`--cache` or `-c` explicitly only when the imported data should remain
-available to later NQ commands:
+`cache load` explicitly only when imported data should remain available to
+later NQ commands:
 
 ```bash
-nq --cache customers.json
-nq catalog
-nq "select id, name from customers order by id;"
+nq cache load --input-file customers.json
+nq catalog --pattern '*'
+nq run --script-text "select id, name from customers order by id;"
 ```
 
 The [cache reference](docs/user-manual.md#querying-input-documents-temporary-and-persistent-h2)

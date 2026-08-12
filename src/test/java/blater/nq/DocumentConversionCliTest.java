@@ -25,7 +25,7 @@ class DocumentConversionCliTest {
         <customer id="7"><name>Alice</name></customer>
         """);
 
-    String output = captureStdout(() -> Main.main(input.toString()));
+    String output = captureStdout(() -> Main.main("convert", "--input-file", input.toString()));
 
     assertEquals("""
         {"customer":{"id":"7","name":"Alice"}}
@@ -38,7 +38,8 @@ class DocumentConversionCliTest {
         {"customer":{"id":7,"name":"Alice"}}
         """);
 
-    String output = captureStdout(() -> Main.main(input.toString(), "-o", "yaml"));
+    String output = captureStdout(() -> Main.main(
+        "convert", "--input-file", input.toString(), "-o", "yaml"));
 
     assertEquals("""
         customer:
@@ -54,7 +55,8 @@ class DocumentConversionCliTest {
         {"customer":{"id":7,"name":"Alice"}}
         """);
 
-    String output = captureStdout(() -> Main.main(input.toString(), "--output", "xml"));
+    String output = captureStdout(() -> Main.main(
+        "convert", "--input-file", input.toString(), "--output", "xml"));
 
     assertTrue(output.contains("<customer>"));
     assertTrue(output.contains("<id>7</id>"));
@@ -69,7 +71,8 @@ class DocumentConversionCliTest {
         2,Bob
         """);
 
-    String output = captureStdout(() -> Main.main(input.toString(), "--output", "markdown"));
+    String output = captureStdout(() -> Main.main(
+        "convert", "--input-file", input.toString(), "--output", "markdown"));
 
     assertEquals(4, output.lines().count());
     assertTrue(output.contains("id"));
@@ -82,7 +85,8 @@ class DocumentConversionCliTest {
   void tsvConvertsDirectlyToTsv() throws Exception {
     Path input = write("customers.tsv", "id\tname\n1\tAlice\n2\tBob\n");
 
-    String output = captureStdout(() -> Main.main(input.toString(), "--output", "tsv"));
+    String output = captureStdout(() -> Main.main(
+        "convert", "--input-file", input.toString(), "--output", "tsv"));
 
     assertEquals("id\tname\n1\tAlice\n2\tBob\n", output);
   }
@@ -97,7 +101,8 @@ class DocumentConversionCliTest {
 
     assertEquals(
         "{\"customer\":{\"id\":\"7\",\"name\":\"Alice\"}}\n",
-        captureStdout(() -> Main.main(toml.toString(), "--output", "json")));
+        captureStdout(() -> Main.main(
+            "convert", "--input-file", toml.toString(), "--output", "json")));
 
     Path json = write("customer-for-toml.json", """
         {"customer":{"id":7,"name":"Alice"}}
@@ -106,7 +111,8 @@ class DocumentConversionCliTest {
         [customer]
         id = "7"
         name = "Alice"
-        """, captureStdout(() -> Main.main(json.toString(), "--output", "toml")));
+        """, captureStdout(() -> Main.main(
+            "convert", "--input-file", json.toString(), "--output", "toml")));
   }
 
   @Test
@@ -116,8 +122,8 @@ class DocumentConversionCliTest {
         """);
 
     String output = captureStdout(() -> Main.main(
-        input.toString(),
-        "select id into {result.id} from customer;",
+        "run", "--input-file", input.toString(),
+        "--script-text", "select id into {result.id} from customer;",
         "--output", "json"));
 
     assertEquals("""
@@ -132,7 +138,8 @@ class DocumentConversionCliTest {
     try (InputStream input = new ByteArrayInputStream(
         "customer:\n  id: 7\n  name: Alice\n".getBytes(StandardCharsets.UTF_8))) {
       System.setIn(input);
-      String output = captureStdout(() -> Main.main("-i", "yaml", "-o", "json"));
+      String output = captureStdout(() -> Main.main(
+          "convert", "--input-file", "-", "--input-format", "yaml", "-o", "json"));
       assertEquals("""
           {"customer":{"id":"7","name":"Alice"}}
           """, output);

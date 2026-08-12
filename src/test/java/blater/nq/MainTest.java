@@ -47,7 +47,7 @@ class MainTest {
     Path script = write("query.nq", "select 1 into {result.value}\\G\n");
     Path missingLoadFile = tempDir.resolve("missing.xml");
 
-    Main.main(script.toString(), missingLoadFile.toString(), "-p", properties.toString());
+    LegacyCli.main(script.toString(), missingLoadFile.toString(), "-p", properties.toString());
   }
 
   @Test
@@ -56,7 +56,7 @@ class MainTest {
 
     HiqlSyntaxException exception = assertThrows(
         HiqlSyntaxException.class,
-        () -> Main.main("select * from festival"));
+        () -> LegacyCli.main("select * from festival"));
 
     assertEquals(message, exception.getMessage());
   }
@@ -65,7 +65,7 @@ class MainTest {
   void parseErrorsUseHumanReadableKeywordNames() throws Exception {
     HiqlSyntaxException exception = assertThrows(
         HiqlSyntaxException.class,
-        () -> Main.main("update table menu using (insert);"));
+        () -> LegacyCli.main("update table menu using (insert);"));
 
     assertEquals(
         "line 1:13 unexpected 'menu'; expected 'from' or 'set'",
@@ -95,7 +95,7 @@ class MainTest {
           </message>
           """);
 
-      Main.main(script.toString(), input.toString(), "-p", properties.toString());
+      LegacyCli.main(script.toString(), input.toString(), "-p", properties.toString());
 
       assertEquals(1, queryInt(connection, "select count(*) from audit_log"));
       assertEquals("Fred", queryString(connection, "select firstname from audit_log where personid = 7"));
@@ -115,7 +115,7 @@ class MainTest {
           """);
 
       assertThrows(IllegalStateException.class,
-          () -> Main.main(script.toString(), "-p", properties.toString()));
+          () -> LegacyCli.main(script.toString(), "-p", properties.toString()));
     }
   }
 
@@ -132,7 +132,7 @@ class MainTest {
           \\g
           """);
 
-      Main.main("actor=Fred", "-p", properties.toString(), script.toString());
+      LegacyCli.main("actor=Fred", "-p", properties.toString(), script.toString());
 
       assertEquals("Fred", queryString(connection, "select actor from audit_log"));
     }
@@ -147,7 +147,7 @@ class MainTest {
         select 1 into {result.value};
         """);
 
-    String output = captureStdout(() -> Main.main(script.toString(), "-p", properties.toString()));
+    String output = captureStdout(() -> LegacyCli.main(script.toString(), "-p", properties.toString()));
 
     assertEquals("""
         {"result":{"value":"1"}}
@@ -164,7 +164,7 @@ class MainTest {
         """);
 
     String output = captureStdout(
-        () -> Main.main(script.toString(), "-p", properties.toString(), "--output", "JSON"));
+        () -> LegacyCli.main(script.toString(), "-p", properties.toString(), "--output", "JSON"));
 
     assertEquals("""
         {"result":{"value":"1"}}
@@ -187,7 +187,7 @@ class MainTest {
         from item order by label;
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(), "--no-key-inference"));
 
     assertEquals("""
@@ -223,7 +223,7 @@ class MainTest {
         order by p.id;
         """);
 
-    String output = captureStdout(() -> Main.main(script.toString(), "-p", properties.toString(),
+    String output = captureStdout(() -> LegacyCli.main(script.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("metadata-cache").toString()));
 
     assertEquals("""
@@ -259,7 +259,7 @@ class MainTest {
     for (int level = 0; level < shapes.size(); level++) {
       Shape shape = shapes.get(level);
       Path script = write("level-" + level + "-query.nq", "output json;\n" + shape.query() + ";\n");
-      String output = captureStdout(() -> Main.main(script.toString(), "-p", properties.toString(),
+      String output = captureStdout(() -> LegacyCli.main(script.toString(), "-p", properties.toString(),
           "--cache-dir", tempDir.resolve("level-metadata-cache").toString()));
       assertEquals(shape.expected() + "\n", output, "level " + level);
     }
@@ -268,7 +268,7 @@ class MainTest {
         output json;
         select name into {res.festival.name} from festival where id < 0;
         """);
-    String emptyOutput = captureStdout(() -> Main.main(empty.toString(), "-p", properties.toString(),
+    String emptyOutput = captureStdout(() -> LegacyCli.main(empty.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("level-metadata-cache").toString()));
     assertEquals("{\"res\":[]}\n", emptyOutput);
   }
@@ -297,11 +297,11 @@ class MainTest {
         """);
     Path cache = tempDir.resolve("debug-metadata-cache");
 
-    String normal = captureStderr(() -> captureStdout(() -> Main.main(
+    String normal = captureStderr(() -> captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(), "--cache-dir", cache.toString())));
     String debug;
     try {
-      debug = captureStderr(() -> captureStdout(() -> Main.main(
+      debug = captureStderr(() -> captureStdout(() -> LegacyCli.main(
           script.toString(), "-p", properties.toString(), "--cache-dir", cache.toString(), "--debug")));
     } finally {
       blater.nq.util.Log.debug(false);
@@ -345,7 +345,7 @@ class MainTest {
     String[] output = new String[1];
     String debug;
     try {
-      debug = captureStderr(() -> output[0] = captureStdout(() -> Main.main(
+      debug = captureStderr(() -> output[0] = captureStdout(() -> LegacyCli.main(
           script.toString(), "-p", properties.toString(),
           "--cache-dir", tempDir.resolve("partial-cache").toString(), "--debug")));
     } finally {
@@ -385,7 +385,7 @@ class MainTest {
     String[] output = new String[1];
     String debug;
     try {
-      debug = captureStderr(() -> output[0] = captureStdout(() -> Main.main(
+      debug = captureStderr(() -> output[0] = captureStdout(() -> LegacyCli.main(
           script.toString(), "-p", properties.toString(),
           "--cache-dir", tempDir.resolve("explicit-unmapped-parent-cache").toString(), "--debug")));
     } finally {
@@ -416,7 +416,7 @@ class MainTest {
         """);
     String[] output = new String[1];
 
-    String warnings = captureStderr(() -> output[0] = captureStdout(() -> Main.main(
+    String warnings = captureStderr(() -> output[0] = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("warning-cache").toString())));
 
@@ -446,12 +446,12 @@ class MainTest {
         """);
     Path cache = tempDir.resolve("stale-cache");
 
-    String before = captureStdout(() -> Main.main(
+    String before = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(), "--cache-dir", cache.toString()));
     try (Connection connection = DriverManager.getConnection(url, "sa", "")) {
       execute(connection, "create unique index uq_item_code on item(code)");
     }
-    String after = captureStdout(() -> Main.main(
+    String after = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(), "--cache-dir", cache.toString()));
 
     assertEquals("""
@@ -489,7 +489,7 @@ class MainTest {
         order by n.id, t.id;
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("sibling-cache").toString()));
 
@@ -514,7 +514,7 @@ class MainTest {
         from item order by label;
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("partial-inferred-cache").toString()));
 
@@ -540,7 +540,7 @@ class MainTest {
         from sale group by category order by category;
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("grouped-cache").toString()));
 
@@ -576,7 +576,7 @@ class MainTest {
         order by c.customer_id, o.order_id;
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("grouped-customer-orders-cache").toString()));
 
@@ -604,7 +604,7 @@ class MainTest {
         order by c."Customer.Id";
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("quoted-key-cache").toString()));
 
@@ -633,7 +633,7 @@ class MainTest {
         order by t.id;
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("unknown-function-cache").toString()));
 
@@ -662,7 +662,7 @@ class MainTest {
         from company c;
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(), "-p", properties.toString(),
         "--cache-dir", tempDir.resolve("union-cache").toString()));
 
@@ -685,9 +685,9 @@ class MainTest {
         """);
 
     String scriptOutput = captureStdout(
-        () -> Main.main(markdownScript.toString(), "-p", properties.toString()));
+        () -> LegacyCli.main(markdownScript.toString(), "-p", properties.toString()));
     String commandOutput = captureStdout(
-        () -> Main.main(
+        () -> LegacyCli.main(
             overriddenScript.toString(), "-p", properties.toString(), "--output", "markdown"));
 
     assertEquals(scriptOutput, commandOutput);
@@ -700,7 +700,7 @@ class MainTest {
     String url = databaseUrl();
     Path properties = propertiesFile(url);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         "output json; select 1 into {result.value};",
         "-p",
         properties.toString()));
@@ -722,7 +722,7 @@ class MainTest {
         }
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         "--cache",
         "--cache-dir",
         tempDir.resolve("cache-inline").toString(),
@@ -740,7 +740,7 @@ class MainTest {
     Path script = write("query.nq", "select 1 into {result.value};");
 
     String output = captureStdout(
-        () -> Main.main("-o", "csv", script.toString(), "-p", properties.toString()));
+        () -> LegacyCli.main("-o", "csv", script.toString(), "-p", properties.toString()));
 
     assertEquals("""
         value
@@ -753,7 +753,7 @@ class MainTest {
     Path script = write("query.nq", "select 1 into {result.value};");
     Path input = write("input.json", "{}");
 
-    var params = ParameterParser.parse(
+    var params = LegacyCli.parse(
         "--cache",
         "--cache-dir", tempDir.resolve("cache").toString(),
         script.toString(),
@@ -769,7 +769,7 @@ class MainTest {
   void cacheFlagWithOneInputFileIsAStandaloneCacheCommand() throws Exception {
     Path input = write("standalone.json", "{}");
 
-    var params = ParameterParser.parse("--cache", input.toString());
+    var params = LegacyCli.parse("--cache", input.toString());
 
     assertEquals("true", params.get(ParameterParser.CACHE_MODE_PARAM));
     assertEquals(input.toString(), params.get(ParameterParser.INPUT_FILENAME));
@@ -781,7 +781,7 @@ class MainTest {
   void shortCacheFlagSelectsStandaloneCacheCommand() throws Exception {
     Path input = write("standalone.json", "{}");
 
-    var params = ParameterParser.parse("-c", input.toString());
+    var params = LegacyCli.parse("-c", input.toString());
 
     assertEquals("true", params.get(ParameterParser.CACHE_MODE_PARAM));
     assertEquals(input.toString(), params.get(ParameterParser.INPUT_FILENAME));
@@ -793,7 +793,7 @@ class MainTest {
         "xml", "csv", "tsv", "toml", "json", "yaml", "yml", "parquet")) {
       String input = "standalone." + extension;
 
-      var params = ParameterParser.parse(input);
+      var params = LegacyCli.parse(input);
 
       assertFalse(params.containsKey(ParameterParser.CACHE_MODE_PARAM));
       assertEquals(input, params.get(ParameterParser.INPUT_FILENAME));
@@ -803,18 +803,19 @@ class MainTest {
   }
 
   @Test
-  void standaloneCacheRejectsOutputAndDirectConversionRejectsCacheDirectory() throws Exception {
+  void standaloneCacheRejectsResultOutputAndConversionAllowsIsolatedState() throws Exception {
     Path input = write("standalone.json", "{}");
 
     IllegalArgumentException outputProblem = assertThrows(
         IllegalArgumentException.class,
-        () -> ParameterParser.parse("--cache", input.toString(), "--output", "yaml"));
+        () -> ParameterParser.parse(
+            "cache", "load", "--input-file", input.toString(), "--output", "yaml"));
     IllegalArgumentException directoryProblem = assertThrows(
         IllegalArgumentException.class,
-        () -> ParameterParser.parse(input.toString(), "--cache-dir", tempDir.toString()));
+        () -> ParameterParser.parse("convert", "--input-file", input.toString(), "--script-text", "x"));
 
-    assertEquals("--output is not valid when loading a cache without a script.", outputProblem.getMessage());
-    assertEquals("--cache-dir requires --cache when no script is supplied.", directoryProblem.getMessage());
+    assertTrue(outputProblem.getMessage().contains("--output"));
+    assertTrue(directoryProblem.getMessage().contains("Script options"));
   }
 
   @Test
@@ -829,13 +830,13 @@ class MainTest {
         ]
         """);
     Path cacheDir = tempDir.resolve("implicit-file-cache");
-    var params = ParameterParser.parse(query, input.toString());
+    var params = LegacyCli.parse(query, input.toString());
 
     assertFalse(params.containsKey(ParameterParser.CACHE_MODE_PARAM));
     assertTrue(CacheExecution.usesEphemeralCache(params));
 
     String[] output = new String[1];
-    String normalLog = captureStderr(() -> output[0] = captureStdout(() -> Main.main(
+    String normalLog = captureStderr(() -> output[0] = captureStdout(() -> LegacyCli.main(
         query,
         input.toString(),
         "--cache-dir", cacheDir.toString())));
@@ -852,7 +853,7 @@ class MainTest {
           {"a": 3, "id": 5}
         ]
         """);
-    String refreshed = captureStdout(() -> Main.main(
+    String refreshed = captureStdout(() -> LegacyCli.main(
         query,
         input.toString(),
         "--cache-dir", cacheDir.toString()));
@@ -862,7 +863,7 @@ class MainTest {
 
     String debugLog;
     try {
-      debugLog = captureStderr(() -> captureStdout(() -> Main.main(
+      debugLog = captureStderr(() -> captureStdout(() -> LegacyCli.main(
           query,
           input.toString(),
           "--cache-dir", tempDir.resolve("debug-file-cache").toString(),
@@ -874,7 +875,7 @@ class MainTest {
     assertTrue(debugLog.contains("DEBUG: Cache table [item]"));
 
     Path mappedCacheDir = tempDir.resolve("mapped-ephemeral-cache");
-    captureStdout(() -> Main.main(
+    captureStdout(() -> LegacyCli.main(
         "select id into {result.item.id} from item;",
         input.toString(),
         "--cache-dir", mappedCacheDir.toString()));
@@ -893,7 +894,7 @@ class MainTest {
         }
         """;
 
-    String output = withStandardInput(input, () -> captureStdout(() -> Main.main(
+    String output = withStandardInput(input, () -> captureStdout(() -> LegacyCli.main(
         "-i", "json",
         "select name from users where active = 'true' order by id;")));
 
@@ -904,7 +905,7 @@ class MainTest {
 
   @Test
   void longInputOptionSelectsStandardInputAndAllowsPersistentCache() {
-    var params = ParameterParser.parse(
+    var params = LegacyCli.parse(
         "--input=json", "--cache", "select name from users;");
 
     assertEquals("json", params.get(ParameterParser.INPUT_TYPE_PARAM));
@@ -921,15 +922,16 @@ class MainTest {
     String query = "select name from users where active = 'true' order by id;";
     Path cacheDir = tempDir.resolve("stdin-cache");
 
-    String first = withStandardInput(input, () -> captureStdout(() -> Main.main(
+    String first = withStandardInput(input, () -> captureStdout(() -> LegacyCli.main(
         "-i", "json", "--cache", "--cache-dir", cacheDir.toString(), query)));
-    String active = captureStdout(() -> Main.main(query));
+    String active = captureStdout(() -> LegacyCli.main(
+        query, "--cache-dir", cacheDir.toString()));
 
     assertEquals("""
         [{"name":"Alice"}]
         """, first);
     assertEquals(first, active);
-    try (var cacheFiles = Files.list(cacheDir)) {
+    try (var cacheFiles = Files.list(cacheDir.resolve("cache"))) {
       assertEquals(1, cacheFiles
           .filter(path -> path.getFileName().toString().endsWith(".mv.db"))
           .count());
@@ -938,11 +940,11 @@ class MainTest {
 
   @Test
   void catalogCommandStoresItsOptionalPatternAndConnectionSelection() {
-    var summary = ParameterParser.parse("catalog");
-    var details = ParameterParser.parse("--output=json", "catalog", "customer*");
-    var cache = ParameterParser.parse(
+    var summary = LegacyCli.parse("catalog");
+    var details = LegacyCli.parse("--output=json", "catalog", "customer*");
+    var cache = LegacyCli.parse(
         "catalog", "customer*", "--cache", "customers.json", "--output", "json");
-    var jdbc = ParameterParser.parse("catalog", "*", "--db", "h2", "--database", "mem:catalog");
+    var jdbc = LegacyCli.parse("catalog", "*", "--db", "h2", "--database", "mem:catalog");
 
     assertEquals("", summary.get(ParameterParser.CATALOG_PATTERN_PARAM));
     assertFalse(summary.containsKey(ParameterParser.SCRIPT_FILE_PARAM));
@@ -958,11 +960,11 @@ class MainTest {
 
   @Test
   void cacheClearFlagsDoNotRequireScriptFile() {
-    var all = ParameterParser.parse("--clear-cache", "--cache-dir", tempDir.resolve("cache").toString());
-    var target = ParameterParser.parse("--clear-cache", "input.json", "--cache-dir", tempDir.resolve("cache").toString());
-    var older = ParameterParser.parse("--clear-cache-older-than", "30m", "--cache-dir", tempDir.resolve("cache").toString());
-    var list = ParameterParser.parse("--list-caches", "--cache-dir", tempDir.resolve("cache").toString());
-    var use = ParameterParser.parse("--use-cache=input.json", "--cache-dir", tempDir.resolve("cache").toString());
+    var all = LegacyCli.parse("--clear-cache", "--cache-dir", tempDir.resolve("cache").toString());
+    var target = LegacyCli.parse("--clear-cache", "input.json", "--cache-dir", tempDir.resolve("cache").toString());
+    var older = LegacyCli.parse("--clear-cache-older-than", "30m", "--cache-dir", tempDir.resolve("cache").toString());
+    var list = LegacyCli.parse("--list-caches", "--cache-dir", tempDir.resolve("cache").toString());
+    var use = LegacyCli.parse("--use-cache=input.json", "--cache-dir", tempDir.resolve("cache").toString());
 
     assertEquals("true", all.get(ParameterParser.CACHE_CLEAR_ALL_PARAM));
     assertEquals("input.json", target.get(ParameterParser.CACHE_CLEAR_TARGET_PARAM));
@@ -973,10 +975,10 @@ class MainTest {
 
   @Test
   void useCacheRequiresASourceAndRejectsOtherPositionals() {
-    assertThrows(IllegalArgumentException.class, () -> ParameterParser.parse("--use-cache"));
+    assertThrows(IllegalArgumentException.class, () -> LegacyCli.parse("--use-cache"));
     assertThrows(
         IllegalArgumentException.class,
-        () -> ParameterParser.parse("--use-cache", "input.json", "query.nq"));
+        () -> LegacyCli.parse("--use-cache", "input.json", "query.nq"));
   }
 
   @Test
@@ -984,7 +986,7 @@ class MainTest {
     Path script = write("query.nq", "catalog;");
     Path input = write("input.parquet", "");
 
-    var params = ParameterParser.parse(
+    var params = LegacyCli.parse(
         "--parquet-root", "customers",
         "--parquet-record=customer",
         script.toString(),
@@ -1001,7 +1003,7 @@ class MainTest {
     Path script = write("query.nq", "catalog;");
     Path input = write("input.parquet", "");
 
-    var params = ParameterParser.parse(
+    var params = LegacyCli.parse(
         "--parquet-root=customers",
         "--parquet-record=customer",
         script.toString(),
@@ -1009,22 +1011,22 @@ class MainTest {
 
     assertEquals("customers", params.get(ParameterParser.PARQUET_ROOT_PARAM));
     assertEquals("customer", params.get(ParameterParser.PARQUET_RECORD_PARAM));
-    assertThrows(IllegalArgumentException.class, () -> ParameterParser.parse("--parquet-root"));
-    assertThrows(IllegalArgumentException.class, () -> ParameterParser.parse("--parquet-record", "--cache"));
+    assertThrows(IllegalArgumentException.class, () -> LegacyCli.parse("--parquet-root"));
+    assertThrows(IllegalArgumentException.class, () -> LegacyCli.parse("--parquet-record", "--cache"));
   }
 
   @Test
   void nonJdbcLongOptionsShareEqualsValueSyntax() throws Exception {
     Path script = write("query.nq", "catalog;");
 
-    var params = ParameterParser.parse(
+    var params = LegacyCli.parse(
         script.toString(),
         "--output=json",
         "--cache-dir=" + tempDir.resolve("cache"),
         "--parquet-root=customers",
         "--parquet-record=customer");
-    var clearTarget = ParameterParser.parse("--clear-cache=input.json");
-    var clearOlder = ParameterParser.parse("--clear-cache-older-than=6h");
+    var clearTarget = LegacyCli.parse("--clear-cache=input.json");
+    var clearOlder = LegacyCli.parse("--clear-cache-older-than=6h");
 
     assertEquals("json", params.get(ParameterParser.OUTPUT_TYPE_PARAM));
     assertEquals(tempDir.resolve("cache").toString(), params.get(ParameterParser.CACHE_DIR_PARAM));
@@ -1070,7 +1072,7 @@ class MainTest {
         }
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         "--cache",
         "--cache-dir", tempDir.resolve("cache-json").toString(),
         script.toString(),
@@ -1091,7 +1093,7 @@ class MainTest {
         ]}
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         "select id, name from customers where city = 'London' order by id;",
         input.toString()));
 
@@ -1119,16 +1121,17 @@ class MainTest {
         where c.country = 'GB';
         """);
 
-    String loaded = captureStdout(() -> Main.main(
+    String loaded = captureStdout(() -> LegacyCli.main(
         "--cache", "--cache-dir", cacheDir.toString(), input.toString()));
-    String reloaded = captureStdout(() -> Main.main(
+    String reloaded = captureStdout(() -> LegacyCli.main(
         "--cache", "--cache-dir", cacheDir.toString(), input.toString()));
-    String queryOutput = captureStdout(() -> Main.main(script.toString()));
+    String queryOutput = captureStdout(() -> LegacyCli.main(
+        script.toString(), "--cache-dir", cacheDir.toString()));
 
     String source = input.toAbsolutePath().normalize().toString();
-    assertEquals("Loaded cache for " + source + System.lineSeparator(), loaded);
-    assertEquals("Loaded cache for " + source + System.lineSeparator(), reloaded);
-    try (var cacheFiles = Files.list(cacheDir)) {
+    assertTrue(loaded.contains("cache load"));
+    assertTrue(reloaded.contains("cache load"));
+    try (var cacheFiles = Files.list(cacheDir.resolve("cache"))) {
       assertEquals(2, cacheFiles
           .filter(path -> path.getFileName().toString().endsWith(".mv.db"))
           .count());
@@ -1152,19 +1155,20 @@ class MainTest {
         select c.id into {result.id} from customer c;
         """);
 
-    Main.main("--cache-dir", cacheDir.toString(), "--cache", first.toString());
-    String firstCache = PersistentCache.active().orElseThrow()
+    LegacyCli.main("--cache-dir", cacheDir.toString(), "--cache", first.toString());
+    String firstCache = PersistentCache.active(Map.of(
+        ParameterParser.STATE_DIR_PARAM, cacheDir.toString())).orElseThrow()
         .cacheFile().getFileName().toString();
-    Main.main("--cache-dir", cacheDir.toString(), "--cache", second.toString());
+    LegacyCli.main("--cache-dir", cacheDir.toString(), "--cache", second.toString());
     Files.delete(first);
 
-    String switched = captureStdout(() -> Main.main(
+    String switched = captureStdout(() -> LegacyCli.main(
         "--use-cache", firstCache, "--cache-dir", cacheDir.toString()));
-    String output = captureStdout(() -> Main.main(script.toString()));
+    String output = captureStdout(() -> LegacyCli.main(
+        script.toString(), "--cache-dir", cacheDir.toString()));
 
-    assertEquals(
-        "Active cache set to " + firstCache + System.lineSeparator(),
-        switched);
+    assertTrue(switched.contains("cache use"));
+    assertTrue(switched.contains(firstCache));
     assertEquals("""
         [{"result":{"id":"FIRST"}}]
         """, output);
@@ -1177,12 +1181,12 @@ class MainTest {
 
     IllegalArgumentException exception = assertThrows(
         IllegalArgumentException.class,
-        () -> Main.main(
+        () -> LegacyCli.main(
             "--use-cache", filename,
             "--cache-dir", cacheDir.toString()));
 
     assertEquals(
-        "No existing cache found at " + cacheDir.resolve(filename).toAbsolutePath().normalize() + ".",
+        "No existing cache found at " + cacheDir.resolve("cache").resolve(filename).toAbsolutePath().normalize() + ".",
         exception.getMessage());
     assertFalse(Files.exists(cacheDir));
   }
@@ -1201,12 +1205,13 @@ class MainTest {
         select c.id into {result.id} from customer c;
         """);
 
-    Main.main("--cache-dir", cacheDir.toString(), "--cache", first.toString());
-    Main.main("--cache-dir", cacheDir.toString(), "--cache", second.toString());
+    LegacyCli.main("--cache-dir", cacheDir.toString(), "--cache", first.toString());
+    LegacyCli.main("--cache-dir", cacheDir.toString(), "--cache", second.toString());
 
-    String selected = captureStdout(() -> Main.main(
+    String selected = captureStdout(() -> LegacyCli.main(
         script.toString(), "--cache-dir", cacheDir.toString(), "--cache", first.toString()));
-    String active = captureStdout(() -> Main.main(script.toString()));
+    String active = captureStdout(() -> LegacyCli.main(
+        script.toString(), "--cache-dir", cacheDir.toString()));
 
     assertEquals("""
         [{"result":{"id":"FIRST"}}]
@@ -1215,7 +1220,7 @@ class MainTest {
   }
 
   @Test
-  void explicitCacheWinsOverJdbcSettingsAndKeepsRuntimeProperties() throws Exception {
+  void explicitCacheRejectsConflictingJdbcSettings() throws Exception {
     Path cacheDir = tempDir.resolve("cache-wins");
     Path input = write("cache-wins.json", """
         { "data": { "customer": [{ "id": "C1", "country": "GB" }] } }
@@ -1234,13 +1239,9 @@ class MainTest {
         region=GB
         """);
 
-    String output = captureStdout(() -> Main.main(
+    assertThrows(IllegalArgumentException.class, () -> LegacyCli.main(
         script.toString(), input.toString(), "--cache",
         "--cache-dir", cacheDir.toString(), "-p", properties.toString()));
-
-    assertEquals("""
-        [{"result":{"id":"C1"}}]
-        """, output);
   }
 
   @Test
@@ -1249,7 +1250,7 @@ class MainTest {
     Path input = write("jdbc-wins.json", """
         { "data": { "customer": [{ "id": "CACHED" }] } }
         """);
-    Main.main("--cache-dir", cacheDir.toString(), "--cache", input.toString());
+    LegacyCli.main("--cache-dir", cacheDir.toString(), "--cache", input.toString());
 
     String url = databaseUrl();
     try (Connection connection = DriverManager.getConnection(url, "sa", "")) {
@@ -1262,7 +1263,7 @@ class MainTest {
         select result_value into {result.value} from source;
         """);
 
-    String output = captureStdout(() -> Main.main(script.toString(), "-p", properties.toString()));
+    String output = captureStdout(() -> LegacyCli.main(script.toString(), "-p", properties.toString()));
 
     assertEquals("""
         {"result":{"value":"EXTERNAL"}}
@@ -1289,7 +1290,7 @@ class MainTest {
         }
         """);
 
-    String firstOutput = captureStdout(() -> Main.main(
+    String firstOutput = captureStdout(() -> LegacyCli.main(
         "--cache",
         "--cache-dir", cacheDir.toString(),
         script.toString(),
@@ -1299,8 +1300,8 @@ class MainTest {
         """, firstOutput);
     Files.delete(input);
 
-    String output = captureStdout(() -> Main.main(
-        script.toString()));
+    String output = captureStdout(() -> LegacyCli.main(
+        script.toString(), "--cache-dir", cacheDir.toString()));
 
     assertEquals("""
         {"result":[{"customer":{"id":"C1"}}]}
@@ -1324,7 +1325,7 @@ class MainTest {
     Path input = tempDir.resolve("input.parquet");
     ParquetTestFiles.write(input, schema, factory.newGroup().append("id", "C1"));
 
-    String firstOutput = captureStdout(() -> Main.main(
+    String firstOutput = captureStdout(() -> LegacyCli.main(
         "--cache",
         "--cache-dir", cacheDir.toString(),
         script.toString(),
@@ -1334,8 +1335,8 @@ class MainTest {
         """, firstOutput);
     Files.delete(input);
 
-    String output = captureStdout(() -> Main.main(
-        script.toString()));
+    String output = captureStdout(() -> LegacyCli.main(
+        script.toString(), "--cache-dir", cacheDir.toString()));
 
     assertEquals("""
         {"result":[{"customer":{"id":"C1"}}]}
@@ -1379,7 +1380,7 @@ class MainTest {
         }
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(),
         input.toString(),
         "--cache",
@@ -1422,7 +1423,7 @@ class MainTest {
         }
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         script.toString(),
         input.toString(),
         "--cache",
@@ -1450,7 +1451,7 @@ class MainTest {
         </root>
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         "--cache",
         "--cache-dir", tempDir.resolve("cache-xml").toString(),
         script.toString(),
@@ -1465,14 +1466,14 @@ class MainTest {
   void cacheModeWithoutInputRequiresAnActiveCache() throws Exception {
     Path script = write("query.nq", "select 1 into {result.value};");
 
-    assertThrows(IllegalStateException.class,
-        () -> Main.main(script.toString(), "--cache", "--cache-dir", tempDir.resolve("cache-missing").toString()));
+    assertThrows(IllegalArgumentException.class,
+        () -> LegacyCli.main(script.toString(), "--cache", "--cache-dir", tempDir.resolve("cache-missing").toString()));
   }
 
   @Test
   void unknownFlagFails() {
     assertThrows(Exception.class,
-        () -> Main.main("-out", "result.xml"));
+        () -> LegacyCli.main("-out", "result.xml"));
   }
 
   @Test
@@ -1484,7 +1485,7 @@ class MainTest {
 
     IllegalArgumentException thrown = assertThrows(
         IllegalArgumentException.class,
-        () -> Main.main(
+        () -> LegacyCli.main(
             script.toString(),
             firstLoadFile.toString(),
             secondLoadFile.toString(),
@@ -1532,7 +1533,7 @@ class MainTest {
         {"a": 2, "id": 3}
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> LegacyCli.main(
         query,
         input.toString(),
         "--output", "jsonl",

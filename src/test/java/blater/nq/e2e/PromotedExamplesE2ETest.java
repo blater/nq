@@ -22,8 +22,8 @@ class PromotedExamplesE2ETest {
   @Test
   void readmeFirstQueryMatchesDocumentedOutput() throws Exception {
     String output = captureStdout(() -> Main.main(
-        "select id, name from customers where city = 'London' order by id;",
-        "docs/examples/customers.json"));
+        "run", "--script-text", "select id, name from customers where city = 'London' order by id;",
+        "--input-file", "docs/examples/customers.json"));
 
     assertEquals("[{\"id\":\"1\",\"name\":\"Alice\"},{\"id\":\"3\",\"name\":\"Eva\"}]\n", output);
   }
@@ -33,8 +33,8 @@ class PromotedExamplesE2ETest {
     String expected = "{\"result\":{\"region\":[{\"country\":\"GB\",\"customerCount\":\"2\"},{\"country\":\"US\",\"customerCount\":\"4\"}]}}\n";
     for (String extension : new String[]{"json", "yaml", "xml"}) {
       String output = captureStdout(() -> Main.main(
-          "docs/examples/identity-country-counts.nq",
-          "docs/examples/identity-customers." + extension));
+          "run", "--script-file", "docs/examples/identity-country-counts.nq",
+          "--input-file", "docs/examples/identity-customers." + extension));
       assertEquals(expected, output, extension);
     }
   }
@@ -42,13 +42,13 @@ class PromotedExamplesE2ETest {
   @Test
   void jqComparisonAndDatabaseHierarchyRecipesMatchExpectedOutput() throws Exception {
     String comparison = captureStdout(() -> Main.main(
-        "docs/examples/jq/maximal.nq",
-        "docs/examples/jq/elements.json"));
+        "run", "--script-file", "docs/examples/jq/maximal.nq",
+        "--input-file", "docs/examples/jq/elements.json"));
     assertEquals("[{\"id\":\"2\"},{\"id\":\"3\"}]\n", comparison);
 
     String database = "mem:recipe_" + UUID.randomUUID().toString().replace("-", "");
     String hierarchy = captureStdout(() -> Main.main(
-        "docs/recipes/database-to-nested-json/database-to-nested-json.nq",
+        "run", "--script-file", "docs/recipes/database-to-nested-json/database-to-nested-json.nq",
         "--db", "h2", "--database", database));
     assertEquals(
         Files.readString(Path.of("docs/recipes/database-to-nested-json/expected.json")).strip() + "\n",
@@ -59,13 +59,13 @@ class PromotedExamplesE2ETest {
   void jsonToDatabaseRecipePersistsAndVerifiesTheMappedRow() throws Exception {
     String database = "file:" + tempDir.resolve("json-to-database").toAbsolutePath();
     String input = captureStdout(() -> Main.main(
-        "docs/recipes/json-to-database/json-to-database.nq",
-        "docs/recipes/json-to-database/person.json",
+        "run", "--script-file", "docs/recipes/json-to-database/json-to-database.nq",
+        "--input-file", "docs/recipes/json-to-database/person.json",
         "--db", "h2", "--database", database));
     assertEquals("{\"message\":{\"person\":{\"firstName\":\"Fred\",\"city\":\"Bedrock\"}}}\n", input);
 
     String verification = captureStdout(() -> Main.main(
-        "select id as person_key, id into {result.person.id}, "
+        "run", "--script-text", "select id as person_key, id into {result.person.id}, "
             + "first_name into {result.person.firstName}, city into {result.person.city} "
             + "from person structure {result.person} key (person_key);",
         "--db", "h2", "--database", database));
@@ -80,15 +80,17 @@ class PromotedExamplesE2ETest {
     Files.writeString(csv, "id,city\n1,London\n2,Paris\n");
     assertEquals(
         "[{\"id\":\"1\"}]\n",
-        captureStdout(() -> Main.main("select id from item where city = 'London';", csv.toString())));
+        captureStdout(() -> Main.main(
+            "run", "--script-text", "select id from item where city = 'London';",
+            "--input-file", csv.toString())));
 
     Path tsv = tempDir.resolve("customers.tsv");
     Files.writeString(tsv, "id\tcity\n1\tLondon\n2\tParis\n");
     assertEquals(
         "id\n2\n",
         captureStdout(() -> Main.main(
-            "output tsv; select id from item where city = 'Paris';",
-            tsv.toString())));
+            "run", "--script-text", "output tsv; select id from item where city = 'Paris';",
+            "--input-file", tsv.toString())));
 
     Path toml = tempDir.resolve("customers.toml");
     Files.writeString(toml, """
@@ -103,14 +105,16 @@ class PromotedExamplesE2ETest {
     assertEquals(
         "[[item]]\n\n[item.result]\nid = \"1\"\n",
         captureStdout(() -> Main.main(
-            "output toml; select id into {result.id} from customers where city = 'London';",
-            toml.toString())));
+            "run", "--script-text", "output toml; select id into {result.id} from customers where city = 'London';",
+            "--input-file", toml.toString())));
 
     Path jsonl = tempDir.resolve("customers.jsonl");
     Files.writeString(jsonl, "{\"id\":1,\"city\":\"London\"}\n{\"id\":2,\"city\":\"Paris\"}\n");
     assertEquals(
         "[{\"id\":\"2\"}]\n",
-        captureStdout(() -> Main.main("select id from item where city = 'Paris';", jsonl.toString())));
+        captureStdout(() -> Main.main(
+            "run", "--script-text", "select id from item where city = 'Paris';",
+            "--input-file", jsonl.toString())));
 
     var schema = ParquetTestFiles.schema("""
         message customer {
@@ -127,7 +131,9 @@ class PromotedExamplesE2ETest {
         groups.newGroup().append("id", 2).append("city", "Paris"));
     assertEquals(
         "[{\"id\":\"1\"}]\n",
-        captureStdout(() -> Main.main("select id from customer where city = 'London';", parquet.toString())));
+        captureStdout(() -> Main.main(
+            "run", "--script-text", "select id from customer where city = 'London';",
+            "--input-file", parquet.toString())));
   }
 
   private String captureStdout(ThrowingRunnable runnable) throws Exception {

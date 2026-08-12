@@ -13,7 +13,7 @@ jq -f docs/examples/jq/maximal.jq docs/examples/jq/elements.json
 With NQ:
 
 ```bash
-nq docs/examples/jq/maximal.nq docs/examples/jq/elements.json
+nq run --script-file docs/examples/jq/maximal.nq --input-file docs/examples/jq/elements.json
 ```
 
 Expected NQ output:

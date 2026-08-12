@@ -5,6 +5,7 @@ import blater.nq.domain.Hierarchy;
 import blater.nq.parser.script.NestScript;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /*
  * Responsibility: Names the supported output formats and their outputWriter implementation.
@@ -29,6 +30,21 @@ public enum OutputType {
 
   public void write(Hierarchy res) {
     outputWriter.write(res);
+  }
+
+  /** Renders without choosing stdout, so reports can target stdout or stderr. */
+  public String render(Hierarchy result) {
+    return switch (this) {
+      case XML -> XmlOutputWriter.render(result);
+      case JSON -> JsonOutputWriter.map(result) + System.lineSeparator();
+      case JSONL -> JsonOutputWriter.mapLines(result).stream()
+          .collect(Collectors.joining(System.lineSeparator(), "", System.lineSeparator()));
+      case YAML -> YamlOutputWriter.map(result);
+      case CSV -> CsvOutputWriter.map(result);
+      case TSV -> TsvOutputWriter.map(result);
+      case TOML -> TomlOutputWriter.map(result);
+      case MARKDOWN -> MarkdownOutputWriter.map(result);
+    };
   }
 
   public static OutputType get(NestScript script, Map<String, String> params) {
@@ -56,7 +72,9 @@ public enum OutputType {
       case "toml" -> TOML;
       case "yaml" -> YAML;
       case "markdown" -> MARKDOWN;
-      default -> DEFAULT_OUTPUT_TYPE;
+      default -> throw new IllegalArgumentException(
+          "Unsupported output format [" + name + "]. Expected one of: "
+              + "xml, json, jsonl, csv, tsv, yaml, toml, markdown");
     };
   }
 }

@@ -19,7 +19,7 @@ class ParameterParserConnectionTest {
 
   @Test
   void buildsMinimalPostgresqlConnection() throws Exception {
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script().toString(),
         "--db", "postgres",
         "--database", "customer_data");
@@ -34,7 +34,7 @@ class ParameterParserConnectionTest {
 
   @Test
   void acceptsEqualsFormsAndPreservesExplicitEmptyValues() throws Exception {
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script().toString(),
         "--db=postgresql",
         "--database=customer_data",
@@ -50,7 +50,7 @@ class ParameterParserConnectionTest {
 
   @Test
   void passesMalformedPortThroughToTheJdbcUrl() throws Exception {
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script().toString(),
         "--db", "postgresql",
         "--database", "customer_data",
@@ -63,7 +63,7 @@ class ParameterParserConnectionTest {
 
   @Test
   void mapsEveryExactJdbcOption() throws Exception {
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script().toString(),
         "--jdbc-driver=postgresql",
         "--jdbc-class-name", "example.Driver",
@@ -80,7 +80,7 @@ class ParameterParserConnectionTest {
 
   @Test
   void exactFormLeavesOmittedCredentialsAbsent() throws Exception {
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script().toString(),
         "--jdbc-class-name", "example.Driver",
         "--jdbc-database", "jdbc:example:test");
@@ -93,7 +93,7 @@ class ParameterParserConnectionTest {
   void directJdbcAssignmentsKeepADataFileAsExternalDatabaseInput() throws Exception {
     Path input = properties("input.json", "{}");
 
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         "select 1;",
         input.toString(),
         "jdbc.class.name=org.h2.Driver",
@@ -116,13 +116,13 @@ class ParameterParserConnectionTest {
         region=properties
         """);
 
-    Map<String, String> propertiesFirst = ParameterParser.parse(
+    Map<String, String> propertiesFirst = LegacyCli.parse(
         script().toString(),
         "-p", properties.toString(),
         "--jdbc-database", "jdbc:h2:mem:command",
         "--user", "command_user",
         "region=command");
-    Map<String, String> propertiesLast = ParameterParser.parse(
+    Map<String, String> propertiesLast = LegacyCli.parse(
         script().toString(),
         "--jdbc-database", "jdbc:h2:mem:command",
         "--user", "command_user",
@@ -145,12 +145,12 @@ class ParameterParserConnectionTest {
         jdbc.password=properties_password
         """);
 
-    Map<String, String> inherited = ParameterParser.parse(
+    Map<String, String> inherited = LegacyCli.parse(
         script().toString(),
         "--db", "h2",
         "--database", "mem:inherited",
         "-p", properties.toString());
-    Map<String, String> overridden = ParameterParser.parse(
+    Map<String, String> overridden = LegacyCli.parse(
         script().toString(),
         "--db", "h2",
         "--database", "mem:overridden",
@@ -168,7 +168,7 @@ class ParameterParserConnectionTest {
     Path first = properties("first.properties", "jdbc.username=first\n");
     Path second = properties("second.properties", "jdbc.username=second\n");
 
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script().toString(),
         "-p", first.toString(),
         "-p", second.toString());
@@ -180,7 +180,7 @@ class ParameterParserConnectionTest {
   void propertiesFilenameMayContainDashes() throws Exception {
     Path properties = properties("staging-properties.properties", "region=staging\n");
 
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script().toString(), "-p", properties.toString());
 
     assertEquals("staging", params.get("region"));
@@ -188,11 +188,11 @@ class ParameterParserConnectionTest {
 
   @Test
   void laterCommandValueWinsWithinCommandLayer() throws Exception {
-    Map<String, String> namedThenAssignment = ParameterParser.parse(
+    Map<String, String> namedThenAssignment = LegacyCli.parse(
         script().toString(),
         "--user", "named",
         "jdbc.username=assignment");
-    Map<String, String> assignmentThenNamed = ParameterParser.parse(
+    Map<String, String> assignmentThenNamed = LegacyCli.parse(
         script().toString(),
         "jdbc.username=assignment",
         "--user", "named");
@@ -203,12 +203,12 @@ class ParameterParserConnectionTest {
 
   @Test
   void exactDatabaseOptionConsistentlyOverridesSimpleForm() throws Exception {
-    Map<String, String> exactLast = ParameterParser.parse(
+    Map<String, String> exactLast = LegacyCli.parse(
         script().toString(),
         "--db", "h2",
         "--database", "mem:simple",
         "--jdbc-database", "jdbc:h2:mem:exact");
-    Map<String, String> simpleLast = ParameterParser.parse(
+    Map<String, String> simpleLast = LegacyCli.parse(
         script().toString(),
         "--jdbc-driver", "h2",
         "--jdbc-database", "jdbc:h2:mem:exact",
@@ -223,7 +223,7 @@ class ParameterParserConnectionTest {
   void explicitClassNameOverridesLogicalDriverFromProperties() throws Exception {
     Path properties = properties("database.properties", "jdbc.driver=h2\n");
 
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script().toString(),
         "-p", properties.toString(),
         "--jdbc-class-name", "example.Driver",
@@ -248,7 +248,7 @@ class ParameterParserConnectionTest {
 
   @Test
   void simpleConnectionDoesNotExposeParserState() throws Exception {
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script().toString(),
         "--db", "h2",
         "--database", "mem:demo");
@@ -262,13 +262,13 @@ class ParameterParserConnectionTest {
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> ParameterParser.parse(script.toString(), "--db", "h2"));
+        () -> LegacyCli.parse(script.toString(), "--db", "h2"));
     assertThrows(
         IllegalArgumentException.class,
-        () -> ParameterParser.parse(script.toString(), "--host", "db.example"));
+        () -> LegacyCli.parse(script.toString(), "--host", "db.example"));
     assertThrows(
         IllegalArgumentException.class,
-        () -> ParameterParser.parse(
+        () -> LegacyCli.parse(
             script.toString(),
             "--db", "h2",
             "--database", "mem:demo",
@@ -281,9 +281,9 @@ class ParameterParserConnectionTest {
 
     assertThrows(
         IllegalArgumentException.class,
-        () -> ParameterParser.parse(script.toString(), "--password", "--db", "h2"));
+        () -> LegacyCli.parse(script.toString(), "--password", "--db", "h2"));
 
-    Map<String, String> params = ParameterParser.parse(
+    Map<String, String> params = LegacyCli.parse(
         script.toString(),
         "--jdbc-class-name=example.Driver",
         "--jdbc-database=jdbc:example:test",
@@ -292,31 +292,15 @@ class ParameterParserConnectionTest {
   }
 
   @Test
-  void cacheCommandsTakePrecedenceOverConnectionConfiguration() throws Exception {
-    Path script = script();
-    Path properties = properties("database.properties", "jdbc.username=cache_user\n");
+  void cacheModesHaveExplicitConnectionRules() throws Exception {
+    Path input = properties("input.json", "{}");
 
-    Map<String, String> simple = ParameterParser.parse(
-        script.toString(),
-        "--cache",
-        "--db", "h2",
-        "--database", "mem:demo");
-    Map<String, String> property = ParameterParser.parse(
-        script.toString(),
-        "--cache",
-        "-p", properties.toString());
-    Map<String, String> conversion = ParameterParser.parse(
-        "input.json",
-        "--db", "h2",
-        "--database", "mem:demo");
-    Map<String, String> list = ParameterParser.parse(
-        "--list-caches", "--jdbc-username=cache_user");
-
-    assertFalse(simple.containsKey(JDBC_DATABASE_PARAM));
-    assertEquals("jdbc:h2:mem:demo", conversion.get(JDBC_DATABASE_PARAM));
-    assertFalse(conversion.containsKey(CACHE_MODE_PARAM));
-    assertEquals("cache_user", property.get(JDBC_USERNAME_PARAM));
-    assertEquals("cache_user", list.get(JDBC_USERNAME_PARAM));
+    assertThrows(IllegalArgumentException.class, () -> ParameterParser.parse(
+        "run", "--script-file", script().toString(),
+        "--input-file", input.toString(), "--cache",
+        "--db", "h2", "--database", "mem:demo"));
+    assertThrows(IllegalArgumentException.class, () -> ParameterParser.parse(
+        "cache", "list", "--jdbc-username=cache_user"));
   }
 
   private Path script() throws Exception {
@@ -325,8 +309,8 @@ class ParameterParserConnectionTest {
 
   private void assertSimpleUrl(String driver, String database, String expected, String... port) throws Exception {
     Map<String, String> params = port.length == 0
-        ? ParameterParser.parse(script().toString(), "--db", driver, "--database", database)
-        : ParameterParser.parse(
+        ? LegacyCli.parse(script().toString(), "--db", driver, "--database", database)
+        : LegacyCli.parse(
             script().toString(), "--db", driver, "--database", database, "--port", port[0]);
     assertEquals(expected, params.get(JDBC_DATABASE_PARAM));
   }

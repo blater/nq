@@ -43,23 +43,7 @@ public final class PersistentCache {
     else {
       cnt = PersistentCache.clearAll(params);
     }
-    Log.info("Cleared " + cnt + " cache(s).");
     return cnt;
-  }
-
-  public static void list(Map<String, String> params) {
-    System.out.println("Cache root: " + PersistentCache.cacheRoot(params));
-    var entries = listCaches(params);
-    if (entries.isEmpty()) {
-      Log.info("No caches found.");
-      return;
-    }
-
-    Log.info("  name\tmodified");
-    for (var entry : entries) {
-      Log.info((entry.active() ? "* " : "  ") + entry.cacheFilename()
-          + "\t" + Instant.ofEpochMilli(entry.modifiedMillis()));
-    }
   }
 
 
@@ -70,15 +54,15 @@ public final class PersistentCache {
     return new CacheHandle(cacheFile, jdbcUrl(cacheFile), true);
   }
 
-  public static void activate(CacheHandle handle) {
-    configureActiveCacheFile(handle.cacheFile());
+  public static void activate(CacheHandle handle, Map<String, String> params) {
+    configureActiveCacheFile(handle.cacheFile(), params);
   }
 
   public static CacheHandle use(String target, Map<String, String> params) {
     Optional<Path> namedCacheFile = resolveCacheFilename(target, params);
     if (namedCacheFile.isEmpty()) {
       return Log.fatal(IllegalArgumentException.class,
-          "--use-cache requires a cache filename such as bright-otter.mv.db.");
+          "cache use --name requires a cache filename such as bright-otter.mv.db.");
     }
     Path cacheFile = namedCacheFile.get();
     if (!isCacheFile(cacheFile)) {
@@ -86,7 +70,7 @@ public final class PersistentCache {
           "No existing cache found at " + cacheFile + ".");
     }
     CacheHandle handle = currentHandle(cacheFile);
-    activate(handle);
+    activate(handle, params);
     return handle;
   }
 
@@ -94,15 +78,15 @@ public final class PersistentCache {
     return new CacheHandle(cacheFile, jdbcUrl(cacheFile), false);
   }
 
-  public static Optional<CacheHandle> active() {
-    Optional<Path> configured = configuredActiveCacheFile();
+  public static Optional<CacheHandle> active(Map<String, String> params) {
+    Optional<Path> configured = configuredActiveCacheFile(params);
     if (configured.isEmpty()) {
       return Optional.empty();
     }
 
     Path cacheFile = configured.get();
     if (!isCacheFile(cacheFile)) {
-      clearActiveSelection();
+      clearActiveSelection(params);
       return Optional.empty();
     }
     return Optional.of(new CacheHandle(cacheFile, jdbcUrl(cacheFile), false));
@@ -114,12 +98,12 @@ public final class PersistentCache {
       deleteCache(cacheFile);
       cleared++;
     }
-    clearActiveIfMissing();
+    clearActiveIfMissing(params);
     return cleared;
   }
 
-  static List<CacheEntry> listCaches(Map<String, String> params) {
-    Optional<Path> activeCache = configuredActiveCacheFile();
+  public static List<CacheEntry> listCaches(Map<String, String> params) {
+    Optional<Path> activeCache = configuredActiveCacheFile(params);
     return cacheFiles(params).stream()
         .map(cacheFile -> new CacheEntry(
             cacheFile.getFileName().toString(),
@@ -132,14 +116,14 @@ public final class PersistentCache {
     Optional<Path> namedCacheFile = resolveCacheFilename(target, params);
     if (namedCacheFile.isEmpty()) {
       return Log.fatal(IllegalArgumentException.class,
-          "--clear-cache requires a cache filename such as bright-otter.mv.db.");
+          "cache clear --name requires a cache filename such as bright-otter.mv.db.");
     }
     Path cacheFile = namedCacheFile.get();
     if (!isCacheFile(cacheFile)) {
       return 0;
     }
     deleteCache(cacheFile);
-    clearActiveIfMissing();
+    clearActiveIfMissing(params);
     return 1;
   }
 
@@ -152,7 +136,7 @@ public final class PersistentCache {
         cleared++;
       }
     }
-    clearActiveIfMissing();
+    clearActiveIfMissing(params);
     return cleared;
   }
 
@@ -179,9 +163,16 @@ public final class PersistentCache {
   }
 
   public static Path cacheRoot(Map<String, String> params) {
-    String configured = params == null ? null : params.get(CACHE_DIR_PARAM);
+    return stateRoot(params).resolve("cache");
+  }
+
+  public static Path stateRoot(Map<String, String> params) {
+    String configured = params == null ? null : params.get(STATE_DIR_PARAM);
     if (configured == null || configured.isBlank()) {
-      configured = Path.of(System.getProperty("user.home"), ".nq", "cache").toString();
+      configured = System.getenv("NQ_STATE_DIR");
+    }
+    if (configured == null || configured.isBlank()) {
+      configured = Path.of(System.getProperty("user.home"), ".nq").toString();
     }
     return Path.of(configured).toAbsolutePath().normalize();
   }
@@ -203,10 +194,8 @@ public final class PersistentCache {
         .build());
   }
 
-  static Path configFile() {
-    return Path.of(System.getProperty("user.home"), ".nq", "config.properties")
-        .toAbsolutePath()
-        .normalize();
+  static Path configFile(Map<String, String> params) {
+    return stateRoot(params).resolve("config.properties");
   }
 
   private static String jdbcUrl(Path cacheFile) {
@@ -266,8 +255,8 @@ public final class PersistentCache {
         && filename.endsWith(H2_DATABASE_SUFFIX);
   }
 
-  private static Optional<Path> configuredActiveCacheFile() {
-    Properties config = readConfig();
+  private static Optional<Path> configuredActiveCacheFile(Map<String, String> params) {
+    Properties config = readConfig(params);
     String value = config.getProperty(ACTIVE_CACHE_FILE);
     if (value == null || value.isBlank()) {
       return Optional.empty();
@@ -276,20 +265,20 @@ public final class PersistentCache {
     try {
       return Optional.of(Path.of(value).toAbsolutePath().normalize());
     } catch (RuntimeException ex) {
-      clearActiveSelection();
+      clearActiveSelection(params);
       return Optional.empty();
     }
   }
 
-  private static void configureActiveCacheFile(Path cacheFile) {
-    Properties config = readConfig();
+  private static void configureActiveCacheFile(Path cacheFile, Map<String, String> params) {
+    Properties config = readConfig(params);
     config.setProperty(ACTIVE_CACHE_FILE, cacheFile.toAbsolutePath().normalize().toString());
-    writeConfig(config);
+    writeConfig(config, params);
   }
 
-  private static Properties readConfig() {
+  private static Properties readConfig(Map<String, String> params) {
     Properties config = new Properties();
-    Path file = configFile();
+    Path file = configFile(params);
     if (!Files.exists(file)) {
       return config;
     }
@@ -301,8 +290,8 @@ public final class PersistentCache {
     }
   }
 
-  private static void writeConfig(Properties config) {
-    Path file = configFile();
+  private static void writeConfig(Properties config, Map<String, String> params) {
+    Path file = configFile(params);
     try {
       Files.createDirectories(file.getParent());
       try (OutputStream output = Files.newOutputStream(file)) {
@@ -313,21 +302,21 @@ public final class PersistentCache {
     }
   }
 
-  private static void clearActiveIfMissing() {
-    Optional<Path> cache = configuredActiveCacheFile();
+  private static void clearActiveIfMissing(Map<String, String> params) {
+    Optional<Path> cache = configuredActiveCacheFile(params);
     if (cache.isPresent() && !Files.exists(cache.get())) {
-      clearActiveSelection();
+      clearActiveSelection(params);
     }
   }
 
-  private static void clearActiveSelection() {
-    Properties config = readConfig();
+  private static void clearActiveSelection(Map<String, String> params) {
+    Properties config = readConfig(params);
     boolean changed = config.remove(ACTIVE_CACHE_FILE) != null;
     if (!changed) {
       return;
     }
 
-    Path file = configFile();
+    Path file = configFile(params);
     if (config.isEmpty()) {
       try {
         Files.deleteIfExists(file);
@@ -335,7 +324,7 @@ public final class PersistentCache {
         Log.fatal(IllegalStateException.class, "Could not update nq configuration: " + file, ex);
       }
     } else {
-      writeConfig(config);
+      writeConfig(config, params);
     }
   }
 

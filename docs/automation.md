@@ -17,14 +17,14 @@ result data and diagnostics.
 ```bash
 set -euo pipefail
 
-nq transform.nq input.json --output json >result.json
+nq run --script-file transform.nq --input-file input.json --output json >result.json
 jq -e . result.json >/dev/null
 ```
 
 Redirect stderr separately when preserving diagnostics:
 
 ```bash
-if ! nq transform.nq input.json >result.json 2>nq-error.log; then
+if ! nq run --script-file transform.nq --input-file input.json >result.json 2>nq-error.log; then
   sed -n '1,120p' nq-error.log >&2
   exit 1
 fi
@@ -53,7 +53,7 @@ jobs:
           tar -xzf "nq-${NQ_VERSION}-linux-x64.tar.gz"
       - name: Transform and validate
         run: |
-          ./nq transform.nq input.json >result.json
+          ./nq run --script-file transform.nq --input-file input.json >result.json
           jq -e . result.json >/dev/null
 ```
 
@@ -66,12 +66,12 @@ visible to other processes or retained by the CI provider.
 
 ## Cache isolation
 
-Use a job-specific directory and delete it according to the CI provider’s
-retention policy:
+Use a job-specific state directory. Both active-cache configuration and cache
+data remain beneath it:
 
 ```bash
-nq --cache input.json --cache-dir "$RUNNER_TEMP/nq-cache"
-nq report.nq
+nq cache load --input-file input.json --state-dir "$RUNNER_TEMP/nq-state" --report-format json
+nq run --script-file report.nq --state-dir "$RUNNER_TEMP/nq-state"
 ```
 
 Persistent caches contain source data. Do not upload them as build artifacts

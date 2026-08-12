@@ -50,6 +50,10 @@ public class XmlOutputWriter implements OutputWriter {
     return new Document(rootElement);
   }
 
+  public static String render(Hierarchy hierarchy) {
+    return new XMLOutputter(Format.getPrettyFormat()).outputString(map(hierarchy));
+  }
+
   private static void writeChildren(Element parent, Node node) {
     for (var child : node.getChildren()) {
       if (child.isCollection()) {

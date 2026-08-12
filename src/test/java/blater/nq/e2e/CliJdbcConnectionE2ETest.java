@@ -14,7 +14,7 @@ class CliJdbcConnectionE2ETest {
   @Test
   void runsQueryWithSimpleH2ConnectionOptions() throws Exception {
     String output = captureStdout(() -> Main.main(
-        "output json; select 1 into {result.value};",
+        "run", "--script-text", "output json; select 1 into {result.value};",
         "--db", "h2",
         "--database", "mem:" + databaseName()));
 
@@ -26,7 +26,7 @@ class CliJdbcConnectionE2ETest {
   @Test
   void runsQueryWithExactJdbcConnectionOptions() throws Exception {
     String output = captureStdout(() -> Main.main(
-        "output json; select 1 into {result.value};",
+        "run", "--script-text", "output json; select 1 into {result.value};",
         "--jdbc-driver", "h2",
         "--jdbc-database", "jdbc:h2:mem:" + databaseName()));
 

@@ -23,7 +23,7 @@ class PersistentCacheTest {
 
   @BeforeEach
   void clearActiveCacheSelection() throws Exception {
-    Files.deleteIfExists(PersistentCache.configFile());
+    Files.deleteIfExists(PersistentCache.configFile(cacheParams()));
   }
 
   @Test
@@ -70,13 +70,13 @@ class PersistentCacheTest {
     Map<String, String> params = cacheParams();
     CacheHandle first = preparedCache(write("first.json", "{\"name\":\"Fred\"}"), params);
     CacheHandle second = preparedCache(write("second.json", "{\"name\":\"Wilma\"}"), params);
-    PersistentCache.activate(second);
+    PersistentCache.activate(second, params);
 
     CacheHandle selected = PersistentCache.use(
         first.cacheFile().getFileName().toString(), params);
 
     assertEquals(first.cacheFile(), selected.cacheFile());
-    assertEquals(first.cacheFile(), PersistentCache.active().orElseThrow().cacheFile());
+    assertEquals(first.cacheFile(), PersistentCache.active(params).orElseThrow().cacheFile());
   }
 
   @Test
@@ -105,7 +105,7 @@ class PersistentCacheTest {
 
     assertEquals(first.cacheFile(), selected.cacheFile());
     assertFalse(second.cacheFile().equals(selected.cacheFile()));
-    assertEquals(first.cacheFile(), PersistentCache.active().orElseThrow().cacheFile());
+    assertEquals(first.cacheFile(), PersistentCache.active(params).orElseThrow().cacheFile());
   }
 
   @Test
@@ -176,7 +176,7 @@ class PersistentCacheTest {
     Path input = write("cached.json", "{\"name\":\"Fred\"}");
     CacheHandle handle = preparedCache(input, params);
 
-    PersistentCache.list(params);
+    PersistentCache.listCaches(params);
 
     CacheHandle next = PersistentCache.prepare(params);
     assertFalse(handle.cacheFile().equals(next.cacheFile()));
@@ -202,19 +202,19 @@ class PersistentCacheTest {
     Map<String, String> params = cacheParams();
     Path input = write("active.json", "{\"name\":\"Fred\"}");
     CacheHandle handle = preparedCache(input, params);
-    Path configFile = PersistentCache.configFile();
+    Path configFile = PersistentCache.configFile(params);
     Files.createDirectories(configFile.getParent());
     Files.writeString(configFile, "unrelated=value\n");
 
-    PersistentCache.activate(handle);
+    PersistentCache.activate(handle, params);
 
-    assertEquals(handle.cacheFile(), PersistentCache.active().orElseThrow().cacheFile());
+    assertEquals(handle.cacheFile(), PersistentCache.active(params).orElseThrow().cacheFile());
     assertTrue(PersistentCache.listCaches(params).getFirst().active());
     assertTrue(Files.readString(configFile).contains("unrelated=value"));
 
     PersistentCache.clearNamed(handle.cacheFile().getFileName().toString(), params);
 
-    assertTrue(PersistentCache.active().isEmpty());
+    assertTrue(PersistentCache.active(params).isEmpty());
     assertTrue(Files.readString(configFile).contains("unrelated=value"));
   }
 
@@ -249,12 +249,12 @@ class PersistentCacheTest {
   }
 
   private Map<String, String> cacheParams() {
-    return Map.of(ParameterParser.CACHE_DIR_PARAM, tempDir.resolve("cache").toString());
+    return Map.of(ParameterParser.STATE_DIR_PARAM, tempDir.resolve("state").toString());
   }
 
   private Map<String, String> cacheParams(String key, String value) {
     return Map.of(
-        ParameterParser.CACHE_DIR_PARAM, tempDir.resolve("cache").toString(),
+        ParameterParser.STATE_DIR_PARAM, tempDir.resolve("state").toString(),
         key, value);
   }
 

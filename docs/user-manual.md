@@ -28,7 +28,7 @@ select 1 into {result.value};
 Run it with JDBC properties:
 
 ```bash
-nq script.nq -p database.properties
+nq run --script-file script.nq --properties database.properties
 ```
 
 Example `database.properties`:
@@ -46,9 +46,9 @@ An input file supplied without a script is read into NQ's neutral hierarchy and
 written directly as JSON by default. Use `--output` to select another format:
 
 ```bash
-nq customers.xml --output json
-nq customers.json -o yaml
-nq customers.csv --output markdown
+nq convert --input-file customers.xml --output json
+nq convert --input-file customers.json -o yaml
+nq convert --input-file customers.csv --output markdown
 ```
 
 Direct conversion does not materialize H2 tables, create or select a cache, or
@@ -58,7 +58,8 @@ conversion and writes only the hierarchy produced by the script.
 For standard input, specify the input type explicitly:
 
 ```bash
-echo '{"customer":{"id":7,"name":"Alice"}}' | nq -i json -o yaml
+echo '{"customer":{"id":7,"name":"Alice"}}' | nq convert \
+  --input-file - --input-format json -o yaml
 ```
 
 ### Query An Input Document
@@ -94,7 +95,7 @@ structure {result.customer} key (c.id);
 Run:
 
 ```bash
-nq customers.json customers.nq
+nq run --script-file customers.nq --input-file customers.json
 ```
 
 Output:
@@ -106,8 +107,8 @@ Output:
 The same query can read JSON from a pipeline or shell redirection:
 
 ```bash
-cat customers.json | nq -i json customers.nq
-nq -i json customers.nq < customers.json
+cat customers.json | nq run --script-file customers.nq --input-file - --input-format json
+nq run --script-file customers.nq --input-file - --input-format json < customers.json
 ```
 
 ### Query SQL To Hierarchical Output
@@ -153,7 +154,7 @@ where personid = {message.person.@id};
 Run:
 
 ```bash
-nq update-person.nq input.xml -p database.properties
+nq run --script-file update-person.nq --input-file input.xml --properties database.properties
 ```
 
 ### Use JSON, YAML, TOML, CSV, TSV, Or Parquet Input
@@ -240,7 +241,7 @@ where region = '${region:EMEA}';
 Run:
 
 ```bash
-nq people.nq -p database.properties region=APAC
+nq run --script-file people.nq --properties database.properties --param region=APAC
 ```
 
 `${name}` is replaced by a runtime parameter or Java system property. `${name:default}` uses a default when no value is found.
@@ -261,101 +262,34 @@ values ({personid}, {firstname});
 
 ### Usage
 
-NQ can be launched in three ways.
-
-Invoke the main class directly when the compiled classes and dependencies are already on `CLASSPATH`:
-
-```bash
-java blater.nq.Main script.nq -p database.properties
-```
-
-`mvn package` creates an executable fat JAR containing its runtime dependencies:
+NQ uses commands and named operands. It does not infer whether a positional
+string is SQL, a script filename, or an input filename.
 
 ```bash
-java -jar target/nq-*.jar script.nq -p database.properties
+nq run (--script-file path | --script-text text) [run-options]
+nq convert --input-file path [--output format]
+nq catalog [--input-file path] [--pattern pattern] [source-options]
+nq cache load --input-file path [state-options]
+nq cache use --name cache-name [state-options]
+nq cache list [state-options]
+nq cache clear (--all | --name cache-name | --older-than age) [state-options]
 ```
 
-Native builds produce `nq` for common JDBC drivers, `nq-enterprise` for enterprise drivers, or `nq-all`
-for both sets. All three executables accept the same arguments:
+Use `--input-file -` with `--input-format` to read standard input:
 
 ```bash
-nq script.nq -p database.properties
-nq-enterprise script.nq -p database.properties
-nq-all script.nq -p database.properties
+cat customers.json | nq run --script-file customers.nq \
+  --input-file - --input-format json
 ```
 
-For simplicity, command examples from this point onward use the default `nq` executable.
+An input source accompanying `run` is loaded into a temporary in-memory H2
+database unless `--cache` is supplied. With JDBC settings it instead supplies
+mapped DML values. With no input or JDBC settings, `run` uses the active cache
+under the selected state directory.
 
-```bash
-nq script-file [load-file] [param=value ...] [-p properties-file] [--output type] [--cache]
-nq -i|--input type [script-file-or-text] [param=value ...] [--output type] [--cache] < input
-nq catalog [table-pattern] [connection/cache options]
-nq load-file [--output type]
-nq -c|--cache load-file [--cache-dir path]
-nq --use-cache cache-filename [--cache-dir path]
-```
-
-Arguments can appear in any unambiguous order.
-
-Cache maintenance commands do not require a script:
-
-```bash
-nq --clear-cache
-nq --clear-cache bright-otter.mv.db
-nq --clear-cache-older-than 6h
-nq --list-caches
-nq --use-cache bright-otter.mv.db
-```
-
-Standalone cache loading also does not require a script:
-
-```bash
-nq --cache customers.json
-```
-
-Command-line help does not require a script:
-
-```bash
-nq -h
-nq --help
-nq --help help
-nq --help query
-```
-
-`-h` prints brief usage help, while `--help` prints the complete `nq(1)`
-manual page. `--help help` lists the available focused help topics, and
-`--help <topic>` prints help for one command or option group.
-
-Catalog inspection also does not require a script:
-
-```bash
-nq catalog
-nq catalog customer
-nq catalog 'audit*' --output json
-nq catalog '*' --cache customers.json
-```
-
-With no pattern, the command lists table names only. A table name or `*` pattern returns full table and column details. Catalog uses an explicitly selected cache, otherwise a configured JDBC connection, otherwise the active cache. The command-line catalog form defaults to Markdown; `--output` can select another format.
-
-### Positional Arguments
-
-| Argument      | Meaning                                                  |
-|---------------|----------------------------------------------------------|
-| `script-file` | The nq script to load and run. Not required for direct conversion, standalone cache loading, or maintenance. |
-| `load-file`   | XML, JSON, JSON Lines, YAML, TOML, CSV, TSV, or Parquet input. On its own, it is converted directly to the selected output format. With a script, it is queried through temporary H2 unless `--cache` or JDBC settings select another destination. |
-
-When JDBC settings select an external database, a load file is not read by a select-only script. Mapped DML reads it when the statement needs input, and reports a missing file at that point. Without JDBC settings, the file is loaded immediately as the temporary database being queried.
-
-`-i type` or `--input type` supplies standard input in place of `load-file`.
-It supports direct conversion, temporary queries, persistent `--cache` queries,
-and mapped DML. It cannot be combined with a positional input file. A script
-remains optional for direct conversion and standalone persistent loading.
-
-An input source accompanying a script is loaded into a temporary in-memory H2
-database when neither `--cache` nor JDBC settings are supplied. Explicit
-`--cache` selects its persistent cache instead. With JDBC settings, the input
-remains available for mapped DML. Without an input source or JDBC settings, a
-script falls back to the active persistent cache.
+`catalog --input-file` also uses temporary H2 and never creates or activates a
+persistent cache. Catalog and cache commands produce operational reports;
+`--report-format` controls their serialization.
 
 ### Options
 
@@ -363,9 +297,13 @@ script falls back to the active persistent cache.
 |----------------------------|--------------------------------------------------|
 | `-h`                       | Print brief usage help.                          |
 | `--help`                   | Print the complete `nq(1)` manual page.      |
-| `--help help`              | List focused help topics.                        |
-| `--help topic`             | Print focused help for a command or option group. |
-| `-p properties-file`       | Load parameters from a `.properties` file.       |
+| `help [topic]`             | List focused help topics or print one topic.     |
+| `--script-file path`       | Run a script from an explicitly named file.      |
+| `--script-text text`       | Run explicitly supplied inline script text.      |
+| `--input-file path`        | Read an explicitly named input file; use `-` for stdin. |
+| `--input-format type`      | Name the format of stdin.                         |
+| `--param name=value`       | Add or override a runtime template parameter.    |
+| `-p`, `--properties path`  | Load parameters from a `.properties` file.       |
 | `--db type`                | Select a supported logical database type and infer its driver class and JDBC URL. |
 | `--database name`          | Set the simple-form database name, Oracle service name, or H2 URL suffix. |
 | `--host host`              | Set the simple-form database host. Defaults to `localhost`; not valid for H2. |
@@ -377,21 +315,29 @@ script falls back to the active persistent cache.
 | `--jdbc-database url`      | Set the complete `jdbc.database` JDBC URL. |
 | `--jdbc-username username` | Set the exact `jdbc.username` value. |
 | `--jdbc-password password` | Set the exact `jdbc.password` value. |
-| `--input type`, `-i type`  | Read `xml`, `json`, `jsonl`, `yaml`, `toml`, `csv`, `tsv`, or `parquet` from standard input. |
 | `--output type`, `-o type` | Write output as `xml`, `json`, `jsonl`, `csv`, `tsv`, `yaml`, `toml`, or `markdown`. |
+| `--report-format type`     | Write catalog, cache, or diagnostic reports in a supported output format; default `markdown`. |
 | `--debug`                  | Log each query's inferred output-path, relation, key, and parent relationship decisions to stderr. |
 | `--no-key-inference`       | Disable automatic DQL keys and preserve row-first output for paths without explicit `structure` keys. |
-| `--cache`, `-c`            | Create and activate a fresh persistent H2 cache from a file or standard input. |
-| `--use-cache cache-filename` | Make an existing named cache active without loading or rebuilding it. |
-| `--cache-dir path`         | Use a non-default cache directory.                |
-| `--clear-cache`            | Clear all caches or one named cache file. |
-| `--clear-cache-older-than duration` | Clear caches not modified within a duration such as `30m`, `6h`, or `7d`. |
-| `--list-caches`            | List known local query caches.                    |
+| `--cache`                  | Persist and activate the input used by `run`.     |
+| `--state-dir path`         | Place configuration and cache data beneath one explicit root. |
 | `--parquet-root name`      | Override the Parquet hierarchy root name. Also supports `--parquet-root=name`. |
 | `--parquet-record name`    | Override the repeated Parquet record node name. Also supports `--parquet-record=name`. |
-| `param=value`              | Add or override a runtime parameter.             |
 
 All long JDBC options accept `--option value` and `--option=value`. An equals form with nothing after the equals sign supplies an explicit empty value. A separated option must have a following token; use the equals form for values beginning with `-`.
+
+### Hermetic State
+
+`--state-dir` places all nq-owned persistent state beneath one directory:
+
+```text
+<state-dir>/config.properties
+<state-dir>/cache/*.mv.db
+```
+
+`NQ_STATE_DIR` supplies the default when `--state-dir` is omitted. If neither is
+set, nq uses `~/.nq`. Use the same state root for `cache load`, `cache use`, and
+later `run` commands that consume the active cache.
 
 Only `.properties` parameter files currently load values. Hooks exist for XML, JSON, and YAML parameter files, but they are not implemented.
 
@@ -400,7 +346,7 @@ Only `.properties` parameter files currently load values. Hooks exist for XML, J
 The simple command-line form builds a JDBC URL and infers the driver class:
 
 ```bash
-nq report.nq \
+nq run --script-file report.nq \
   --db postgresql \
   --database customer_data \
   --host db.internal.example \
@@ -427,7 +373,7 @@ The host defaults to `localhost`. HANA and Informix require an explicit port bec
 For a complete JDBC URL or custom JVM driver, use the exact form:
 
 ```bash
-nq report.nq \
+nq run --script-file report.nq \
   --jdbc-driver postgresql \
   --jdbc-database 'jdbc:postgresql://db.internal.example:5432/customer_data' \
   --jdbc-username report_user
@@ -461,8 +407,8 @@ jdbc.password=change-me
 ```
 
 ```bash
-nq report.nq -p database.properties --db postgresql --database customer_data
-nq report.nq --db postgresql --database customer_data -p database.properties
+nq run --script-file report.nq --properties database.properties --db postgresql --database customer_data
+nq run --script-file report.nq --db postgresql --database customer_data --properties database.properties
 ```
 
 Both commands use the generated PostgreSQL URL and the credentials from the properties file. A command-line `--user`, `--password`, `--jdbc-*`, or `jdbc.*=value` replaces the corresponding property. Exact command-line `--jdbc-*` values override values inferred from the simple form regardless of argument position. If a command-line property is supplied more than once, its last value wins. An explicit command-line `jdbc.class.name` replaces a `jdbc.driver` inherited from properties; when both are supplied directly on the command line, `jdbc.driver` takes precedence.
@@ -487,7 +433,13 @@ For predefined drivers, the selected JAR or native executable must contain the r
 
 Supplied values are used as written. NQ does not validate port ranges, encode URL components, or reconcile inconsistent credentials; the JDBC driver or database reports those errors. For example, `--host=` and `--port=` supply explicit empty values rather than selecting defaults, while omitting those options selects documented defaults. The simple form requires `--db` and `--database` together and does not decompose an existing `jdbc.database` URL from a properties file.
 
-Explicit `--cache` takes precedence over JDBC settings because cache operations own their local H2 connection. Non-JDBC values from the same properties file remain available as runtime parameters. Cache-maintenance commands ignore JDBC settings. Without `--cache`, explicit JDBC settings use an accompanying input file or typed standard input for mapped DML; without JDBC settings, that input is queried through temporary H2. With no input source, JDBC settings take precedence over the active-cache fallback. Command-line passwords may be visible in shell history and process listings; prefer a protected properties file for reusable credentials.
+`run --cache` cannot be combined with JDBC connection options because they name
+conflicting execution targets. Without `--cache`, explicit JDBC settings use an
+accompanying input file or typed standard input for mapped DML; without JDBC
+settings, that input is queried through temporary H2. With no input source,
+JDBC settings take precedence over the active-cache fallback. Command-line
+passwords may be visible in shell history and process listings; prefer a
+protected properties file for reusable credentials.
 
 ### Input Type Selection
 
@@ -546,20 +498,24 @@ NQ creates the same SQL tables for both modes. The difference is how long the H2
 Supplying a script and input file without `--cache` or JDBC settings loads the file into an in-memory H2 database:
 
 ```bash
-nq 'select id from item where a in (select max(a) from item);' elements.json
+nq run --script-text 'select id from item where a in (select max(a) from item);' \
+  --input-file elements.json
 ```
 
 Typed standard input uses the same temporary path:
 
 ```bash
-cat elements.json | nq -i json 'select id from item where a in (select max(a) from item);'
+cat elements.json | nq run \
+  --script-text 'select id from item where a in (select max(a) from item);' \
+  --input-file - --input-format json
 ```
 
 The database exists only for that command and is discarded when the command
 finishes. A source file is read again, or standard input is consumed again, on
 every invocation, so changes are visible immediately. Temporary loads create no
-cache file, do not appear in `--list-caches`, do not change the active cache,
-and do not persist inferred key metadata. `--cache-dir` has no effect on them.
+cache file, do not appear in `cache list`, do not change the active cache,
+and do not persist inferred key metadata. `--state-dir` has no effect on the
+temporary database itself.
 
 Temporary loading avoids cache files, stale results, H2 file locking, and active-cache side effects. Its costs are that parsing and table creation are repeated for every command, the database cannot be reused later, and the materialized data must fit comfortably in memory. It is therefore a good default for one-off queries and modest input files.
 
@@ -568,13 +524,14 @@ Temporary loading avoids cache files, stale results, H2 file locking, and active
 Add `--cache` to keep the loaded database for later queries:
 
 ```bash
-nq totals.nq customers.json --cache --output json
+nq run --script-file totals.nq --input-file customers.json --cache --output json
 ```
 
 Standard input can also create a persistent cache:
 
 ```bash
-cat customers.json | nq -i json --cache totals.nq --output json
+cat customers.json | nq run --script-file totals.nq \
+  --input-file - --input-format json --cache --output json
 ```
 
 Each explicit `--cache` invocation creates a new file-backed H2 database and
@@ -586,24 +543,24 @@ space and can encounter H2 file-lock contention between processes. File-backed
 sources may return stale data because their caches are not automatically
 synchronized when the source file changes.
 
-A standalone persistent load also requires `--cache` or `-c`:
+A standalone persistent load uses the `cache load` command:
 
 ```bash
-nq --cache customers.json
-cat customers.json | nq -i json --cache
+nq cache load --input-file customers.json
+cat customers.json | nq cache load --input-file - --input-format json
 ```
 
-The command reports `Loaded cache for <source>`. Query the active cache without
-repeating the input source or option:
+The command emits a report in the selected `--report-format`. Query the active
+cache without repeating the input source:
 
 ```bash
-nq totals.nq --output json
+nq run --script-file totals.nq --output json
 ```
 
-A persistent cache becomes active for later queries. `--list-caches` shows its
-generated filename and records the source for information. Use the filename
-with `--use-cache` or targeted `--clear-cache`. An
-explicit `--cache` wins over JDBC settings. Without `--cache`, JDBC settings
+A persistent cache becomes active for later queries. `cache list` shows its
+generated filename. Use that filename with `cache use` or targeted
+`cache clear`. An
+`--cache` cannot be combined with JDBC settings. Without `--cache`, JDBC settings
 make an accompanying input file a mapped-DML source; without JDBC settings, a
 script queries that file through temporary H2. With no input source, JDBC
 settings win over the active-cache fallback.
@@ -612,12 +569,12 @@ To switch the active selection without running a query or loading the source
 file, use:
 
 ```bash
-nq --use-cache bright-otter.mv.db
+nq cache use --name bright-otter.mv.db
 ```
 
-`--use-cache` only selects an existing cache by a bare filename such as
-`bright-otter.mv.db`. The filename is resolved under `--cache-dir`, or under
-`~/.nq/cache` by default. The source file need not still exist, and no cache is
+`cache use` only selects an existing cache by a bare filename such as
+`bright-otter.mv.db`. The filename is resolved under `<state-dir>/cache`. The
+source file need not still exist, and no cache is
 created or rebuilt when the name is missing.
 
 By default, cache files are stored under:
@@ -626,7 +583,8 @@ By default, cache files are stored under:
 ~/.nq/cache
 ```
 
-Use `--cache-dir path` to choose another directory for persistent caches.
+Use `--state-dir path` or `NQ_STATE_DIR` to choose another root for all
+persistent nq state.
 
 The active selection is stored in:
 
@@ -634,13 +592,13 @@ The active selection is stored in:
 ~/.nq/config.properties
 ```
 
-It records the generated cache file, so a cache loaded with a custom
-`--cache-dir` remains active without repeating that option. New cache files use
+It records the generated cache file. A later command must select the same
+`--state-dir` to read that state. New cache files use
 two-word jnames such as `bright-otter.mv.db`. If a generated name already
 exists, NQ generates another. The filename is the cache's selection key.
 
-Persistent cache creation and selection are always explicit. Use `--cache` or
-`-c` to create a fresh cache, or `--use-cache` to select an existing cache by
+Persistent cache creation and selection are always explicit. Use `cache load`
+or `run ... --cache` to create a fresh cache, or `cache use` to select one by
 filename. After that explicit selection, a script with no
 input source can use the active-cache fallback. A script supplied with an input
 file or typed standard input but without `--cache` always performs a fresh
@@ -648,7 +606,7 @@ temporary load, even when a persistent cache already exists for that source.
 
 File-backed persistent caches are not synchronized with source-file changes.
 Run the query with its input file and without `--cache` for a fresh temporary
-load, or run `--cache` again to create and activate a fresh persistent cache.
+load, or run `cache load` again to create and activate a fresh persistent cache.
 
 When a cache is built, nq creates input-structure tables. Object names become table names, direct scalar children become columns, and nested objects become related tables.
 
@@ -753,9 +711,9 @@ structure {result.region} key (country_key);
 Run it against any of the equivalent example inputs:
 
 ```bash
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.json --cache --output json
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.yaml --cache --output json
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.xml --cache --output json
+nq run --script-file docs/examples/identity-country-counts.nq --input-file docs/examples/identity-customers.json --cache --output json
+nq run --script-file docs/examples/identity-country-counts.nq --input-file docs/examples/identity-customers.yaml --cache --output json
+nq run --script-file docs/examples/identity-country-counts.nq --input-file docs/examples/identity-customers.xml --cache --output json
 ```
 
 Output:
@@ -791,7 +749,7 @@ Input-structure tables are loaded into the persistent cache. Secondary path/valu
 List caches:
 
 ```bash
-nq --list-caches
+nq cache list
 ```
 
 The listing shows each cache filename and timestamp. The active cache is marked
@@ -800,38 +758,37 @@ with `*`.
 Switch the active cache without loading or rebuilding it:
 
 ```bash
-nq --use-cache bright-otter.mv.db
+nq cache use --name bright-otter.mv.db
 ```
 
 Clear all caches:
 
 ```bash
-nq --clear-cache
+nq cache clear --all
 ```
 
 Clear one cache by its bare filename:
 
 ```bash
-nq --clear-cache bright-otter.mv.db
+nq cache clear --name bright-otter.mv.db
 ```
 
-Bare cache filenames are resolved under `--cache-dir`, or under
-`~/.nq/cache` by default.
+Bare cache filenames are resolved under `<state-dir>/cache`.
 
 Clear caches not modified within a duration:
 
 ```bash
-nq --clear-cache-older-than 30m
-nq --clear-cache-older-than 6h
-nq --clear-cache-older-than 7d
+nq cache clear --older-than 30m
+nq cache clear --older-than 6h
+nq cache clear --older-than 7d
 ```
 
 Supported duration units are minutes, hours, and days. Short forms such as `m`, `h`, and `d` are accepted.
 
-Cache maintenance commands accept `--cache-dir`:
+Cache maintenance commands accept `--state-dir`:
 
 ```bash
-nq --cache-dir /tmp/nq-cache --clear-cache
+nq cache clear --all --state-dir /tmp/nq-state
 ```
 
 ### Output Format
@@ -859,18 +816,18 @@ synthetic-object result is preserved as one complete JSON value on one line.
 Examples:
 
 ```bash
-nq people.xml --output json
-nq people.json --output yaml
-nq people.csv --output markdown
-nq people.tsv --output csv
+nq convert --input-file people.xml --output json
+nq convert --input-file people.json --output yaml
+nq convert --input-file people.csv --output markdown
+nq convert --input-file people.tsv --output csv
 ```
 
 ```bash
-nq people.nq -p database.properties --output json
+nq run --script-file people.nq --properties database.properties --output json
 ```
 
 ```bash
-nq people.nq -p database.properties --output jsonl > people.jsonl
+nq run --script-file people.nq --properties database.properties --output jsonl > people.jsonl
 ```
 
 ```sql
@@ -962,7 +919,7 @@ where region = '${region:EMEA}';
 ```
 
 ```bash
-nq people.nq -p database.properties region=APAC
+nq run --script-file people.nq --properties database.properties --param region=APAC
 ```
 
 ### Paths

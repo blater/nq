@@ -11,12 +11,15 @@ import blater.nq.runner.ScriptRunner;
 import blater.nq.runner.sql.cache.CacheExecution;
 import blater.nq.runner.sql.cache.PersistentCache;
 import blater.nq.runner.sql.SqlExecutor;
+import blater.nq.report.ReportWriter;
 import blater.nq.util.Log;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +28,8 @@ import static blater.nq.ParameterParser.*;
 // Responsibility: orchestrates running an nq script.
 public class Main {
   public static void main(String... args) throws Exception {
+    Log.reportFormat(null);
+    Log.reportFormat(ParameterParser.requestedReportFormat(args));
     var params = ParameterParser.parse(args);
     Path stagedInput = stageStandardInput(params);
     try {
@@ -51,26 +56,34 @@ public class Main {
         Help.printCommandInfo(topic);
       }
     } else if (params.containsKey(CACHE_LIST_PARAM)) {
-      PersistentCache.list(params);
+      writeCacheListReport(params);
     } else if (params.containsKey(CACHE_USE_PARAM)) {
       var handle = PersistentCache.use(params.get(CACHE_USE_PARAM), params);
-      System.out.println("Active cache set to " + handle.cacheFile().getFileName());
+      writeReport(params, "cache use", details(
+          "cache_name", handle.cacheFile().getFileName().toString(),
+          "cache_path", handle.cacheFile().toString(),
+          "active", true));
     } else  if (params.containsKey(CACHE_CLEAR_TARGET_PARAM)
                || params.containsKey(CACHE_CLEAR_ALL_PARAM)
                || params.containsKey(CACHE_CLEAR_OLDER_THAN_PARAM)
     ) {
-      PersistentCache.clear(params);
+      int cleared = PersistentCache.clear(params);
+      writeReport(params, "cache clear", details("cleared", cleared));
     } else if (params.containsKey(CATALOG_PATTERN_PARAM)) {
       String pattern = params.get(CATALOG_PATTERN_PARAM);
       NestScript script = new NestScript(List.of(NestStatement.catalog(pattern.isEmpty() ? null : pattern)));
       execute(script, params);
     } else if (!ParameterParser.hasScript(params)) {
       if (Boolean.parseBoolean(params.get(CACHE_MODE_PARAM))) {
-        CacheExecution.loadAndActivate(params);
-        String source = params.containsKey(INPUT_TYPE_PARAM)
+        var handle = CacheExecution.loadAndActivate(params);
+        String source = STDIN_INPUT.equals(params.get(INPUT_FILENAME))
             ? "standard input"
             : Path.of(params.get(INPUT_FILENAME)).toAbsolutePath().normalize().toString();
-        System.out.println("Loaded cache for " + source);
+        writeReport(params, "cache load", details(
+            "source", source,
+            "cache_name", handle.cacheFile().getFileName().toString(),
+            "cache_path", handle.cacheFile().toString(),
+            "active", true));
       } else {
         convertInput(params);
       }
@@ -119,7 +132,42 @@ public class Main {
 
   private static void convertInput(Map<String, String> params) {
     String inputFilename = params.get(INPUT_FILENAME);
-    var hierarchy = InputReader.of(InputType.fromFilename(inputFilename)).load(inputFilename, params);
+    InputType inputType = params.containsKey(INPUT_TYPE_PARAM)
+        ? InputType.fromName(params.get(INPUT_TYPE_PARAM))
+        : InputType.fromFilename(inputFilename);
+    var hierarchy = InputReader.of(inputType).load(inputFilename, params);
     OutputType.get(null, params).write(hierarchy);
+  }
+
+  private static void writeCacheListReport(Map<String, String> params) {
+    List<Map<String, Object>> caches = PersistentCache.listCaches(params).stream()
+        .map(entry -> Map.<String, Object>of(
+            "name", entry.cacheFilename(),
+            "modified", Instant.ofEpochMilli(entry.modifiedMillis()).toString(),
+            "active", entry.active()))
+        .toList();
+    writeReport(params, "cache list", details(
+        "state_dir", PersistentCache.stateRoot(params).toString(),
+        "cache_dir", PersistentCache.cacheRoot(params).toString(),
+        "caches", caches));
+  }
+
+  private static void writeReport(
+      Map<String, String> params,
+      String command,
+      Map<String, ?> details) {
+    Map<String, Object> report = new LinkedHashMap<>();
+    report.put("status", "ok");
+    report.put("command", command);
+    report.putAll(details);
+    ReportWriter.write(report, ParameterParser.reportFormat(params));
+  }
+
+  private static Map<String, Object> details(Object... values) {
+    Map<String, Object> details = new LinkedHashMap<>();
+    for (int index = 0; index < values.length; index += 2) {
+      details.put(values[index].toString(), values[index + 1]);
+    }
+    return details;
   }
 }
