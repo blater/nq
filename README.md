@@ -1,3 +1,5 @@
+[![Latest release](https://img.shields.io/github/v/release/blater/nq)] (https://github.com/blater/nq/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/blater/nq/total)] (https://github.com/blater/nq/releases)
 
 NQ is a command-line tool for querying and moving data between JSON, YAML, TOML, XML, CSV, TSV files and relational databases.
 It provides a familiar SQL language for querying JSON, YAML, TOML, XML, CSV, TSV, JSONL, and Parquet files, extracting complex
@@ -5,11 +7,18 @@ data structures into these formats from databases, and generally working with an
 
 Full documentation: [NQ user manual](docs/user-manual.md).
 
-## Getting started
+## Install
 
-You can run SQL directly against JSON/XML/Yaml.  
-For example given a json file 'users.json'
+| Platform | instructions | 
+| --- | --- | 
+| macOS ARM64 | `brew install blater/tap/nq` |
+| Windows x64 | Run from an administrator powershell<br>with Chocolatey installed. <br>`irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1` | 
+| Lunux x64 | This installs the latest NQ package directly<br>from GitHub Releases. Rerun the same command to upgrade.<br>`curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh` |
 
+
+## What does it do?
+
+You can run SQL queries directly against data files. For example given a json file 'users.json'
 ```json
     {
         "users": [
@@ -32,90 +41,40 @@ Get all the active users from the file:
 
 ` [{"name":"Alice"},{"name":"Charlie"}] `
 
-You can use very complex selects. This is because Nq treats arrays as tables and fields as columns so you can run SQL over them as if the file is a database. 
+You can use very complex selects. 
+This is because Nq treats arrays as tables and fields as columns so you can run SQL over them as if the file is a database. 
 
 If your file has ID fields it can match on, then nq will also infer key relationships, allowing joins and subqueries:
 ```
   nq "select u.id, u.name, u.active, a.city 
       from users u 
       join address a on a.user_id = u.id 
-      order by u.id;" --db h2 --database file:./users-db
+      order by u.id;" users.json 
 ```
 
 If it can't infer then you can still tell it how to match fields with its `structure` keyword.
 
-This example inserts the data from the file into a database (a local H2 database in this example):
+You can insert into a database from the file - this example inserts it into the 'appusers' table (we're using a local H2 database):
 ```
-nq "insert into users (id, name, active) values ({users.item.id}, {users.item.name}, {users.item.active});"  \
+nq "insert into appusers (id, username, active) values ({users.id}, {users.name}, {users.active});"  \
     users.json --db h2 --database file:./users-db`
-
-This updates a database from the file:
 ```
-nq "update users set active = {users.active} where id = {users.id};" \
+
+This updates the database `appusers` table:
+```
+nq "update appusers set isactive = {users.active} where id = {users.id};" \
     users.json --db h2 --database file:./users-db
 ```
 
-And this command converts directly from one format to another
-`nq users.json -o csv > users.csv`
-you can use any of the supported input formats and possible output formats are JSON, YAML, XML, TOML, JSONL, CSV, TSV, and Markdown.
-
-
-## Supported formats
-
-NQ reads these input formats:
-
-| Format | Extensions or selection |
-| --- | --- |
-| JSON | `.json` or `-t json` for stdin |
-| JSON Lines | `.jsonl` or `-t jsonl` for stdin |
-| YAML | `.yaml`, `.yml`, or `-t yaml` for stdin |
-| TOML | `.toml` or `-t toml` for stdin |
-| XML | `.xml` or `-t xml` for stdin |
-| CSV | `.csv` or `-t csv` for stdin |
-| TSV | `.tsv` or `-t tsv` for stdin |
-| Parquet | `.parquet` or `-t parquet` for stdin |
-
-Output is available as JSON, JSON Lines, YAML, TOML, XML, CSV, TSV, or Markdown. JSON is
-the default.
-
-A file supplied without SQL is converted directly and does not create a
-database:
-
-```bash
-nq customers.xml
+You can also conveniently convert from one format to another.
+```
+nq users.json -o csv 
 nq customers.json -o yaml
-nq customers.csv -o markdown
+nq customers.xml -o json
 ```
 
-
-## Install
-
-| Platform | instructions | 
-| --- | --- | 
-| macOS ARM64 | `brew install blater/tap/nq` |
-| Windows x64 | Run from an administrator powershell<br>with Chocolatey installed. <br>`irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1` | 
-| Lunux x64 | This installs the latest NQ package directly<br>from GitHub Releases. Rerun the same command to upgrade.<br>`curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh` |
-
-
-## Where NQ fits
-
-NQ is intended for work that crosses document and relational boundaries:
-
-- exporting joined database data into a deliberate JSON, YAML, or XML shape;
-- applying JSON, YAML, TOML, XML, CSV, TSV, or Parquet data through database DML;
-- joining or aggregating related collections inside structured files;
-- replacing one-off data movement code with a checked-in SQL-like script.
-
-Use a focused tool when the task stays inside a simpler boundary:
-
-- jq for JSON-native filtering and editing;
-- yq or Dasel for direct YAML or document edits;
-- Remarshal for guarded format conversion;
-- Miller for record-stream processing;
-- DuckDB or another SQL-over-file tool for primarily analytical, tabular work.
-
-The [comparison guide](docs/comparison.md) describes these boundaries in more
-detail.
+All of the commands operate on JSON/JSONL/YAML/ToML/XML/CSV/TSV input files and 
+can output to JSON, YAML, XML, TOML, JSONL, CSV, TSV, and Markdown.
 
 
 ## Query a local H2 database
@@ -450,6 +409,29 @@ selected JSON, JSONL, YAML, TOML, XML, CSV, TSV, or Markdown format.
 Exit statuses are stable: `0` for success, `1` for execution failure, `2` for
 invalid usage or configuration, and `130` when interrupted. See the
 [automation guide](docs/automation.md) for scripting and CI examples.
+
+
+## Where NQ fits
+
+NQ is intended for work that crosses document and relational boundaries:
+
+- exporting joined database data into a deliberate JSON, YAML, or XML shape;
+- applying JSON, YAML, TOML, XML, CSV, TSV, or Parquet data through database DML;
+- joining or aggregating related collections inside structured files;
+- replacing one-off data movement code with a checked-in SQL-like script.
+
+Use a focused tool when the task stays inside a simpler boundary:
+
+- jq for JSON-native filtering and editing;
+- yq or Dasel for direct YAML or document edits;
+- Remarshal for guarded format conversion;
+- Miller for record-stream processing;
+- DuckDB or another SQL-over-file tool for primarily analytical, tabular work.
+
+The [comparison guide](docs/comparison.md) describes these boundaries in more
+detail.
+
+
 
 ## Documentation
 
