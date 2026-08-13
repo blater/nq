@@ -5,6 +5,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.util.Locale;
@@ -82,15 +83,17 @@ final class PlatformTerminalDetector {
 
   private static final class WindowsBindings {
     private static final Linker LINKER = Linker.nativeLinker();
+    private static final SymbolLookup KERNEL32 = SymbolLookup.libraryLookup(
+        "Kernel32.dll", Arena.global());
     private static final ValueLayout C_INT = nativeLayout(LINKER, "int");
     private static final ValueLayout DWORD = nativeLayout(LINKER, "long");
     private static final ValueLayout HANDLE = ValueLayout.ADDRESS;
     private static final MethodHandle GET_STD_HANDLE = LINKER.downcallHandle(
-        LINKER.defaultLookup().find("GetStdHandle")
+        KERNEL32.find("GetStdHandle")
             .orElseThrow(() -> new IllegalStateException("GetStdHandle is unavailable")),
         FunctionDescriptor.of(HANDLE, C_INT));
     private static final MethodHandle GET_CONSOLE_MODE = LINKER.downcallHandle(
-        LINKER.defaultLookup().find("GetConsoleMode")
+        KERNEL32.find("GetConsoleMode")
             .orElseThrow(() -> new IllegalStateException("GetConsoleMode is unavailable")),
         FunctionDescriptor.of(C_INT, HANDLE, HANDLE));
   }
