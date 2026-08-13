@@ -1,5 +1,4 @@
-[![Latest release](https://img.shields.io/github/v/release/blater/nq)] (https://github.com/blater/nq/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/blater/nq/total)] (https://github.com/blater/nq/releases)
+[![Latest release](https://img.shields.io/github/v/release/blater/nq)](https://github.com/blater/nq/releases/latest)
 
 NQ is a command-line tool for querying and moving data between JSON, YAML, TOML, XML, CSV, TSV files and relational databases.
 It provides a familiar SQL language for querying JSON, YAML, TOML, XML, CSV, TSV, JSONL, and Parquet files, extracting complex
