@@ -32,13 +32,6 @@ public class Hierarchy {
     SYNTHETIC_ARRAY
   }
 
-  /*
-   * activeObjects records the latest Node opened or created for a path.
-   * example:
-   *     people.person          -> current person node
-   *     people.person.address  -> current address
-   */
-  private final Map<HierarchyPath, Node> activePathEntries = new HashMap<>();
   private final IdentityHashMap<Node, Map<HierarchyPath, ChildBucket>> persistentChildren = new IdentityHashMap<>();
   private final Set<HierarchyPath> warnedInferredConflictPaths = new HashSet<>();
 
@@ -99,20 +92,11 @@ public class Hierarchy {
       } else {
         root = new Node(rootName);
         rootKind = RootKind.NAMED;
-        activePathEntries.put(rootPath, root);
       }
       initializeInferredCollections();
     }
     if (namespace == null)
       namespace = stmt.getNamespace();
-  }
-
-  @Deprecated
-  public static HierarchyPath from(String dotSeparatedPath) {
-    List<String> parts = Arrays.stream(dotSeparatedPath.split("\\."))
-        .filter(part -> !part.isEmpty())
-        .toList();
-    return new HierarchyPath(parts);
   }
 
   /*
@@ -567,140 +551,6 @@ public class Hierarchy {
     return targets;
   }
 
-  /*
-   * create a new node if key value changes (as requested by a
-   * createsNew rule such as "people.id createsNew {people.person}")
-   *
-   * A createsNew rule on a value path, such as createsNew {people.person.name},
-   * is not handled here because there is no child container to create. That case
-   * is handled when the value is written, where it means "add another value node".
-   */
-  private void createNewNodeBlocksForIdChange(MappingPlan plan, QueryResultRow row) {
-    for (CorrelationRule rule : plan.getCorrelationRules()) {
-      if (isFieldPath(plan, rule.getPath())) {
-        // value-reset rule, handled when the field is written
-        continue;
-      }
-      if (!correlationRulesPass(rule, row)) {
-        continue;
-      }
-      Node parent = findOrCreateNode(rule.getPath().parent());
-      Node repeatedBlock = new Node(rule.getPath().getTerminalNodeName());
-      // Node repeated = Node.builder().name(rule.getPath().getTerminalNodeName()).build();
-
-      parent.addNode(repeatedBlock);
-      // The entries for the last instance of this node block are in activePathEntries. Clear them out
-      // note: implicit loop
-      activePathEntries.keySet()
-          .removeIf(path -> path.isBelow(rule.getPath()));
-      // add the new container block
-      activePathEntries.put(rule.getPath(), repeatedBlock);
-    }
-  }
-
-
-  /*
-   * Writes this row's mapped values into the hierarchy. Each field finds
-   * or creates its parent node, then adds, replaces, or composes a value
-   * node below it.
-   */
-  private void applyFields(MappingPlan plan, QueryResultRow row) {
-
-    for (var field : plan.getFields()) {
-      if (!evaluateFieldConditions(field, row))
-        continue;
-
-      var parent = findOrCreateNode(field.getPath().parent());
-      var stringValue = row.getStringValue(field.getSourceColumn());
-      var isNull = row.isNull(field.getSourceColumn());
-      if (isNull && field.isAbsentOnNull())
-        continue;
-
-      boolean isNew = startsNewNode(plan, field.getPath(), row);
-      writeValueNode(parent, field, stringValue, isNull, isNew);
-    }
-  }
-
-  /*
-   * Decides whether a field-level correlation rule fired for this row.
-   * A fired rule starts a fresh value node instead of replacing or
-   * composing with the previous value node.
-   */
-  private boolean startsNewNode(MappingPlan plan, HierarchyPath fieldPath, QueryResultRow row) {
-    for (var rule : plan.getCorrelationRules()) {
-      if (!rule.getPath().equals(fieldPath)) {
-        continue;
-      }
-      if (correlationRulesPass(rule, row)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /*
-   * Identifies correlation rules that target a value field rather than a
-   * node. The name hides that this is used to separate value reset from
-   * node creation.
-   */
-  private boolean isFieldPath(MappingPlan plan, HierarchyPath path) {
-    for (var field : plan.getFields()) {
-      if (field.getPath().equals(path)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /*
-   * Returns the active Node for a path, creating any missing parent
-   * nodes and making the created node active. This changes both the
-   * output hierarchy and activeObjects.
-   */
-  private Node findOrCreateNode(HierarchyPath path) {
-    if (path == null || path.isRoot()) {
-      return root;
-    }
-    var active = activePathEntries.get(path);
-    if (active != null) {
-      return active;
-    }
-
-    var parent = findOrCreateNode(path.parent());
-    var created = new Node(path.getTerminalNodeName());
-    parent.addNode(created);
-    activePathEntries.put(path, created);
-    return created;
-  }
-
-  /*
-   * Applies OutputField value-composition rules under a parent node.
-   * appendText is the text inserted between the current value and the
-   * next value when append(...) syntax targets the same value node.
-   */
-  private void writeValueNode(Node parent, OutputField field, String value, boolean nullValue, boolean isNew) {
-    String name = field.getPath().getTerminalNodeName();
-    int existingIndex = isNew ? -1 : lastChildIndex(parent, name);
-
-    boolean attribute = field.isAttribute();
-    if (field.getAppendText() != null) {
-      Node existing = existingIndex < 0 ? null : parent.getChildren().get(existingIndex);
-      if (isNull(existing))
-        parent.addNode(valueNode(name, value, nullValue, attribute));
-      else {
-        String combined = existing.getValue() + field.getAppendText() + value;
-        parent.replaceChild(existingIndex, valueNode(name, combined, nullValue, attribute));
-      }
-    } else {
-      var newNode = valueNode(name, value, nullValue, attribute);
-      if (existingIndex < 0) {
-        parent.addNode(newNode);
-      } else {
-        parent.replaceChild(existingIndex, newNode);
-      }
-    }
-  }
-
   private List<Node> matchingChildren(List<Node> parents, String name, boolean attribute) {
     List<Node> matches = new ArrayList<>();
     for (Node parent : parents) {
@@ -751,19 +601,6 @@ public class Hierarchy {
    */
   private boolean evaluateFieldConditions(OutputField field, QueryResultRow row) {
     for (var condition : field.getConditions()) {
-      if (!Evaluator.evaluate(condition, row)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /*
-   * Checks whether all node-opening or field-reset conditions match
-   * this row.
-   */
-  private boolean correlationRulesPass(CorrelationRule rule, QueryResultRow row) {
-    for (var condition : rule.getConditions()) {
       if (!Evaluator.evaluate(condition, row)) {
         return false;
       }

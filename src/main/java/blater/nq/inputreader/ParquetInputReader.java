@@ -1,6 +1,6 @@
 package blater.nq.inputreader;
 
-import blater.nq.ParameterParser;
+import blater.nq.execution.EngineParameterNames;
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.Node;
 import blater.nq.util.Log;
@@ -92,8 +92,8 @@ public class ParquetInputReader implements InputReader {
   }
 
   private static String rawRootName(Path path, Map<String, String> parameters) {
-    if (hasParameter(parameters, ParameterParser.PARQUET_ROOT_PARAM)) {
-      return parameters.get(ParameterParser.PARQUET_ROOT_PARAM);
+    if (hasParameter(parameters, EngineParameterNames.PARQUET_ROOT)) {
+      return parameters.get(EngineParameterNames.PARQUET_ROOT);
     }
 
     Path fileName = path.getFileName();
@@ -111,8 +111,8 @@ public class ParquetInputReader implements InputReader {
   }
 
   private static String rawRecordName(MessageType schema, Map<String, String> parameters) {
-    if (hasParameter(parameters, ParameterParser.PARQUET_RECORD_PARAM)) {
-      return parameters.get(ParameterParser.PARQUET_RECORD_PARAM);
+    if (hasParameter(parameters, EngineParameterNames.PARQUET_RECORD)) {
+      return parameters.get(EngineParameterNames.PARQUET_RECORD);
     }
     if (schema == null || !hasValue(schema.getName())) {
       return "";

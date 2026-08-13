@@ -84,7 +84,7 @@ class SqlRowCursorNamedAccessTest {
   @Test
   void missingColumnsReadAsNullOrEmpty() {
     QueryResultRow row = new QueryResultRow(
-        Map.of("present", QueryColumn.builder().columnName("present").sqlType(SqlType.STRING).columnValue("value").previousValue("value").build()));
+        Map.of("present", QueryColumn.builder().columnName("present").sqlType(SqlType.STRING).columnValue("value").build()));
     assertNull(row.getValue("missing"));
     assertEquals("", row.getStringValue("missing"));
   }

@@ -34,8 +34,7 @@ statementBlock
     ;
 
 statementDelimiter
-    : SEMI TERM?
-    | TERM
+    : SEMI
     ;
 
 body
@@ -112,13 +111,13 @@ dmlExpr
 dmlExprAtom
     : dmlSource
     | LPAREN dmlExprInside* RPAREN
-    | ~( COMMA | K_WHERE | K_AND | K_RETURNS | LPAREN | RPAREN | SEMI | TERM )
+    | ~( COMMA | K_WHERE | K_AND | K_RETURNS | LPAREN | RPAREN | SEMI )
     ;
 
 dmlExprInside
     : dmlSource
     | LPAREN dmlExprInside* RPAREN
-    | ~( LPAREN | RPAREN | SEMI | TERM )
+    | ~( LPAREN | RPAREN | SEMI )
     ;
 
 dmlSource
@@ -183,12 +182,12 @@ pathSegment
 //
 // `select` reads a SQL SELECT (or unioned series) and routes columns into an
 // output hierarchy/properties. SQL between markers is opaque token soup — we recognise
-// only the markers that drive mapping (INTO {path}, xmlunion, ORDER BY ...
-// createsNew {path}). Parens are paren-balanced via sqlInside so that
+// only the markers that drive mapping (INTO {path}, hierarchy union, ORDER BY,
+// and STRUCTURE). Parens are paren-balanced via sqlInside so that
 // subquery-internal occurrences of those markers are ignored.
 
 selectStatement
-    : selectBranch ( ( hierarchyUnion | K_XMLUNION ) selectBranch )* orderByClause? structureClause?
+    : selectBranch ( hierarchyUnion selectBranch )* orderByClause? structureClause?
     ;
 
 hierarchyUnion
@@ -230,7 +229,7 @@ orderByClause
     ;
 
 orderItem
-    : orderExpr ( K_ASC | K_DESC )? ( createsNewClause ( AMP createsNewClause )* )?
+    : orderExpr ( K_ASC | K_DESC )?
     ;
 
 orderExpr
@@ -241,10 +240,10 @@ orderExprAtom
     : LPAREN sqlInside* RPAREN
     | ~( COMMA
        | K_ASC | K_DESC
-       | K_STRUCTURE | K_HIERARCHY | K_CREATESNEW
-       | K_GROUP | K_HAVING | K_XMLUNION
+       | K_STRUCTURE | K_HIERARCHY
+       | K_GROUP | K_HAVING
        | LPAREN | RPAREN
-       | SEMI | TERM )
+       | SEMI )
     ;
 
 structureClause
@@ -261,11 +260,7 @@ structureKeyExpr
 
 structureKeyExprAtom
     : LPAREN sqlInside* RPAREN
-    | ~( COMMA | LPAREN | RPAREN | SEMI | TERM )
-    ;
-
-createsNewClause
-    : K_CREATESNEW LBRACE path RBRACE
+    | ~( COMMA | LPAREN | RPAREN | SEMI )
     ;
 
 // One select-item expression. Stops at COMMA (next item), AS (SQL alias), the
@@ -285,27 +280,27 @@ selectExprAtom
       ~( COMMA
        | K_AS
        | K_FROM | K_WHERE | K_GROUP | K_HAVING
-       | K_ORDER | K_XMLUNION | K_HIERARCHY | K_STRUCTURE
+       | K_ORDER | K_HIERARCHY | K_STRUCTURE
        | LPAREN | RPAREN
-       | SEMI | TERM )
+       | SEMI )
     ;
 
 // Everything from FROM (or wherever the first non-select-list token is) up to
-// xmlunion / top-level order by / statement delimiter. Parens nested via sqlInside.
+// hierarchy union / top-level order by / statement delimiter. Parens nested via sqlInside.
 sqlTail
     : sqlTailAtom+
     ;
 
 sqlTailAtom
     : LPAREN sqlInside* RPAREN
-    | ~( K_XMLUNION | K_HIERARCHY | K_STRUCTURE | K_ORDER | LPAREN | RPAREN | SEMI | TERM )
+    | ~( K_HIERARCHY | K_STRUCTURE | K_ORDER | LPAREN | RPAREN | SEMI )
     ;
 
 // Opaque contents of a parenthesised group. Anything goes; just keep parens
-// balanced. TERM ends a statement so it stops nesting too.
+// balanced.
 sqlInside
     : LPAREN sqlInside* RPAREN
-    | ~( LPAREN | RPAREN | TERM )
+    | ~( LPAREN | RPAREN )
     ;
 
 // Keywords are usable as identifiers in paths and names to avoid reserved-word conflicts.
@@ -321,9 +316,9 @@ keyword
     | K_OUTPUT | K_XML | K_JSON | K_CSV | K_TSV | K_TOML | K_YAML | K_MARKDOWN
     | K_AUTOCOMMIT | K_CATALOG | K_ON | K_OFF | K_TRUE | K_FALSE
     | K_ABORT | K_ROLLBACK | K_ONERROR | K_ONWARNING
-    | K_XMLUNION | K_XMLROOT | K_SCHEMA | K_NAMESPACE | K_HIERARCHY | K_UNION
+    | K_XMLROOT | K_SCHEMA | K_NAMESPACE | K_HIERARCHY | K_UNION
     | K_SELECT | K_INTO | K_WHERE | K_GROUP | K_HAVING
-    | K_ORDER | K_BY | K_ASC | K_DESC | K_STRUCTURE | K_KEY | K_CREATESNEW
+    | K_ORDER | K_BY | K_ASC | K_DESC | K_STRUCTURE | K_KEY
     | K_AS | K_ABSENT | K_NULL | K_VALUES | K_AND | K_LITERAL
     | K_RETURNS
     ;
@@ -333,7 +328,7 @@ rawSql
     ;
 
 rawSqlToken
-    : ~( TERM | SEMI )
+    : ~SEMI
     ;
 
 literalSql
@@ -344,7 +339,6 @@ literalSql
 // ─── Lexer ────────────────────────────────────────────────────────────────────
 
 // Statement delimiters and structural punctuation
-TERM         : '\\' G ;
 SEMI         : ';' ;
 LPAREN       : '(' ;
 RPAREN       : ')' ;
@@ -359,7 +353,7 @@ COLON        : ':' ;
 AT           : '@' ;
 AMP          : '&' ;
 
-// SQL operators (needed so they lex cleanly inside rawSql / xmlselect bodies)
+// SQL operators (needed so they lex cleanly inside raw SQL and SELECT bodies)
 LTEQ         : '<=' ;
 GTEQ         : '>=' ;
 NEQ          : '<>' | '!=' ;
@@ -410,9 +404,7 @@ K_TOML       : T O M L ;
 K_YAML       : Y A M L ;
 K_MARKDOWN   : M A R K D O W N ;
 
-// xmlselect keywords
-K_XMLSELECT  : X M L S E L E C T ;
-K_XMLUNION   : X M L U N I O N ;
+// SELECT and hierarchy-mapping keywords
 K_HIERARCHY  : H I E R A R C H Y ;
 K_UNION      : U N I O N ;
 K_XMLROOT    : X M L R O O T ;
@@ -428,7 +420,6 @@ K_BY         : B Y ;
 K_AS         : A S ;
 K_ASC        : A S C ;
 K_DESC       : D E S C ;
-K_CREATESNEW : C R E A T E S N E W ;
 K_STRUCTURE  : S T R U C T U R E ;
 K_KEY        : K E Y ;
 K_ABSENT     : A B S E N T ;

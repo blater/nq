@@ -4,162 +4,195 @@ package blater.nq;
 public final class Help {
   static final String USAGE = """
       Usage:
-        nq run (--script-file <path> | --script-text <text>) [run-options]
-        nq convert --input-file <path|-> [conversion-options]
-        nq catalog [--pattern <pattern>] [source-options]
-        nq cache load --input-file <path|-> [cache-options]
-        nq cache use --name <cache-name> [cache-options]
-        nq cache list [cache-options]
-        nq cache clear (--all | --name <cache-name> | --older-than <age>) [cache-options]
-        nq help [topic]
-        nq -h | --help [topic]
-        nq --version
+        nq [<script.nq> [<data>]]
+        nq [<data>]
+        nq run <script> [<data>] [options]
+        nq convert [<data>] [options]
+        nq catalog [<data>] [<pattern>] [options]
+        nq cache load [<data>] [<name>] [options]
+        nq cache use <name> [options]
+        nq cache list [options]
+        nq cache clear (<name> | olderthan <age> | all) [options]
+        nq help [<command> [<subcommand>]]
+        nq version
 
-      Explicit input and script options:
-        --script-file <path>
-        --script-text <text>
-        --input-file <path|->
-        --input-format <xml|json|jsonl|yaml|toml|csv|tsv|parquet>
-        --param <name=value>
+      Common source options:
+        -f, --script-file <path>       Named equivalent for a script operand.
+        -e, --script-text <text>       Supply literal NQ script text.
+        -i, --input-file <path|->      Named equivalent for a data operand.
+        --input-text <text>            Supply literal hierarchical data.
+        -t, --input-format <format>    Override input format inference.
 
       Result and report options:
-        -o, --output <xml|json|jsonl|csv|tsv|yaml|toml|markdown>
-        --report-format <xml|json|jsonl|csv|tsv|yaml|toml|markdown>
+        -o, --output <format>          Run/convert result format (default: json).
+        -r, --report-format <format>   Catalog/cache report format (default: markdown).
 
-      State options:
-        --state-dir <path>     Store configuration and caches beneath this directory.
-                               NQ_STATE_DIR supplies the same default.
+      Cache options:
+        --cache                       Select persistent cache execution.
+        --name <name>                 Named equivalent in a cache context.
+        --cache-dir <path>            Actual directory containing cache state.
 
-      Run and connection options:
-        -p, --properties <properties-file>
-        --cache
-        --db <type> --database <name> [--host <host>] [--port <port>]
-        --user <username> [--password <password>]
-        --jdbc-driver <name> --jdbc-class-name <class> --jdbc-database <url>
-        --jdbc-username <username> --jdbc-password <password>
+      Configuration and parameters:
+        --config <file.properties>     NQ operational configuration.
+        --params-file <file.properties>
+        --param <name=value>           Repeat for distinct task parameter names.
+
+      Other:
         --debug
         --no-key-inference
+        -h                             Brief global help.
+        --help                         Full or command-local help.
+        --version                      Print the version.
       """;
 
   static final String HELP_ON_HELP = """
       HELP
-          nq help [topic]
-          nq --help [topic]
+          nq help [<command> [<subcommand>]]
+          nq <command> --help
+
+      COMMANDS
+          run         Execute a script against data, a cache, or JDBC.
+          convert     Convert hierarchical data directly.
+          catalog     Inspect relations in data, a cache, or JDBC.
+          cache       Load, select, list, and clear persistent caches.
+          help        Show global or command-specific help.
+          version     Print the NQ version.
 
       TOPICS
-          run         Execute a script from an explicitly named file or text value.
-          convert     Convert one explicitly named input source.
-          catalog     Inspect a database, active cache, or input file.
-          cache       Load, select, list, and clear persistent caches.
-          connection  Configure JDBC connections.
-          output      Choose result and report formats.
-          state       Isolate configuration and cache files.
-          parameters  Supply runtime template parameters.
-          parquet     Override Parquet hierarchy names.
+          connection, output, cache-dir, parameters, parquet
       """;
 
   static final String RUN_CMD = """
       RUN
-          Execute an nq script.
+          Execute one complete NQ script.
 
       SYNOPSIS
-          nq run --script-file <path> [--input-file <path|->] [options]
-          nq run --script-text <text> [--input-file <path|->] [options]
+          nq <script.nq> [<data>]
+          nq '<literal script>' ['<literal json>']
+          nq run <script> [<data>] [options]
 
       DESCRIPTION
-          Exactly one script source is required. An input file is loaded into a
-          temporary H2 database unless --cache is supplied. With no input or JDBC
-          connection, run uses the active cache in --state-dir. Use --input-file -
-          together with --input-format to read standard input.
+          Script and data operands may be files or literal values. Recognised
+          extensions identify file roles. Script plus explicit data uses a
+          temporary database unless --cache or JDBC is selected. With no explicit
+          data, redirected stdin is data; terminal stdin falls back to the active
+          cache. --cache [--name <name>] selects a persistent cache without
+          automatically loading the supplied data into it.
 
       EXAMPLES
-          nq run --script-file report.nq --properties database.properties
-          nq run --script-text 'select id from item;' --input-file items.json
-          nq run --script-file import.nq --input-file customers.json --param region=EMEA
+          nq report.nq customers.json
+          nq 'select id from customer;' '{"customer":[{"id":1}]}'
+          producer | nq report.nq
+          nq report.nq --cache --name customers
       """;
 
   static final String CONVERT_CMD = """
       CONVERT
-          Convert structured data without materializing it in H2.
+          Convert hierarchical data without creating a database.
 
       SYNOPSIS
-          nq convert --input-file <path> [--output <format>]
-          nq convert --input-file - --input-format <format> [--output <format>]
+          nq <data-file>
+          nq convert [<data>] [-o <format>]
+
+      DESCRIPTION
+          With no operand, conversion reads stdin. Input defaults to JSON unless
+          inferred from a filename or overridden with -t. Output defaults to JSON.
 
       EXAMPLES
-          nq convert --input-file customers.xml --output json
-          nq convert --input-file - --input-format yaml --output json < customers.yaml
+          nq customers.yaml
+          nq customers.xml -o yaml
+          producer | nq -o json
       """;
 
   static final String CATALOG_CMD = """
       CATALOG
-          Inspect database or input relations without changing persistent state.
+          Inspect database relations without changing persistent state.
 
       SYNOPSIS
-          nq catalog [--pattern <pattern>] [connection-options]
-          nq catalog --input-file <path|-> [--pattern <pattern>]
+          nq catalog [<data>] [<pattern>] [options]
 
       DESCRIPTION
-          Input files are inspected through an ephemeral in-memory database.
-          Without an input or JDBC connection, catalog uses the active cache under
-          --state-dir. Reports default to Markdown; --report-format selects another
-          structured format.
+          Explicit data is inspected through a temporary database. Otherwise,
+          redirected stdin is data and terminal stdin falls back to the active
+          cache. Use --cache --name <name> for a non-activating named selection,
+          or supply JDBC options. Reports default to Markdown.
 
       EXAMPLES
-          nq catalog --input-file customers.json --pattern '*' --report-format json
-          nq catalog --properties database.properties --pattern 'audit*'
+          nq catalog customers.json 'customer*'
+          nq catalog 'audit*' --cache
+          nq catalog --cache --name archive -r json
       """;
 
   static final String CACHE_CMD = """
       CACHE
-          Manage persistent local H2 caches.
+          Manage persistent local caches.
 
       SYNOPSIS
-          nq cache load --input-file <path|-> [--state-dir <path>]
-          nq cache use --name <cache-name> [--state-dir <path>]
-          nq cache list [--state-dir <path>]
-          nq cache clear (--all | --name <cache-name> | --older-than <age>)
+          nq cache load [<data>] [<name>]
+          nq cache use <name>
+          nq cache list
+          nq cache clear <name>
+          nq cache clear olderthan <age>
+          nq cache clear all
 
       DESCRIPTION
-          All cache files and active-cache configuration live beneath --state-dir.
-          NQ_STATE_DIR supplies the default; otherwise ~/.nq is used. Cache commands
-          emit a report controlled by --report-format.
+          --cache-dir is the actual cache directory. A successful load creates a
+          fresh cache and activates it; it never appends, overwrites, or upserts.
+          Named query selection does not change the active cache. Reports default
+          to Markdown and can be made machine-readable with -r json.
+
+      EXAMPLES
+          nq cache load customers.json customers
+          producer | nq cache load --name customers
+          nq cache use customers
+          nq cache --cache-dir ./cache clear olderthan 7d -r json
       """;
 
   static final String CONNECTION_CMD = """
       CONNECTION
-          Use --properties for a JDBC properties file, or use --db and --database
-          with optional --host, --port, --user, and --password. Exact JDBC options
-          remain available as --jdbc-driver, --jdbc-class-name, --jdbc-database,
-          --jdbc-username, and --jdbc-password.
+          Simple form:
+            --db <type> --database <name> [--host <host>] [--port <port>]
+
+          Exact form:
+            --jdbc-database <url>
+            [--jdbc-driver <known-driver> | --jdbc-class-name <class>]
+
+          Both forms accept --user and --password. A JDBC URL is sufficient in
+          the normal case; driver hints are optional escape hatches.
       """;
 
   static final String OUTPUT_CMD = """
       OUTPUT
-          --output controls run and convert result data.
-          --report-format controls catalog, cache, and diagnostic reports.
+          -o, --output controls run and conversion result data.
+          -r, --report-format controls catalog and cache reports.
 
-          Both accept xml, json, jsonl, csv, tsv, yaml, toml, and markdown.
+          Formats are xml, json, jsonl, csv, tsv, yaml, toml, and markdown.
+          Values are case-insensitive; md is an alias for markdown.
       """;
 
-  static final String STATE_CMD = """
-      STATE
-          --state-dir <path> places config.properties and the cache directory under
-          one explicit root. NQ_STATE_DIR supplies the same default. If neither is
-          set, nq uses ~/.nq.
+  static final String CACHE_DIR_CMD = """
+      CACHE DIRECTORY
+          Resolution order:
+            ~/.nq/cache < config cache.dir < NQ_CACHE_DIR < --cache-dir
+
+          The selected directory directly contains .active and cache database
+          files. Read-only operations do not create an absent directory.
       """;
 
   static final String PARAMETERS_CMD = """
       PARAMETERS
-          Supply each runtime template value explicitly:
+          --config contains only whitelisted operational NQ settings.
+          --params-file contains task parameters visible to scripts and readers.
+          --param name=value overrides a file value and may repeat for distinct names.
 
-          nq run --script-file report.nq --param region=EMEA --param year=2026
+      EXAMPLE
+          nq report.nq --params-file report.properties --param region=EMEA
       """;
 
   static final String PARQUET_CMD = """
       PARQUET
           --parquet-root <name> and --parquet-record <name> override names inferred
-          from a Parquet file and schema.
+          from Parquet input. They are invalid for non-Parquet input.
       """;
 
   static final String MAN_PAGE = """
@@ -172,16 +205,17 @@ public final class Help {
       """ + USAGE + """
 
       DESCRIPTION
-          nq uses explicit commands and named operands. Result data is controlled by
-          --output; operational reports are controlled independently by
-          --report-format. Persistent state is hermetic beneath --state-dir.
+          NQ uses convenient positional operands for each command's primary roles
+          and named options for optional modifications or disambiguation. Result
+          data and operational reports have separate format controls. Persistent
+          cache state is hermetic beneath the selected cache directory.
 
       ENVIRONMENT
-          NQ_STATE_DIR   Default state root when --state-dir is omitted.
+          NQ_CACHE_DIR   Default direct cache directory.
 
       FILES
-          <state-dir>/config.properties
-          <state-dir>/cache/
+          <cache-dir>/.active
+          <cache-dir>/<logical-name>.mv.db
       """;
 
   private Help() {
@@ -194,7 +228,7 @@ public final class Help {
 
   public static void printBriefHelp() {
     System.out.print(USAGE);
-    System.out.println("Run 'nq help' for topics or 'nq --help' for the complete manual.");
+    System.out.println("Run 'nq help' for commands or 'nq --help' for the complete manual.");
   }
 
   public static void printCommandInfo(String command) {
@@ -207,10 +241,11 @@ public final class Help {
       case "cache", "load", "use", "list", "clear" -> CACHE_CMD;
       case "connection", "database", "db", "jdbc" -> CONNECTION_CMD;
       case "output", "report-format" -> OUTPUT_CMD;
-      case "state", "state-dir" -> STATE_CMD;
-      case "parameters", "parameter", "params" -> PARAMETERS_CMD;
+      case "cache-dir", "cache-directory" -> CACHE_DIR_CMD;
+      case "parameters", "parameter", "params", "config" -> PARAMETERS_CMD;
       case "parquet" -> PARQUET_CMD;
-      default -> "Unknown help topic: " + command + "\n\nRun 'nq help' to list available topics.\n";
+      default -> "Unknown help topic: " + command
+          + "\n\nRun 'nq help' to list available commands and topics.\n";
     };
     System.out.print(info);
   }

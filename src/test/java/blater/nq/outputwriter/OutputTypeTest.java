@@ -1,6 +1,6 @@
 package blater.nq.outputwriter;
 
-import blater.nq.ParameterParser;
+import blater.nq.execution.EngineParameterNames;
 import blater.nq.parser.script.NestScript;
 import blater.nq.parser.script.NestStatement;
 import org.junit.jupiter.api.Test;
@@ -12,26 +12,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OutputTypeTest {
   @Test
-  void commandLineCatalogDefaultsToMarkdownWhileOtherCommandsDefaultToJson() {
+  void scriptsDefaultToJson() {
     NestScript catalogScript = new NestScript(List.of(NestStatement.catalog(null)));
 
-    assertEquals(
-        OutputType.MARKDOWN,
-        OutputType.get(
-            catalogScript,
-            Map.of(ParameterParser.CATALOG_PATTERN_PARAM, "")));
     assertEquals(OutputType.JSON, OutputType.get(catalogScript, Map.of()));
   }
 
   @Test
-  void explicitOutputSelectionsOverrideTheCatalogDefault() {
+  void commandLineOutputOverridesTheScriptDirective() {
     NestScript yamlScript = new NestScript(OutputType.YAML, List.of());
-    Map<String, String> catalog = Map.of(ParameterParser.CATALOG_PATTERN_PARAM, "");
-    Map<String, String> commandLineJson = Map.of(
-        ParameterParser.CATALOG_PATTERN_PARAM, "",
-        ParameterParser.OUTPUT_TYPE_PARAM, "json");
+    Map<String, String> commandLineJson = Map.of(EngineParameterNames.OUTPUT_TYPE, "json");
 
-    assertEquals(OutputType.YAML, OutputType.get(yamlScript, catalog));
+    assertEquals(OutputType.YAML, OutputType.get(yamlScript, Map.of()));
     assertEquals(OutputType.JSON, OutputType.get(yamlScript, commandLineJson));
   }
 

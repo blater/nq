@@ -1,6 +1,6 @@
 package blater.nq.runner;
 
-import blater.nq.ParameterParser;
+import blater.nq.execution.EngineParameterNames;
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.HierarchyPath;
 import blater.nq.domain.Node;
@@ -101,12 +101,10 @@ class ScriptRunnerCatalogTest {
         """, StandardCharsets.UTF_8);
 
     Map<String, String> params = new LinkedHashMap<>();
-    params.put(ParameterParser.CACHE_MODE_PARAM, "true");
-    params.put(ParameterParser.INPUT_FILENAME, input.toString());
-    params.put(ParameterParser.CACHE_DIR_PARAM, tempDir.resolve("cache").toString());
+    params.put(EngineParameterNames.INPUT_FILENAME, input.toString());
 
     Hierarchy catalog;
-    SqlExecutor executor = CacheExecution.openForQuery(params).orElseThrow();
+    SqlExecutor executor = CacheExecution.openTemporary(params);
     try {
       catalog = ScriptRunner.run(ScriptParser.parse("catalog person;"), params, executor);
     } finally {

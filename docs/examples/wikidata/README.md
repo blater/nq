@@ -4,8 +4,8 @@ These scripts query `wikidata-companies.json` through NQ cache mode. For
 example:
 
 ```bash
-nq run --script-file docs/examples/wikidata/wikidata-row-first.nq \
-  --input-file docs/examples/wikidata/wikidata-companies.json
+nq docs/examples/wikidata/wikidata-row-first.nq \
+  docs/examples/wikidata/wikidata-companies.json
 ```
 
 The examples use the cache tables created from the dataset:

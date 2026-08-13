@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SelectStatementTest {
 
   @Test
-  public void shouldAcceptValidWithXmlUnion() {
+  public void shouldAcceptValidWithHierarchyUnionAndStructure() {
     String sql = """
         select
           p.personId,
@@ -26,7 +26,7 @@ public class SelectStatementTest {
           person  p
         where
           firstName like '${NAME}%'
-        xmlunion
+        hierarchy union
         select
           n.personId,
           n.nicknameId,
@@ -41,9 +41,11 @@ public class SelectStatementTest {
         and n.nickname like '${NAME}%'
         order by
           surname asc,
-          personId   asc createsNew {searchResults.person},
-          nicknameId asc createsNew {searchResults.person.nickname}
-        \\G
+          personId asc,
+          nicknameId asc
+        structure
+          {searchResults.person} key (personId),
+          {searchResults.person.nickname} key (nicknameId);
         """;
     assertDoesNotThrow(() -> ScriptParser.parse(sql));
   }
@@ -60,8 +62,8 @@ public class SelectStatementTest {
               case when surname not like 'TEMP%' escape '$' then firstname end into {people.person.smithName} absent on null
             from person
             where active = true
-            order by personid asc createsNew {people.person}
-            \\G
+            order by personid asc
+            structure {people.person} key (personid);
             """);
 
     NestStatement statement = script.statements().getFirst();
@@ -84,7 +86,7 @@ public class SelectStatementTest {
   }
 
   @Test
-  public void shouldBuildSelectStatementWithUsingMetadataUnionAliasesAttributesAndCreatesNewRules()
+  public void shouldBuildSelectStatementWithUsingMetadataUnionAliasesAttributesAndStructureKeys()
       throws Exception {
     NestScript script = ScriptParser.parse(
         """
@@ -93,15 +95,16 @@ public class SelectStatementTest {
               p.firstname into {people.person.@firstname},
               p.surname into {people.person.surname:append(space)}
             from person p
-            xmlunion
+            hierarchy union
             select
               p.personid as pid,
               n.nicknameid as nid,
               n.nickname into {people.person.nickname}
             from person p, nickname n
-            order by pid asc createsNew {people.person},
-              nid desc createsNew {people.person.nickname}
-            \\G
+            order by pid asc, nid desc
+            structure
+              {people.person} key (pid),
+              {people.person.nickname} key (nid);
             """);
 
     assertEquals(1, script.statements().size());
@@ -129,13 +132,13 @@ public class SelectStatementTest {
     assertNotNull(surname.getSourceColumn());
     assertNotNull(firstname.getSourceColumn());
     assertNotNull(nickname.getSourceColumn());
-    assertEquals(2, plan.getCorrelationRules().size());
-    assertEquals(HierarchyPath.fromDottedPath("people.person"), plan.getCorrelationRules().get(0).getPath());
-    assertEquals(HierarchyPath.fromDottedPath("people.person.nickname"), plan.getCorrelationRules().get(1).getPath());
+    assertEquals(2, plan.getKeyedPaths().size());
+    assertEquals(HierarchyPath.fromDottedPath("people.person"), plan.getKeyedPaths().get(0).path());
+    assertEquals(HierarchyPath.fromDottedPath("people.person.nickname"), plan.getKeyedPaths().get(1).path());
   }
 
   @Test
-  public void shouldBuildMultipleCreatesNewRulesForOneOrderItem()
+  public void shouldBuildMultipleStructureKeysForOneExpression()
       throws Exception {
     NestScript script = ScriptParser.parse(
         """
@@ -145,17 +148,15 @@ public class SelectStatementTest {
               surname into {people.audit.surname}
             from person
             order by personid asc
-              createsNew {people.person}
-              & createsNew {people.audit}
-            \\G
+            structure
+              {people.person} key (personid),
+              {people.audit} key (personid);
             """);
 
-    var rules = script.statements().getFirst().getPlan().getCorrelationRules();
-    assertEquals(2, rules.size());
-    assertEquals(HierarchyPath.fromDottedPath("people.person"), rules.get(0).getPath());
-    assertEquals("col1", rules.get(0).getConditions().getFirst().fieldName());
-    assertEquals(HierarchyPath.fromDottedPath("people.audit"), rules.get(1).getPath());
-    assertEquals("col1", rules.get(1).getConditions().getFirst().fieldName());
+    var keys = script.statements().getFirst().getPlan().getKeyedPaths();
+    assertEquals(2, keys.size());
+    assertEquals(HierarchyPath.fromDottedPath("people.person"), keys.get(0).path());
+    assertEquals(HierarchyPath.fromDottedPath("people.audit"), keys.get(1).path());
   }
 
   @Test
@@ -164,7 +165,7 @@ public class SelectStatementTest {
         """
             xmlselect
             select personid from person
-            \\g
+            ;
             """));
   }
 
@@ -173,7 +174,7 @@ public class SelectStatementTest {
     NestScript script = ScriptParser.parse(
         """
             select count(*) as total from person
-            \\g
+            ;
             """);
 
     NestStatement statement = script.statements().getFirst();
@@ -187,7 +188,7 @@ public class SelectStatementTest {
     NestScript script = ScriptParser.parse(
         """
             select colname as colalias from t
-            \\g
+            ;
             """);
 
     NestStatement statement = script.statements().getFirst();
@@ -201,7 +202,7 @@ public class SelectStatementTest {
     NestScript script = ScriptParser.parse(
         """
             select x into newtable from t
-            \\g
+            ;
             """);
 
     NestStatement statement = script.statements().getFirst();
@@ -215,7 +216,7 @@ public class SelectStatementTest {
     NestScript script = ScriptParser.parse(
         """
             select name as personName into {person.name} from person
-            \\g
+            ;
             """);
 
     NestStatement statement = script.statements().getFirst();
@@ -233,7 +234,7 @@ public class SelectStatementTest {
     NestScript script = ScriptParser.parse(
         """
             literal create table audit_log (message varchar(80))
-            \\g
+            ;
             """);
 
     NestStatement statement = script.statements().getFirst();
@@ -246,7 +247,7 @@ public class SelectStatementTest {
     var error = assertThrows(HiqlSyntaxException.class, () -> ScriptParser.parse(
         """
             select using schema 'x' xmlroot = y count(*) from t
-            \\g
+            ;
             """));
   }
 
@@ -256,32 +257,32 @@ public class SelectStatementTest {
         """
             insert into audit_log (firstname)
             select firstname into {people.person.firstname} from person
-            \\g
+            ;
             """));
   }
 
   @Test
-  public void shouldRejectCreatesNewInsideInsertSelectSource() {
+  public void shouldRejectStructureInsideInsertSelectSource() {
     HiqlSyntaxException error = assertThrows(HiqlSyntaxException.class, () -> ScriptParser.parse(
         """
             insert into audit_log (personid)
-            select personid from person order by personid createsNew {people.person}
-            \\g
+            select personid from person order by personid
+            structure {people.person} key (personid);
             """));
   }
 
   @Test
-  public void shouldRejectUsingMetadataOnNonFirstXmlUnionBranch() {
+  public void shouldRejectUsingMetadataOnNonFirstHierarchyUnionBranch() {
     HiqlSyntaxException error = assertThrows(HiqlSyntaxException.class, () -> ScriptParser.parse(
         """
             select using schema 'a.xsd'
               firstname into {people.person.firstname}
             from person
-            xmlunion
+            hierarchy union
             select using schema 'b.xsd'
               surname into {people.person.surname}
             from person
-            \\g
+            ;
             """));
 
     assertTrue(error.getMessage().contains("only valid on the first"));
@@ -296,7 +297,7 @@ public class SelectStatementTest {
             group by department, upper(surname), year(created_at)
             having count(*) > 1 and max(score) >= 10
             order by upper(surname) asc, 1 desc
-            \\g
+            ;
             """));
   }
 

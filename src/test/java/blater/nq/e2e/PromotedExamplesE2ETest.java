@@ -1,6 +1,6 @@
 package blater.nq.e2e;
 
-import blater.nq.Main;
+import blater.nq.testsupport.CliTestHarness;
 import blater.nq.testsupport.ParquetTestFiles;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ class PromotedExamplesE2ETest {
 
   @Test
   void readmeFirstQueryMatchesDocumentedOutput() throws Exception {
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> CliTestHarness.run(
         "run", "--script-text", "select id, name from customers where city = 'London' order by id;",
         "--input-file", "docs/examples/customers.json"));
 
@@ -32,7 +32,7 @@ class PromotedExamplesE2ETest {
   void promotedNestedSummaryMatchesAcrossJsonYamlAndXml() throws Exception {
     String expected = "{\"result\":{\"region\":[{\"country\":\"GB\",\"customerCount\":\"2\"},{\"country\":\"US\",\"customerCount\":\"4\"}]}}\n";
     for (String extension : new String[]{"json", "yaml", "xml"}) {
-      String output = captureStdout(() -> Main.main(
+      String output = captureStdout(() -> CliTestHarness.run(
           "run", "--script-file", "docs/examples/identity-country-counts.nq",
           "--input-file", "docs/examples/identity-customers." + extension));
       assertEquals(expected, output, extension);
@@ -41,13 +41,13 @@ class PromotedExamplesE2ETest {
 
   @Test
   void jqComparisonAndDatabaseHierarchyRecipesMatchExpectedOutput() throws Exception {
-    String comparison = captureStdout(() -> Main.main(
+    String comparison = captureStdout(() -> CliTestHarness.run(
         "run", "--script-file", "docs/examples/jq/maximal.nq",
         "--input-file", "docs/examples/jq/elements.json"));
     assertEquals("[{\"id\":\"2\"},{\"id\":\"3\"}]\n", comparison);
 
     String database = "mem:recipe_" + UUID.randomUUID().toString().replace("-", "");
-    String hierarchy = captureStdout(() -> Main.main(
+    String hierarchy = captureStdout(() -> CliTestHarness.run(
         "run", "--script-file", "docs/recipes/database-to-nested-json/database-to-nested-json.nq",
         "--db", "h2", "--database", database));
     assertEquals(
@@ -58,13 +58,13 @@ class PromotedExamplesE2ETest {
   @Test
   void jsonToDatabaseRecipePersistsAndVerifiesTheMappedRow() throws Exception {
     String database = "file:" + tempDir.resolve("json-to-database").toAbsolutePath();
-    String input = captureStdout(() -> Main.main(
+    String input = captureStdout(() -> CliTestHarness.run(
         "run", "--script-file", "docs/recipes/json-to-database/json-to-database.nq",
         "--input-file", "docs/recipes/json-to-database/person.json",
         "--db", "h2", "--database", database));
     assertEquals("{\"message\":{\"person\":{\"firstName\":\"Fred\",\"city\":\"Bedrock\"}}}\n", input);
 
-    String verification = captureStdout(() -> Main.main(
+    String verification = captureStdout(() -> CliTestHarness.run(
         "run", "--script-text", "select id as person_key, id into {result.person.id}, "
             + "first_name into {result.person.firstName}, city into {result.person.city} "
             + "from person structure {result.person} key (person_key);",
@@ -80,7 +80,7 @@ class PromotedExamplesE2ETest {
     Files.writeString(csv, "id,city\n1,London\n2,Paris\n");
     assertEquals(
         "[{\"id\":\"1\"}]\n",
-        captureStdout(() -> Main.main(
+        captureStdout(() -> CliTestHarness.run(
             "run", "--script-text", "select id from item where city = 'London';",
             "--input-file", csv.toString())));
 
@@ -88,7 +88,7 @@ class PromotedExamplesE2ETest {
     Files.writeString(tsv, "id\tcity\n1\tLondon\n2\tParis\n");
     assertEquals(
         "id\n2\n",
-        captureStdout(() -> Main.main(
+        captureStdout(() -> CliTestHarness.run(
             "run", "--script-text", "output tsv; select id from item where city = 'Paris';",
             "--input-file", tsv.toString())));
 
@@ -104,7 +104,7 @@ class PromotedExamplesE2ETest {
         """);
     assertEquals(
         "[[item]]\n\n[item.result]\nid = \"1\"\n",
-        captureStdout(() -> Main.main(
+        captureStdout(() -> CliTestHarness.run(
             "run", "--script-text", "output toml; select id into {result.id} from customers where city = 'London';",
             "--input-file", toml.toString())));
 
@@ -112,7 +112,7 @@ class PromotedExamplesE2ETest {
     Files.writeString(jsonl, "{\"id\":1,\"city\":\"London\"}\n{\"id\":2,\"city\":\"Paris\"}\n");
     assertEquals(
         "[{\"id\":\"2\"}]\n",
-        captureStdout(() -> Main.main(
+        captureStdout(() -> CliTestHarness.run(
             "run", "--script-text", "select id from item where city = 'Paris';",
             "--input-file", jsonl.toString())));
 
@@ -131,7 +131,7 @@ class PromotedExamplesE2ETest {
         groups.newGroup().append("id", 2).append("city", "Paris"));
     assertEquals(
         "[{\"id\":\"1\"}]\n",
-        captureStdout(() -> Main.main(
+        captureStdout(() -> CliTestHarness.run(
             "run", "--script-text", "select id from customer where city = 'London';",
             "--input-file", parquet.toString())));
   }

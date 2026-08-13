@@ -1,7 +1,7 @@
 package blater.nq.runner.inference;
 
-import blater.nq.ParameterParser;
 import blater.nq.domain.HierarchyPath;
+import blater.nq.execution.EngineParameterNames;
 import blater.nq.parser.script.NestStatement;
 import blater.nq.parser.script.SelectBlueprint;
 import blater.nq.runner.sql.SqlExecutor;
@@ -25,7 +25,7 @@ public final class KeyInference {
     if (blueprint == null) {
       return statement;
     }
-    if (Boolean.parseBoolean(parameters.get(ParameterParser.NO_KEY_INFERENCE_PARAM))) {
+    if (Boolean.parseBoolean(parameters.get(EngineParameterNames.NO_KEY_INFERENCE))) {
       Log.debug("DQL key inference disabled by --no-key-inference.");
       return statement;
     }

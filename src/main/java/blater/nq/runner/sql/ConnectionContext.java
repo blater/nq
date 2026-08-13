@@ -55,10 +55,30 @@ public final class ConnectionContext {
     }
 
     String className = params.get("jdbc.class.name");
-    if (className == null || className.isBlank()) {
-      throw new IllegalArgumentException("No JDBC driver configured.");
+    if (className != null && !className.isBlank()) {
+      Class.forName(className);
+      return;
     }
-    Class.forName(className);
+
+    String inferredClass = driverClassForUrl(params.get("jdbc.database"));
+    if (inferredClass != null) Class.forName(inferredClass);
+    // Unknown URLs deliberately fall through to JDBC service discovery. This
+    // keeps URL-only custom drivers usable on the JVM while known bundled
+    // drivers remain explicit enough for native-image reachability.
+  }
+
+  private static String driverClassForUrl(String url) {
+    if (url == null) return null;
+    if (url.startsWith("jdbc:h2:")) return "org.h2.Driver";
+    if (url.startsWith("jdbc:postgresql:")) return "org.postgresql.Driver";
+    if (url.startsWith("jdbc:mysql:")) return "com.mysql.cj.jdbc.Driver";
+    if (url.startsWith("jdbc:mariadb:")) return "org.mariadb.jdbc.Driver";
+    if (url.startsWith("jdbc:oracle:")) return "oracle.jdbc.OracleDriver";
+    if (url.startsWith("jdbc:sqlserver:")) return "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+    if (url.startsWith("jdbc:db2:")) return "com.ibm.db2.jcc.DB2Driver";
+    if (url.startsWith("jdbc:sap:")) return "com.sap.db.jdbc.Driver";
+    if (url.startsWith("jdbc:informix-sqli:")) return "com.informix.jdbc.IfxDriver";
+    return null;
   }
 
   public void close() {

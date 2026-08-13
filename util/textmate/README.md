@@ -7,7 +7,7 @@ It covers:
 
 - query mappings, hierarchy paths, attributes, mapping functions, and null policy;
 - row-first `structure ... key (...)` declarations and composite keys;
-- `hierarchy union` plus the legacy `xmlunion` and `createsnew` spellings;
+- `hierarchy union` and `structure ... key (...)` declarations;
 - `using` metadata, output directives, templates, and statement terminators;
 - mapped `insert`, `update`, `delete`, `returns`, and stored procedure calls;
 - capture/temp rowsets, transaction controls, handlers, includes, and literal SQL;

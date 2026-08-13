@@ -59,7 +59,6 @@ final class SyntaxErrorListener extends BaseErrorListener {
   private static String tokenName(Vocabulary vocabulary, int tokenType) {
     return switch (tokenType) {
       case Token.EOF -> "the end of input";
-      case HiQLParser.TERM -> "'\\g'";
       case HiQLParser.IDENT -> "an identifier";
       case HiQLParser.QUOTED_IDENTIFIER -> "a quoted identifier";
       case HiQLParser.STRING -> "a quoted string";

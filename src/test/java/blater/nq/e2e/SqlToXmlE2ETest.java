@@ -37,7 +37,8 @@ public class SqlToXmlE2ETest {
                 firstname into {people.person.firstname},
                 surname into {people.person.surname}
               from person
-              order by personid asc createsNew {people.person}\\G
+              order by personid asc
+              structure {people.person} key (personid);
               """);
 
       Element people = runScript(database, script);
@@ -53,7 +54,7 @@ public class SqlToXmlE2ETest {
   }
 
   @Test
-  public void createsNestedNicknameElementsWithXmlUnionThrowNew() throws Exception {
+  public void createsNestedNicknameElementsWithHierarchyUnionAndStructure() throws Exception {
     try (H2Database database = new H2Database()) {
       database.execute(
           "create table person (" +
@@ -77,15 +78,17 @@ public class SqlToXmlE2ETest {
                 p.firstname into {people.person.firstname},
                 p.surname into {people.person.surname}
               from person p
-              xmlunion
+              hierarchy union
               select
                 p.personid,
                 n.nicknameid,
                 n.nickname into {people.person.nickname}
               from person p, nickname n
               where p.personid = n.personid
-              order by personid asc createsNew {people.person},
-                nicknameid asc createsNew {people.person.nickname}\\G
+              order by personid asc, nicknameid asc
+              structure
+                {people.person} key (personid),
+                {people.person.nickname} key (nicknameid);
               """);
 
       Element people = runScript(database, script);
@@ -101,7 +104,7 @@ public class SqlToXmlE2ETest {
   }
 
   @Test
-  public void createsIndependentSiblingCollectionsWithXmlUnion() throws Exception {
+  public void createsIndependentSiblingCollectionsWithHierarchyUnion() throws Exception {
     try (H2Database database = new H2Database()) {
       database.execute(
           "create table customer (customerid integer primary key)",
@@ -122,7 +125,7 @@ public class SqlToXmlE2ETest {
                 p.number into {customers.customer.phone.number}
               from customer c
               join phone p on p.customerid = c.customerid
-              xmlunion
+              hierarchy union
               select
                 c.customerid,
                 e.emailid,
@@ -131,9 +134,13 @@ public class SqlToXmlE2ETest {
               from customer c
               join email e on e.customerid = c.customerid
               order by
-                customerid asc createsNew {customers.customer},
-                phoneid asc createsNew {customers.customer.phone},
-                emailid asc createsNew {customers.customer.email}\\G
+                customerid asc,
+                phoneid asc,
+                emailid asc
+              structure
+                {customers.customer} key (customerid),
+                {customers.customer.phone} key (phoneid),
+                {customers.customer.email} key (emailid);
               """);
 
       Element customers = runScript(database, script);
@@ -153,7 +160,7 @@ public class SqlToXmlE2ETest {
   }
 
   @Test
-  public void createsSiblingBranchesForOneOrderItemWithAmpersandCreatesNew() throws Exception {
+  public void createsSiblingBranchesWithSharedStructureKeyExpression() throws Exception {
     try (H2Database database = new H2Database()) {
       database.execute(
           "create table person (" +
@@ -171,8 +178,9 @@ public class SqlToXmlE2ETest {
                 surname into {people.audit.surname}
               from person
               order by personid asc
-                createsNew {people.person}
-                & createsNew {people.audit}\\G
+              structure
+                {people.person} key (personid),
+                {people.audit} key (personid);
               """);
 
       Element people = runScript(database, script);
@@ -205,7 +213,8 @@ public class SqlToXmlE2ETest {
                 firstname into {people.person.name:append(space)},
                 surname into {people.person.name:append(space)}
               from person
-              order by personid asc createsNew {people.person}\\G
+              order by personid asc
+              structure {people.person} key (personid);
               """);
       Element rootElement = runScript(database, script);
       List<Element> persons = children(rootElement, "person");
@@ -250,7 +259,8 @@ public class SqlToXmlE2ETest {
                 case when category = 'Z' then name end into {people.person.keptNull},
                 case when category = 'Z' then name end into {people.person.absentNull} absent on null
               from person
-              order by personid asc createsNew {people.person}\\G
+              order by personid asc
+              structure {people.person} key (personid);
               """);
 
       Element rootElement = runScript(database, script);
@@ -322,7 +332,8 @@ public class SqlToXmlE2ETest {
               "  firstname into {people.person.firstname},\n" +
               "  nickname into {people.person.nickname}\n" +
               "from person\n" +
-              "order by personid asc createsNew {people.person}\\G\n");
+              "order by personid asc\n" +
+              "structure {people.person} key (personid);\n");
 
       Element rootElement = runScript(database, script);
       Element person = child(rootElement, "person");
@@ -347,8 +358,8 @@ public class SqlToXmlE2ETest {
 
       Path scriptDirectory = Files.createTempDirectory("hiql-scripts");
       Files.writeString(scriptDirectory.resolve("setup.sql"), """
-          literal create table audit (message varchar(80))\\G
-          insert into audit (message) values ('include-ran')\\G
+          literal create table audit (message varchar(80));
+          insert into audit (message) values ('include-ran');
           """);
       Files.writeString(scriptDirectory.resolve("summary.stx"), """
           select
@@ -356,21 +367,22 @@ public class SqlToXmlE2ETest {
             firstname into {people.summary}
           from person
           where firstname like '${root.namePrefix}%'
-          order by personid asc\\G
+          order by personid asc;
           """);
       Files.writeString(scriptDirectory.resolve("main.stx"), """
           autocommit on
-          \\g
-          include 'setup.sql'
+          ;
+          include 'setup.sql';
           select
             personid,
             firstname into {people.person.firstname},
             surname into {people.person.surname}
           from person
           where firstname like '${root.namePrefix}%'
-          order by personid asc createsNew {people.person}\\G
-          insert into audit (message) values ('finish-ran')\\G
-          submapping 'summary.stx'
+          order by personid asc
+          structure {people.person} key (personid);
+          insert into audit (message) values ('finish-ran');
+          submapping 'summary.stx';
           """);
 
       String text = ScriptLoader.load(scriptDirectory.resolve("main.stx").toString());
@@ -391,11 +403,12 @@ public class SqlToXmlE2ETest {
     try (H2Database database = new H2Database()) {
       NestScript script = ScriptParser.parse(
           """
-              literal create table person (personid integer primary key, firstname varchar(80))\\G
-              insert into person values (1, 'Alice')\\G
-              insert into person values (2, 'Bob')\\G
+              literal create table person (personid integer primary key, firstname varchar(80));
+              insert into person values (1, 'Alice');
+              insert into person values (2, 'Bob');
               select personid, firstname into {people.person.name} from person
-              order by personid asc createsNew {people.person}\\G
+              order by personid asc
+              structure {people.person} key (personid);
               """);
 
       Element rootElement = runScript(database, script);

@@ -18,11 +18,11 @@ class DmlScriptParserTest {
         update menu
         set dishname = {message.dish.dishname}
         where dishid = {message.dish.@id}
-        \\g
+        ;
         onError('bad update', abort, rollback)
-        \\g
+        ;
         onWarning('no rows', abort)
-        \\g
+        ;
         """);
 
     NestStatement statement = script.statements().getFirst();
@@ -36,16 +36,16 @@ class DmlScriptParserTest {
   void parsesLiteralSelectProcedureAndSqlLikeDmlStatements() throws Exception {
     NestScript script = ScriptParser.parse("""
         select personid from person where firstname = '${message.person.lookup}'
-        \\g
+        ;
         insert into audit_log (personid) values (${PERSONID})
-        \\g
+        ;
         execute procedure update_person(firstname = {person.firstname})
-        \\g
+        ;
         update person
         set lastupdated = {person.lastUpdated},
             status = {person.status}
         where personid = {person.id}
-        \\g
+        ;
         """);
 
     assertEquals(4, script.statements().size());
@@ -186,15 +186,15 @@ class DmlScriptParserTest {
         set firstname = upper({person.firstname}),
             lastname = coalesce({person.lastname}, 'Unknown')
         where personid = {person.id} and tenantid = 12
-        \\g
+        ;
 
         insert into audit_log (personid, status, nickname)
         values ({person.id}, 'NEW', defaultValue({person.nickname}, 'none'))
-        \\g
+        ;
 
         delete from audit_log
         where personid = {person.id}
-        \\g
+        ;
         """);
 
     assertEquals(3, script.statements().size());
@@ -229,14 +229,14 @@ class DmlScriptParserTest {
         insert into person (firstname)
         values ({person.firstname})
         returns personid into {person.id}
-        \\g
+        ;
 
         update person
         set firstname = {person.firstname}
         where personid = {person.id}
         returns lastupdated into {person.lastUpdated},
                 version into {person.version}
-        \\g
+        ;
         """);
 
     NestStatement insert = script.statements().get(0);
@@ -259,27 +259,27 @@ class DmlScriptParserTest {
         () -> ScriptParser.parse("""
             update table menu using (insert)
             set dishid = {message.dish.@id, key:1}
-            \\g
+            ;
             """));
     assertThrows(HiqlSyntaxException.class,
         () -> ScriptParser.parse("""
             execute procedure update_person(personid = {person.id, key:1})
-            \\g
+            ;
             """));
     assertThrows(HiqlSyntaxException.class,
         () -> ScriptParser.parse("""
             execute procedure update_person(personid = {person.id, uid:true})
-            \\g
+            ;
             """));
     assertThrows(HiqlSyntaxException.class,
         () -> ScriptParser.parse("""
             execute procedure update_person(personid = {person.id, autoincrement:true})
-            \\g
+            ;
             """));
     assertThrows(HiqlSyntaxException.class,
         () -> ScriptParser.parse("""
             execute procedure update_person(lastupdated = {person.lastUpdated, volatile:true})
-            \\g
+            ;
             """));
   }
 
@@ -290,14 +290,14 @@ class DmlScriptParserTest {
             insert into person (firstname)
             values ({person.firstname})
             returning personid into {person.id}
-            \\g
+            ;
             """));
     assertThrows(HiqlSyntaxException.class,
         () -> ScriptParser.parse("""
             delete from person
             where personid = {person.id}
             returns personid into {person.id}
-            \\g
+            ;
             """));
   }
 
@@ -307,7 +307,7 @@ class DmlScriptParserTest {
         """
             capture 'people_snap'
             select personid, firstname from person order by personid
-            \\g
+            ;
             """);
 
     assertEquals(1, script.statements().size());
@@ -324,7 +324,7 @@ class DmlScriptParserTest {
         update audit from temp 'people_snap'
         set myid = {personid}
         where auditid = {people.person.id}
-        \\g
+        ;
         """);
 
     NestStatement stmt = script.statements().getFirst();
@@ -343,7 +343,7 @@ class DmlScriptParserTest {
             update menu
             set dishname = {message.dish.dishname}
             where dishid = {message.dish.@id}
-            \\g
+            ;
             onError('bad update', abort, rollback)
             """));
   }
@@ -353,15 +353,15 @@ class DmlScriptParserTest {
     NestScript script = ScriptParser.parse(
         """
             select personid from person
-            \\g
+            ;
             onError('keep going')
-            \\g
+            ;
             select personid, firstname into {people.person.firstname}
             from person
-            order by personid asc createsNew {people.person}
-            \\g
+            order by personid asc
+            structure {people.person} key (personid);
             onWarning('ambiguous row', rollback)
-            \\g
+            ;
             """);
 
     assertEquals(2, script.statements().size());
@@ -394,12 +394,10 @@ class DmlScriptParserTest {
   }
 
   @Test
-  void stillParsesGoTerminatorsWithOptionalSemicolon() throws Exception {
+  void parsesSemicolonTerminators() throws Exception {
     NestScript script = ScriptParser.parse("""
         autocommit on;
-        \\G
-        autocommit off
-        \\g
+        autocommit off;
         """);
 
     assertEquals(2, script.statements().size());
@@ -412,9 +410,9 @@ class DmlScriptParserTest {
     NestScript script = ScriptParser.parse(
         """
             autocommit on
-            \\g
+            ;
             autocommit off
-            \\g
+            ;
             """);
 
     assertEquals(2, script.statements().size());

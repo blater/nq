@@ -4,5 +4,5 @@
         company_id into {companies.company.compid},
         country_label into {companies.company.country}
   from company
-  order by id createsnew {companies.company}
-;
+  order by id
+  structure {companies.company} key (id);

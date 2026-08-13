@@ -19,8 +19,7 @@ class TemplateParametersCommandExecutionTest {
       database.execute("create table audit_log (dishid integer, dishname varchar(80), actor varchar(80))");
       var statement =
           parseStatement("insert into audit_log (dishid, dishname, actor) "
-              + "values (${message.dish.[id]}, '${message.dish.dishname}', '${actor}');\n"
-              + "\\g\n");
+              + "values (${message.dish.[id]}, '${message.dish.dishname}', '${actor}');\n");
       Map<String, String> params = Map.of(
           "message.dish.[id]", "12",
           "message.dish.dishname", "Dry Toast",

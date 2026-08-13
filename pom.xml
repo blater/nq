@@ -19,6 +19,7 @@
     <jaxen.version>2.0.6</jaxen.version>
     <slf4j.version>1.7.36</slf4j.version>
     <junit.jupiter.version>6.0.3</junit.jupiter.version>
+    <picocli.version>4.7.7</picocli.version>
     <antlr4.version>4.13.2</antlr4.version>
     <snakeyaml.version>2.6</snakeyaml.version>
     <night-config.version>3.8.4</night-config.version>
@@ -78,6 +79,11 @@
       <artifactId>junit-jupiter-api</artifactId>
       <version>${junit.jupiter.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+      <version>${picocli.version}</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -206,6 +212,11 @@
               <artifactId>lombok</artifactId>
               <version>${lombok.version}</version>
             </path>
+            <path>
+              <groupId>info.picocli</groupId>
+              <artifactId>picocli-codegen</artifactId>
+              <version>${picocli.version}</version>
+            </path>
           </annotationProcessorPaths>
         </configuration>
       </plugin>
@@ -219,6 +230,9 @@
               <mainClass>${main.class}</mainClass>
               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
             </manifest>
+            <manifestEntries>
+              <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
+            </manifestEntries>
           </archive>
         </configuration>
       </plugin>
@@ -234,6 +248,7 @@
             </manifest>
             <manifestEntries>
               <Implementation-Version>${project.version}</Implementation-Version>
+              <Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
             </manifestEntries>
           </archive>
           <descriptorRefs>
@@ -265,7 +280,6 @@
         <configuration>
           <systemPropertyVariables>
             <user.home>${project.build.directory}/test-home</user.home>
-            <nq.debug>true</nq.debug>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -417,6 +431,7 @@
                 <buildArg>-Os</buildArg>
                 <buildArg>-H:-UnlockExperimentalVMOptions</buildArg>
                 <buildArg>--exact-reachability-metadata=blater.nq</buildArg>
+                <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
                 <buildArg>--initialize-at-run-time=sun.security.util.Password$ConsoleHolder</buildArg>
               </buildArgs>
             </configuration>

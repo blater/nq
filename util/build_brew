@@ -80,7 +80,7 @@ class Nq < Formula
   end
 
   test do
-    output = shell_output("#{bin}/nq cache list --state-dir #{testpath}/state --report-format json 2>&1")
+    output = shell_output("#{bin}/nq cache list --cache-dir #{testpath}/cache --report-format json 2>&1")
     assert_match '"caches":[]', output
   end
 end

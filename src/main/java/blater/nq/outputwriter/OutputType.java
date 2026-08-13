@@ -1,7 +1,7 @@
 package blater.nq.outputwriter;
 
-import blater.nq.ParameterParser;
 import blater.nq.domain.Hierarchy;
+import blater.nq.execution.EngineParameterNames;
 import blater.nq.parser.script.NestScript;
 
 import java.util.Map;
@@ -48,13 +48,11 @@ public enum OutputType {
   }
 
   public static OutputType get(NestScript script, Map<String, String> params) {
-    String cliOutputType = params.get(ParameterParser.OUTPUT_TYPE_PARAM);
+    String cliOutputType = params.get(EngineParameterNames.OUTPUT_TYPE);
     if (cliOutputType != null) {
       return OutputType.fromName(cliOutputType);
     } else if (script != null && script.outputType() != null) {
       return script.outputType();
-    } else if (params.containsKey(ParameterParser.CATALOG_PATTERN_PARAM)) {
-      return MARKDOWN;
     } else
       return DEFAULT_OUTPUT_TYPE;
   }

@@ -139,8 +139,7 @@ Completion definitions live in
 
 ```bash
 curl -sSLO https://raw.githubusercontent.com/blater/nq/master/docs/examples/customers.json
-nq run --script-text "select id, name from customers where city = 'London' order by id;" \
-  --input-file customers.json
+nq "select id, name from customers where city = 'London' order by id;" customers.json
 ```
 
 Expected output:

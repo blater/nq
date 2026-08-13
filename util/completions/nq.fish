@@ -1,20 +1,21 @@
 complete -c nq -f
-complete -c nq -n '__fish_use_subcommand' -a 'run convert catalog cache help'
+complete -c nq -n '__fish_use_subcommand' -a 'run convert catalog cache help version'
 complete -c nq -n '__fish_seen_subcommand_from cache' -a 'load use list clear'
 complete -c nq -s h -d 'Show brief help'
 complete -c nq -l help -d 'Show full or topic help'
 complete -c nq -l version -d 'Show NQ version'
-complete -c nq -l script-file -r -d 'Read script file' -F
-complete -c nq -l script-text -r -d 'Use inline script text'
-complete -c nq -l input-file -r -d 'Read input file or -' -F
-complete -c nq -l input-format -r -d 'Name stdin format' -xa 'json jsonl yaml xml csv tsv toml parquet'
-complete -c nq -l param -r -d 'Set template parameter'
-complete -c nq -s p -l properties -r -d 'Read properties' -F
+complete -c nq -s f -l script-file -r -d 'Read script file' -F
+complete -c nq -s e -l script-text -r -d 'Use inline script text'
+complete -c nq -s i -l input-file -r -d 'Read input file or -' -F
+complete -c nq -s t -l input-format -r -d 'Name stdin format' -xa 'json jsonl yaml xml csv tsv toml parquet'
+complete -c nq -l param -r -d 'Set task parameter'
+complete -c nq -l params-file -r -d 'Read task parameters' -F
+complete -c nq -l config -r -d 'Read operational configuration' -F
 complete -c nq -s o -l output -r -d 'Select result format' -xa 'json jsonl yaml xml csv tsv toml markdown'
-complete -c nq -l report-format -r -d 'Select report format' -xa 'json jsonl yaml xml csv tsv toml markdown'
-complete -c nq -l state-dir -r -d 'Select state root' -a '(__fish_complete_directories)'
-complete -c nq -l cache -d 'Persist run input'
-complete -c nq -l pattern -r -d 'Select catalog pattern'
+complete -c nq -s r -l report-format -r -d 'Select report format' -xa 'json jsonl yaml xml csv tsv toml markdown'
+complete -c nq -l cache-dir -r -d 'Select direct cache directory' -a '(__fish_complete_directories)'
+complete -c nq -l cache -d 'Select cache execution'
+complete -c nq -s m -l pattern -r -d 'Select catalog pattern'
 complete -c nq -l name -r -d 'Select cache name'
 complete -c nq -l all -d 'Select all caches'
 complete -c nq -l older-than -r -d 'Select cache age'

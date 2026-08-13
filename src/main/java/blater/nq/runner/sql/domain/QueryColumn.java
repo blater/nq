@@ -11,14 +11,13 @@ import java.sql.Timestamp;
 @EqualsAndHashCode
 @Builder(toBuilder = true)
 /*
- * Responsibility: Tracks one JDBC result-column value across cursor
- * fetches so row snapshots can report value changes.
+ * Responsibility: Holds one JDBC result-column value for the current
+ * cursor row.
  */
 public class QueryColumn {
   private String columnName;
   private int columnType;
   private SqlType sqlType;
-  private Object previousValue;
   private Object columnValue;
   private int columnIndex;
 
@@ -30,16 +29,7 @@ public class QueryColumn {
   }
 
   public void setValue(Object value) {
-    if (columnValue != null) {
-      previousValue = columnValue;
-    }
     columnValue = (value instanceof Timestamp ts) ? ts.toLocalDateTime() : value;
-  }
-
-  public boolean hasChanged() {
-    return (previousValue != null || columnValue != null)
-            && (previousValue == null || columnValue != null)
-            && (previousValue == null || !previousValue.equals(columnValue));
   }
 
   public boolean columnValueIsNull() {

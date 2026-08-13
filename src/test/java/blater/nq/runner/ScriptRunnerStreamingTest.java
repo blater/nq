@@ -27,7 +27,8 @@ class ScriptRunnerStreamingTest {
               "  firstname into {people.person.firstname}\n" +
               "from person\n" +
               "where personid = -1\n" +
-              "order by personid asc createsNew {people.person}\\G\n");
+              "order by personid asc\n" +
+              "structure {people.person} key (personid);\n");
 
       Hierarchy hierarchy = ScriptRunner.run(script, database.jdbcProperties());
       Document document = XmlOutputWriter.map(hierarchy);
@@ -42,7 +43,7 @@ class ScriptRunnerStreamingTest {
   void hierarchySelectOutput() throws Exception {
     try (H2Database database = new H2Database()) {
       NestScript script = ScriptParser.parse(
-          "select max(x) into {data.value} from system_range(1, 200000)\\G\n");
+          "select max(x) into {data.value} from system_range(1, 200000);\n");
 
       Hierarchy hierarchy = ScriptRunner.run(script, new HashMap<>(database.jdbcProperties()));
       Document document = XmlOutputWriter.map(hierarchy);

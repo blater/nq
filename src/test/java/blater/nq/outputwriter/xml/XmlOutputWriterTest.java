@@ -6,8 +6,7 @@ import blater.nq.domain.Node;
 import blater.nq.outputwriter.XmlOutputWriter;
 import blater.nq.parser.script.NestStatement;
 import blater.nq.runner.sql.domain.QueryResultRow;
-import blater.nq.domain.CorrelationRule;
-import blater.nq.domain.MappingCondition;
+import blater.nq.domain.KeyedPath;
 import blater.nq.domain.MappingPlan;
 import blater.nq.domain.OutputField;
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,7 @@ class XmlOutputWriterTest {
         new OutputField(HierarchyPath.fromDottedPath("people.person.name"), "firstname", " ", List.of(), false),
         new OutputField(HierarchyPath.fromDottedPath("people.person.name"), "surname", " ", List.of(), false)
       ),
-      List.of(new CorrelationRule(HierarchyPath.fromDottedPath("people.person"), List.of(MappingCondition.newValue("personid"))))
+      List.of(new KeyedPath(HierarchyPath.fromDottedPath("people.person"), List.of("personid")))
     );
 
     NestStatement statement = NestStatement.select("", plan, null);
@@ -53,7 +52,7 @@ class XmlOutputWriterTest {
       List.of(new OutputField(HierarchyPath.fromDottedPath("people.person.firstname"), "firstname", null, List.of(), false)),
       List.of());
     NestStatement statement = NestStatement.select("", plan, "urn:hiql:test");
-    Hierarchy hierarchy = hierarchy(statement, List.of(row(values("firstname", "Alice"), "firstname")));
+    Hierarchy hierarchy = hierarchy(statement, List.of(row(values("firstname", "Alice"))));
 
     var document = XmlOutputWriter.map(hierarchy);
     assertEquals("urn:hiql:test", document.getRootElement().getNamespaceURI());
@@ -81,7 +80,7 @@ class XmlOutputWriterTest {
   }
 
   private QueryResultRow personRow(String personId, String firstname, String surname) {
-    return row(values("personid", personId, "firstname", firstname, "surname", surname), "personid");
+    return row(values("personid", personId, "firstname", firstname, "surname", surname));
   }
 
   private Hierarchy hierarchy(NestStatement statement, List<QueryResultRow> rows) {

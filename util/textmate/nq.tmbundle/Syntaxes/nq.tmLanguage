@@ -15,7 +15,7 @@
   <key>foldingStartMarker</key>
   <string>(?ix)^\s*(?:select|insert\b.*\bselect|capture\b.*$|/\*)</string>
   <key>foldingStopMarker</key>
-  <string>(?ix)(?:;|\\g)\s*$|\*/</string>
+  <string>(?ix);\s*$|\*/</string>
   <key>patterns</key>
   <array>
     <dict><key>include</key><string>#comments</string></dict>
@@ -108,7 +108,7 @@
       <array>
         <dict>
           <key>name</key><string>keyword.control.hierarchy-union.nq</string>
-          <key>match</key><string>(?i)\b(?:hierarchy\s+union|xmlunion)\b</string>
+          <key>match</key><string>(?i)\bhierarchy\s+union\b</string>
         </dict>
       </array>
     </dict>
@@ -185,7 +185,7 @@
       <array>
         <dict>
           <key>name</key><string>keyword.control.mapping.nq</string>
-          <key>match</key><string>(?i)\b(?:into|structure|key|createsnew|returns)\b</string>
+          <key>match</key><string>(?i)\b(?:into|structure|key|returns)\b</string>
         </dict>
         <dict>
           <key>name</key><string>keyword.control.null-policy.nq</string>
@@ -197,7 +197,7 @@
         </dict>
         <dict>
           <key>name</key><string>keyword.control.statement.nq</string>
-          <key>match</key><string>(?i)\b(?:autocommit|catalog|capture|literal|xmlselect|execute\s+procedure|from\s+temp)\b</string>
+          <key>match</key><string>(?i)\b(?:autocommit|catalog|capture|literal|execute\s+procedure|from\s+temp)\b</string>
         </dict>
         <dict>
           <key>name</key><string>constant.language.toggle.nq</string>
@@ -292,7 +292,7 @@
     <dict>
       <key>patterns</key>
       <array>
-        <dict><key>name</key><string>punctuation.terminator.statement.nq</string><key>match</key><string>;|\\[gG]\b</string></dict>
+        <dict><key>name</key><string>punctuation.terminator.statement.nq</string><key>match</key><string>;</string></dict>
       </array>
     </dict>
   </dict>

@@ -137,6 +137,12 @@ jobs:
           "$executable" 'output json; select 1 into {result.value};' \
             --db h2 --database mem:release_smoke > jdbc.json
           grep -Fx '{"result":{"value":"1"}}' jdbc.json
+          "$executable" 'output json; select 2 into {result.value};' \
+            --jdbc-database jdbc:h2:mem:release_url_smoke > jdbc-url.json
+          grep -Fx '{"result":{"value":"2"}}' jdbc-url.json
+          printf '%s\n' '{}' | "$executable" \
+            'output json; select 3 into {result.value};' > stdin.json
+          grep -Fx '{"result":{"value":"3"}}' stdin.json
 
       - name: Smoke-test Windows executable
         if: runner.os == 'Windows'
@@ -163,6 +169,16 @@ jobs:
             --db h2 --database mem:release_smoke
           if ($jdbc -ne '{"result":{"value":"1"}}') {
             throw "JDBC smoke output mismatch"
+          }
+          $jdbcUrl = & $executable 'output json; select 2 into {result.value};' `
+            --jdbc-database jdbc:h2:mem:release_url_smoke
+          if ($jdbcUrl -ne '{"result":{"value":"2"}}') {
+            throw "URL-only JDBC smoke output mismatch"
+          }
+          $stdinResult = '{}' | & $executable `
+            'output json; select 3 into {result.value};'
+          if ($stdinResult -ne '{"result":{"value":"3"}}') {
+            throw "Redirected-stdin/terminal-detection smoke output mismatch"
           }
 
       - name: Package Unix executable

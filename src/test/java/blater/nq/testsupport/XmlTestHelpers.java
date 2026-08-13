@@ -1,6 +1,6 @@
 package blater.nq.testsupport;
 
-import blater.nq.ParameterParser;
+import blater.nq.execution.EngineParameterNames;
 import blater.nq.domain.Hierarchy;
 import blater.nq.outputwriter.XmlOutputWriter;
 import blater.nq.parser.ScriptParser;
@@ -49,7 +49,8 @@ public final class XmlTestHelpers {
     NestScript parsed = ScriptParser.parse(script);
     Path tempFile = Files.createTempFile("hiql-", ".xml");
     Files.writeString(tempFile, inputXml, StandardCharsets.UTF_8);
-    Element rootElement = runScript(database, parsed, Map.of(ParameterParser.INPUT_FILENAME, tempFile.toString()));
+    Element rootElement = runScript(
+        database, parsed, Map.of(EngineParameterNames.INPUT_FILENAME, tempFile.toString()));
     Files.deleteIfExists(tempFile);
     return rootElement;
   }

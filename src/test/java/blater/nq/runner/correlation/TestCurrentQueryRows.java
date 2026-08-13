@@ -15,34 +15,26 @@ public final class TestCurrentQueryRows {
     }
 
     public static QueryResultRow row(Map<String, String> values) {
-        return row(values, noFlags(), noFlags());
-    }
-
-    public static QueryResultRow row(Map<String, String> values, String newValueColumn) {
-        return row(values, flags(newValueColumn, true), noFlags());
+        return row(values, Map.of());
     }
 
     public static QueryResultRow row(
         Map<String, String> values,
-        Map<String, Boolean> newValues,
         Map<String, Boolean> nullValues) {
         var normalizedValues = normalize(values);
         var normalizedNullValues = normalize(nullValues);
-        var normalizedNewValues = normalize(newValues);
         Map<String, QueryColumn> cells = new HashMap<>();
         normalizedValues.forEach((name, val) -> cells.put(name, cell(
             name,
             val,
             SqlType.STRING,
-            normalizedNullValues.getOrDefault(name, false),
-            normalizedNewValues.getOrDefault(name, false))));
+            normalizedNullValues.getOrDefault(name, false))));
         return new QueryResultRow(cells);
     }
 
     /** Build a row with typed cell values. SqlType is inferred from each value's runtime type. */
     public static QueryResultRow typedRow(
         Map<String, Object> values,
-        Map<String, Boolean> newValues,
         Map<String, Boolean> nullValues)
     {
         Map<String, QueryColumn> cells = new HashMap<>();
@@ -52,24 +44,19 @@ public final class TestCurrentQueryRows {
                 columnKey,
                 val,
                 inferSqlType(val),
-                nullValues.getOrDefault(columnKey, false),
-                newValues.getOrDefault(columnKey, false)));
+                nullValues.getOrDefault(columnKey, false)));
         });
         return new QueryResultRow(cells);
     }
 
     /*
-     * Builds one live QueryColumn cell. A null column value models SQL
-     * NULL (wasNull). A null previousValue against a non-null value models
-     * a changed value, matching QueryColumn.hasChanged().
+     * Builds one live QueryColumn cell. A null column value models SQL NULL.
      */
-    private static QueryColumn cell(String name, Object value, SqlType sqlType, boolean wasNull, boolean changed) {
+    private static QueryColumn cell(String name, Object value, SqlType sqlType, boolean wasNull) {
         Object columnValue = wasNull ? null : value;
-        Object previousValue = changed ? null : columnValue;
         return QueryColumn.builder()
             .columnName(name)
             .sqlType(sqlType)
-            .previousValue(previousValue)
             .columnValue(columnValue)
             .build();
     }
@@ -79,22 +66,6 @@ public final class TestCurrentQueryRows {
         for (var idx = 0; idx < pairs.length; idx += 2) {
             values.put(key(pairs[idx]), pairs[idx + 1]);
         }
-        return values;
-    }
-
-    public static Map<String, Boolean> noFlags() {
-        return Map.of();
-    }
-
-    public static Map<String, Boolean> flags(String key, boolean val) {
-        var values = new HashMap<String, Boolean>();
-        values.put(key(key), val);
-        return values;
-    }
-
-    public static Map<String, Boolean> flags(String key1, boolean value1, String key2, boolean value2) {
-        Map<String, Boolean> values = flags(key1, value1);
-        values.put(key(key2), value2);
         return values;
     }
 

@@ -41,7 +41,7 @@ class InputTypeTest {
   }
 
   @Test
-  void keepsEmptyFilenameCompatibleWithEmptyXmlHierarchyBehavior() {
+  void mapsEmptyFilenameToEmptyXmlHierarchy() {
     assertEquals(InputType.XML, InputType.fromFilename(""));
   }
 

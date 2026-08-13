@@ -1,8 +1,13 @@
 package blater.nq;
 
+import blater.nq.cli.parse.CliParser;
+import blater.nq.cli.parse.CliUsageException;
+import blater.nq.testsupport.CliTestHarness;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
@@ -12,41 +17,42 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class HelpTest {
   @Test
   void versionHasStableCliPrefix() throws Exception {
-    String output = captureStdout(() -> Main.main("--version"));
+    String output = captureStdout(() -> CliTestHarness.run("--version"));
 
     assertTrue(output.startsWith("nq "));
     assertTrue(output.endsWith(System.lineSeparator()));
   }
 
   @Test
-  void noArgumentsPrintsShortHelp() throws Exception {
-    assertFalse(captureStdout(Main::main).isBlank());
+  void noArgumentsConvertsStandardInputUsingJsonDefaults() throws Exception {
+    String output = captureStdin("{\"customer\":{\"id\":7}}", CliTestHarness::run);
+
+    assertTrue(output.contains("\"id\":\"7\""));
   }
 
   @Test
   void shortHelpIsBriefAndLongHelpPrintsTheManPage() throws Exception {
-    String shortHelp = captureStdout(() -> Main.main("-h"));
-    String longHelp = captureStdout(() -> Main.main("--help"));
+    String shortHelp = captureStdout(() -> CliTestHarness.run("-h"));
+    String longHelp = captureStdout(() -> CliTestHarness.run("--help"));
 
     assertTrue(shortHelp.startsWith("Usage:\n"));
-    assertTrue(shortHelp.contains("Run and connection options:"));
-    assertTrue(shortHelp.contains("--properties <properties-file>"));
-    assertTrue(shortHelp.contains("--jdbc-database <url>"));
-    assertTrue(shortHelp.contains("nq convert --input-file"));
+    assertTrue(shortHelp.contains("Common source options:"));
+    assertTrue(shortHelp.contains("--config <file.properties>"));
+    assertTrue(shortHelp.contains("nq convert [<data>]"));
     assertTrue(shortHelp.contains("nq cache load"));
-    assertTrue(shortHelp.contains("nq cache use --name"));
-    assertTrue(shortHelp.contains("--input-format <xml|json|jsonl|yaml|toml|csv|tsv|parquet>"));
+    assertTrue(shortHelp.contains("nq cache use <name>"));
+    assertTrue(shortHelp.contains("-t, --input-format <format>"));
     assertTrue(shortHelp.contains("--input-format"));
-    assertTrue(shortHelp.contains("Run 'nq help' for topics"));
+    assertTrue(shortHelp.contains("Run 'nq help' for commands"));
     assertFalse(shortHelp.contains("NQ(1)"));
     assertTrue(longHelp.startsWith("NQ(1)"));
     assertTrue(longHelp.contains("\nSYNOPSIS\n"));
-    assertTrue(longHelp.contains("--help [topic]"));
+    assertTrue(longHelp.contains("nq help [<command> [<subcommand>]]"));
   }
 
   @Test
   void helpOnHelpListsAvailableTopics() throws Exception {
-    String output = captureStdout(() -> Main.main("--help", "help"));
+    String output = captureStdout(() -> CliTestHarness.run("help", "help"));
 
     assertTrue(output.startsWith("HELP\n"));
     assertTrue(output.contains("TOPICS"));
@@ -57,35 +63,36 @@ class HelpTest {
 
   @Test
   void commandHelpPrintsFocusedTopic() throws Exception {
-    String output = captureStdout(() -> Main.main("--help", "query"));
+    String output = captureStdout(() -> CliTestHarness.run("run", "--help"));
 
     assertTrue(output.startsWith("RUN\n"));
-    assertTrue(output.contains("nq run --script-file"));
-    assertTrue(output.contains("--script-text"));
+    assertTrue(output.contains("nq <script.nq> [<data>]"));
+    assertTrue(output.contains("nq '<literal script>' ['<literal json>']"));
   }
 
   @Test
   void queryAndCacheHelpSeparateEphemeralQueriesFromPersistentCaches() throws Exception {
-    String query = captureStdout(() -> Main.main("--help", "query"));
-    String output = captureStdout(() -> Main.main("--help", "cache"));
+    String query = captureStdout(() -> CliTestHarness.run("help", "query"));
+    String output = captureStdout(() -> CliTestHarness.run("cache", "--help"));
 
-    assertTrue(query.contains("temporary H2"));
-    assertTrue(output.contains("persistent local H2"));
-    assertTrue(output.contains("--state-dir"));
+    assertTrue(query.contains("temporary"));
+    assertTrue(query.contains("database"));
+    assertTrue(output.contains("persistent local caches"));
+    assertTrue(output.contains("--cache-dir"));
   }
 
   @Test
   void useCacheHelpExplainsThatItOnlySelectsExistingCaches() throws Exception {
-    String output = captureStdout(() -> Main.main("--help", "cache"));
+    String output = captureStdout(() -> CliTestHarness.run("cache", "--help"));
 
     assertTrue(output.startsWith("CACHE\n"));
-    assertTrue(output.contains("nq cache use --name"));
-    assertTrue(output.contains("--state-dir"));
+    assertTrue(output.contains("nq cache use <name>"));
+    assertTrue(output.contains("--cache-dir"));
   }
 
   @Test
-  void equalsFormPrintsFocusedTopic() throws Exception {
-    String output = captureStdout(() -> Main.main("--help=output"));
+  void spacedHelpTopicPrintsFocusedTopic() throws Exception {
+    String output = captureStdout(() -> CliTestHarness.run("help", "output"));
 
     assertTrue(output.startsWith("OUTPUT\n"));
     assertTrue(output.contains("--report-format"));
@@ -93,28 +100,31 @@ class HelpTest {
 
   @Test
   void catalogHelpDescribesPatternsAndConnectionSelection() throws Exception {
-    String output = captureStdout(() -> Main.main("--help", "catalog"));
+    String output = captureStdout(() -> CliTestHarness.run("catalog", "--help"));
 
     assertTrue(output.startsWith("CATALOG\n"));
-    assertTrue(output.contains("nq catalog [--pattern"));
-    assertTrue(output.contains("active cache"));
-    assertTrue(output.contains("ephemeral"));
+    assertTrue(output.contains("nq catalog [<data>] [<pattern>]"));
+    assertTrue(output.contains("active"));
+    assertTrue(output.contains("cache"));
+    assertTrue(output.contains("temporary"));
+    assertTrue(output.contains("database"));
   }
 
   @Test
   void helpShortCircuitsOtherCommandLineProcessing() throws Exception {
-    String output = captureStdout(() -> Main.main(
-        "--properties", "/file/that/does/not/exist.properties", "--help", "cache"));
+    String output = captureStdout(() -> CliTestHarness.run(
+        "cache", "--config", "/file/that/does/not/exist.properties", "--help"));
 
     assertTrue(output.startsWith("CACHE\n"));
   }
 
   @Test
-  void unknownTopicPointsToTopicListing() throws Exception {
-    String output = captureStdout(() -> Main.main("--help", "unknown"));
+  void unknownTopicIsAUsageError() {
+    var failure = org.junit.jupiter.api.Assertions.assertThrows(
+        CliUsageException.class,
+        () -> new CliParser().parse("help", "unknown"));
 
-    assertTrue(output.startsWith("Unknown help topic: unknown"));
-    assertTrue(output.contains("nq help"));
+    assertTrue(failure.getMessage().contains("Unknown help topic: unknown"));
   }
 
   private String captureStdout(ThrowingRunnable runnable) throws Exception {
@@ -127,6 +137,16 @@ class HelpTest {
       System.setOut(original);
     }
     return output.toString(StandardCharsets.UTF_8);
+  }
+
+  private String captureStdin(String input, ThrowingRunnable runnable) throws Exception {
+    InputStream original = System.in;
+    try {
+      System.setIn(new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8)));
+      return captureStdout(runnable);
+    } finally {
+      System.setIn(original);
+    }
   }
 
   @FunctionalInterface

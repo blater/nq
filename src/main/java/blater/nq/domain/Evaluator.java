@@ -2,17 +2,12 @@ package blater.nq.domain;
 
 import blater.nq.runner.sql.domain.QueryResultRow;
 
-import static blater.nq.domain.Operator.IF_NEW_VALUE;
-
 /*
  * Responsibility: Evaluates one parsed hierarchy-mapping condition
  * against the current query result row.
  */
 public final class Evaluator {
   public static boolean evaluate(MappingCondition condition, QueryResultRow queryResultRow) {
-    if (condition.operator() == IF_NEW_VALUE)
-      return queryResultRow.newValue(condition.fieldName());
-
     Object left = queryResultRow.getValue(condition.fieldName());
     Object expected = condition.expected();
     if (left == null || expected == null) {

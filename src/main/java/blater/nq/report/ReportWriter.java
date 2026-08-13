@@ -12,22 +12,49 @@ public final class ReportWriter {
   private ReportWriter() {
   }
 
-  public static void write(Map<String, ?> fields, ReportFormat format) {
-    write(fields, format, System.out);
+  public static void write(ReportEnvelope report, ReportFormat format) {
+    writeEnvelope(report.fields(), format, System.out, false);
   }
 
-  public static void write(Map<String, ?> fields, ReportFormat format, PrintStream stream) {
+  public static void write(
+      ReportEnvelope report,
+      ReportFormat format,
+      PrintStream stream) {
+    writeEnvelope(report.fields(), format, stream, false);
+  }
+
+  public static void write(
+      DiagnosticEnvelope diagnostic,
+      ReportFormat format,
+      PrintStream stream) {
+    writeEnvelope(diagnostic.fields(), format, stream, true);
+  }
+
+  private static void writeEnvelope(
+      Map<String, ?> fields,
+      ReportFormat format,
+      PrintStream stream,
+      boolean diagnostic) {
     if (format == ReportFormat.JSON || format == ReportFormat.JSONL) {
-      stream.println(json(Map.of("report", fields)));
+      stream.println(json(fields));
       return;
     }
-    stream.print(format.outputType().render(hierarchy(fields)));
+    if (format == ReportFormat.YAML) {
+      if (diagnostic) stream.println("---");
+      stream.print(yaml(fields));
+      return;
+    }
+    if (format == ReportFormat.TOML) {
+      stream.print(toml(fields));
+      return;
+    }
+    stream.print(format.outputType().render(envelopeHierarchy(fields)));
   }
 
-  private static Hierarchy hierarchy(Map<String, ?> fields) {
-    Node root = new Node("report");
+  private static Hierarchy envelopeHierarchy(Map<String, ?> fields) {
+    Node root = new Node("");
     addFields(root, fields);
-    return new Hierarchy(root);
+    return new Hierarchy(root, Hierarchy.RootKind.SYNTHETIC_OBJECT);
   }
 
   private static void addFields(Node parent, Map<String, ?> fields) {
@@ -108,5 +135,129 @@ public final class ReportWriter {
       }
     }
     return result.append("\"").toString();
+  }
+
+  private static String yaml(Map<String, ?> fields) {
+    StringBuilder result = new StringBuilder();
+    writeYamlMap(result, fields, 0);
+    return result.toString();
+  }
+
+  private static void writeYamlMap(
+      StringBuilder result,
+      Map<?, ?> fields,
+      int indent) {
+    for (Map.Entry<?, ?> entry : fields.entrySet()) {
+      result.append(" ".repeat(indent)).append(entry.getKey()).append(":");
+      Object value = entry.getValue();
+      if (isScalar(value) || isEmptyCollection(value)) {
+        result.append(" ").append(yamlScalar(value)).append("\n");
+      } else {
+        result.append("\n");
+        writeYamlValue(result, value, indent + 2);
+      }
+    }
+  }
+
+  private static void writeYamlValue(StringBuilder result, Object value, int indent) {
+    if (value instanceof Map<?, ?> map) {
+      writeYamlMap(result, map, indent);
+    } else if (value instanceof List<?> list) {
+      for (Object item : list) {
+        result.append(" ".repeat(indent)).append("-");
+        if (isScalar(item) || isEmptyCollection(item)) {
+          result.append(" ").append(yamlScalar(item)).append("\n");
+        } else {
+          result.append("\n");
+          writeYamlValue(result, item, indent + 2);
+        }
+      }
+    }
+  }
+
+  private static boolean isScalar(Object value) {
+    return value == null || value instanceof String
+        || value instanceof Boolean || value instanceof Number;
+  }
+
+  private static boolean isEmptyCollection(Object value) {
+    return value instanceof Map<?, ?> map && map.isEmpty()
+        || value instanceof List<?> list && list.isEmpty();
+  }
+
+  private static String yamlScalar(Object value) {
+    if (value == null) return "null";
+    if (value instanceof Boolean || value instanceof Number) return value.toString();
+    if (value instanceof Map<?, ?>) return "{}";
+    if (value instanceof List<?>) return "[]";
+    return quoted(value.toString());
+  }
+
+  private static String toml(Map<String, ?> fields) {
+    StringBuilder result = new StringBuilder();
+    writeTomlTable(result, fields, List.of());
+    return result.toString();
+  }
+
+  private static void writeTomlTable(
+      StringBuilder result,
+      Map<?, ?> table,
+      List<String> path) {
+    for (Map.Entry<?, ?> entry : table.entrySet()) {
+      if (!(entry.getValue() instanceof Map<?, ?>) && !isArrayOfMaps(entry.getValue())) {
+        result.append(tomlKey(entry.getKey().toString())).append(" = ")
+            .append(tomlValue(entry.getValue())).append("\n");
+      }
+    }
+    for (Map.Entry<?, ?> entry : table.entrySet()) {
+      if (entry.getValue() instanceof Map<?, ?> child) {
+        List<String> childPath = append(path, entry.getKey().toString());
+        tomlSectionBreak(result);
+        result.append("[").append(tomlPath(childPath)).append("]\n");
+        writeTomlTable(result, child, childPath);
+      }
+    }
+    for (Map.Entry<?, ?> entry : table.entrySet()) {
+      if (isArrayOfMaps(entry.getValue())) {
+        List<String> childPath = append(path, entry.getKey().toString());
+        for (Object item : (List<?>) entry.getValue()) {
+          tomlSectionBreak(result);
+          result.append("[[").append(tomlPath(childPath)).append("]]\n");
+          writeTomlTable(result, (Map<?, ?>) item, childPath);
+        }
+      }
+    }
+  }
+
+  private static boolean isArrayOfMaps(Object value) {
+    return value instanceof List<?> list && !list.isEmpty()
+        && list.stream().allMatch(Map.class::isInstance);
+  }
+
+  private static String tomlValue(Object value) {
+    if (value == null) return "\"\"";
+    if (value instanceof Boolean || value instanceof Number) return value.toString();
+    if (value instanceof List<?> list) {
+      return "[" + String.join(", ", list.stream().map(ReportWriter::tomlValue).toList()) + "]";
+    }
+    return quoted(value.toString());
+  }
+
+  private static String tomlPath(List<String> path) {
+    return String.join(".", path.stream().map(ReportWriter::tomlKey).toList());
+  }
+
+  private static String tomlKey(String key) {
+    return key.matches("[A-Za-z0-9_-]+") ? key : quoted(key);
+  }
+
+  private static List<String> append(List<String> path, String value) {
+    java.util.ArrayList<String> result = new java.util.ArrayList<>(path);
+    result.add(value);
+    return result;
+  }
+
+  private static void tomlSectionBreak(StringBuilder result) {
+    if (!result.isEmpty() && result.charAt(result.length() - 1) == '\n') result.append("\n");
   }
 }

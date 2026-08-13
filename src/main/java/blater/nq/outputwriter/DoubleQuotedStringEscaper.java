@@ -1,7 +1,7 @@
 package blater.nq.outputwriter;
 
 /*
- * Responsibility: Produces the compatible double-quoted string form used by
+ * Responsibility: Produces the double-quoted string form used by
  * the handwritten YAML and TOML serializers.
  */
 final class DoubleQuotedStringEscaper {

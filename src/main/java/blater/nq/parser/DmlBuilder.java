@@ -141,12 +141,6 @@ final class DmlBuilder {
     if (ctx.structureClause() != null)
       fatal(FATAL_SYNTAX_ERROR, "insert select source cannot use structure.");
 
-    if (ctx.orderByClause() != null)
-      for (HiQLParser.OrderItemContext item : ctx.orderByClause().orderItem()) {
-        if (!item.createsNewClause().isEmpty())
-          fatal(FATAL_SYNTAX_ERROR, "insert select source cannot use createsNew.");
-      }
-
     for (HiQLParser.SelectBranchContext branch : ctx.selectBranch()) {
       if (branch.usingClause() != null)
         fatal(FATAL_SYNTAX_ERROR, "insert select source cannot use 'using' metadata.");

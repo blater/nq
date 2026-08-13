@@ -4,15 +4,15 @@ _nq_completion() {
   previous="${COMP_WORDS[COMP_CWORD-1]}"
 
   case "$previous" in
-    help|--help)
-      COMPREPLY=($(compgen -W "help run convert catalog cache connection output state parameters parquet" -- "$current"))
+    help)
+      COMPREPLY=($(compgen -W "help run convert catalog cache connection output cache-dir parameters parquet" -- "$current"))
       return
       ;;
-    -o|--output|--report-format)
+    -o|--output|-r|--report-format)
       COMPREPLY=($(compgen -W "json jsonl yaml xml csv tsv toml markdown" -- "$current"))
       return
       ;;
-    --input-format)
+    -t|--input-format)
       COMPREPLY=($(compgen -W "json jsonl yaml xml csv tsv toml parquet" -- "$current"))
       return
       ;;
@@ -20,16 +20,16 @@ _nq_completion() {
       COMPREPLY=($(compgen -W "h2 mysql mariadb postgresql oracle sqlserver db2 hana informix" -- "$current"))
       return
       ;;
-    --script-file|--input-file|-p|--properties|--state-dir)
+    -f|--script-file|-i|--input-file|--config|--params-file|--cache-dir)
       COMPREPLY=($(compgen -f -- "$current"))
       return
       ;;
   esac
 
   if [[ "$current" == -* ]]; then
-    COMPREPLY=($(compgen -W "-h --help --version --script-file --script-text --input-file --input-format --param -p --properties -o --output --report-format --state-dir --cache --debug --no-key-inference --pattern --name --all --older-than --parquet-root --parquet-record --db --database --host --port --user --password --jdbc-driver --jdbc-class-name --jdbc-database --jdbc-username --jdbc-password" -- "$current"))
+    COMPREPLY=($(compgen -W "-h --help --version -f --script-file -e --script-text -i --input-file -t --input-format --param --params-file --config -o --output -r --report-format --cache-dir --cache --debug --no-key-inference -m --pattern --name --all --older-than --parquet-root --parquet-record --db --database --host --port --user --password --jdbc-driver --jdbc-class-name --jdbc-database --jdbc-username --jdbc-password" -- "$current"))
   elif [[ $COMP_CWORD -eq 1 ]]; then
-    COMPREPLY=($(compgen -W "run convert catalog cache help" -- "$current"))
+    COMPREPLY=($(compgen -W "run convert catalog cache help version" -- "$current"))
   elif [[ ${COMP_WORDS[1]} == cache && $COMP_CWORD -eq 2 ]]; then
     COMPREPLY=($(compgen -W "load use list clear" -- "$current"))
   fi

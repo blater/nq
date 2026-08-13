@@ -5,6 +5,5 @@ package blater.nq.domain;
  * hierarchy mapping.
  */
 public enum Operator {
-  EQ,
-  IF_NEW_VALUE
+  EQ
 }

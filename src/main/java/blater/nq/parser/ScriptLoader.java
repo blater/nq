@@ -20,7 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class ScriptLoader {
   private static final Pattern INCLUDE_DIRECTIVE = Pattern.compile(
-      "(?i)\\b(include|submapping)\\s+'([^']+)'\\s*(\\\\G)?");
+      "(?i)\\b(include|submapping)\\s+'([^']+)'\\s*;");
 
   public static String load(String filename) throws IOException {
     return loadAndExpand(Paths.get(filename), new LinkedHashSet<>());

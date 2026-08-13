@@ -1,5 +1,6 @@
 package blater.nq;
 
+import blater.nq.testsupport.CliTestHarness;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -25,7 +26,7 @@ class DocumentConversionCliTest {
         <customer id="7"><name>Alice</name></customer>
         """);
 
-    String output = captureStdout(() -> Main.main("convert", "--input-file", input.toString()));
+    String output = captureStdout(() -> CliTestHarness.run("convert", "--input-file", input.toString()));
 
     assertEquals("""
         {"customer":{"id":"7","name":"Alice"}}
@@ -38,7 +39,7 @@ class DocumentConversionCliTest {
         {"customer":{"id":7,"name":"Alice"}}
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> CliTestHarness.run(
         "convert", "--input-file", input.toString(), "-o", "yaml"));
 
     assertEquals("""
@@ -55,7 +56,7 @@ class DocumentConversionCliTest {
         {"customer":{"id":7,"name":"Alice"}}
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> CliTestHarness.run(
         "convert", "--input-file", input.toString(), "--output", "xml"));
 
     assertTrue(output.contains("<customer>"));
@@ -71,7 +72,7 @@ class DocumentConversionCliTest {
         2,Bob
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> CliTestHarness.run(
         "convert", "--input-file", input.toString(), "--output", "markdown"));
 
     assertEquals(4, output.lines().count());
@@ -85,7 +86,7 @@ class DocumentConversionCliTest {
   void tsvConvertsDirectlyToTsv() throws Exception {
     Path input = write("customers.tsv", "id\tname\n1\tAlice\n2\tBob\n");
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> CliTestHarness.run(
         "convert", "--input-file", input.toString(), "--output", "tsv"));
 
     assertEquals("id\tname\n1\tAlice\n2\tBob\n", output);
@@ -101,7 +102,7 @@ class DocumentConversionCliTest {
 
     assertEquals(
         "{\"customer\":{\"id\":\"7\",\"name\":\"Alice\"}}\n",
-        captureStdout(() -> Main.main(
+        captureStdout(() -> CliTestHarness.run(
             "convert", "--input-file", toml.toString(), "--output", "json")));
 
     Path json = write("customer-for-toml.json", """
@@ -111,7 +112,7 @@ class DocumentConversionCliTest {
         [customer]
         id = "7"
         name = "Alice"
-        """, captureStdout(() -> Main.main(
+        """, captureStdout(() -> CliTestHarness.run(
             "convert", "--input-file", json.toString(), "--output", "toml")));
   }
 
@@ -121,7 +122,7 @@ class DocumentConversionCliTest {
         {"customer":{"id":7,"name":"Alice"}}
         """);
 
-    String output = captureStdout(() -> Main.main(
+    String output = captureStdout(() -> CliTestHarness.run(
         "run", "--input-file", input.toString(),
         "--script-text", "select id into {result.id} from customer;",
         "--output", "json"));
@@ -138,7 +139,7 @@ class DocumentConversionCliTest {
     try (InputStream input = new ByteArrayInputStream(
         "customer:\n  id: 7\n  name: Alice\n".getBytes(StandardCharsets.UTF_8))) {
       System.setIn(input);
-      String output = captureStdout(() -> Main.main(
+      String output = captureStdout(() -> CliTestHarness.run(
           "convert", "--input-file", "-", "--input-format", "yaml", "-o", "json"));
       assertEquals("""
           {"customer":{"id":"7","name":"Alice"}}

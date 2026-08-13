@@ -1,6 +1,5 @@
 package blater.nq.parser.script;
 
-import blater.nq.domain.CorrelationRule;
 import blater.nq.domain.HierarchyPath;
 import blater.nq.domain.KeyOrigin;
 import blater.nq.domain.KeyedPath;
@@ -85,7 +84,7 @@ public final class SelectBlueprint {
       keyedPaths.add(new KeyedPath(key.identityPath(), key.placement(), columns, key.origin()));
     }
 
-    MappingPlan plan = new MappingPlan(fields, legacyCorrelationRules(orderItems, internalExpressions), keyedPaths);
+    MappingPlan plan = new MappingPlan(fields, keyedPaths);
     return new Compiled(sql.toString(), plan);
   }
 
@@ -224,19 +223,6 @@ public final class SelectBlueprint {
     throw new IllegalStateException("Missing internal expression: " + expression);
   }
 
-  private static List<CorrelationRule> legacyCorrelationRules(
-      List<OrderItem> orderItems,
-      List<InternalExpression> internalExpressions) {
-    List<CorrelationRule> rules = new ArrayList<>();
-    for (OrderItem item : orderItems) {
-      for (HierarchyPath path : item.legacyPaths()) {
-        String column = "col" + (indexOfExpression(internalExpressions, item.expression()) + 1);
-        rules.add(new CorrelationRule(path, List.of(MappingCondition.newValue(column))));
-      }
-    }
-    return rules;
-  }
-
   private static String quoteAlias(String alias) {
     return "\"" + alias + "\"";
   }
@@ -273,10 +259,7 @@ public final class SelectBlueprint {
       QueryShape.ExpressionFacts expressionFacts) {
   }
 
-  public record OrderItem(String expression, String direction, List<HierarchyPath> legacyPaths) {
-    public OrderItem {
-      legacyPaths = List.copyOf(legacyPaths);
-    }
+  public record OrderItem(String expression, String direction) {
   }
 
   public sealed interface KeyExpressions permits CommonKeyExpressions, BranchKeyExpressions {

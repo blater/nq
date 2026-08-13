@@ -22,7 +22,7 @@ execution policy globally. See [Installing NQ](install.md).
 Inspect the schema NQ discovered:
 
 ```bash
-nq catalog --input-file input.json --pattern '*'
+nq catalog input.json '*'
 ```
 
 Named JSON/YAML/TOML collections normally become tables with their member names.
@@ -35,7 +35,7 @@ Persistent caches are not synchronized automatically with source changes.
 Query without `--cache` for a fresh temporary load or rebuild the cache:
 
 ```bash
-nq cache load --input-file input.json
+nq cache load input.json
 ```
 
 Inspect cache state with:
@@ -49,10 +49,10 @@ nq cache list
 Supply an input file with the query, activate a cache, or configure JDBC:
 
 ```bash
-nq run --script-file query.nq --input-file input.json
-nq cache load --input-file input.json
-nq run --script-file query.nq
-nq run --script-file query.nq --properties database.properties
+nq query.nq input.json
+nq cache load input.json
+nq query.nq
+nq query.nq --config database.properties
 ```
 
 ## JDBC driver or connection failure
@@ -62,13 +62,13 @@ nq run --script-file query.nq --properties database.properties
 3. Verify hostname, port, database, username, TLS options, and network access
    using the database vendor’s client.
 4. Remember that native executables cannot load arbitrary driver JARs.
-5. Use a protected properties file instead of a command-line password.
+5. Use a protected operational config file instead of a command-line password.
 
 Enable debug diagnostics only while investigating and review output before
 sharing:
 
 ```bash
-nq run --script-file query.nq --properties database.properties --debug
+nq query.nq --config database.properties --debug
 ```
 
 ## Hierarchy-path failure

@@ -1,6 +1,6 @@
 package blater.nq.runner;
 
-import blater.nq.ParameterParser;
+import blater.nq.execution.EngineParameterNames;
 import blater.nq.domain.Hierarchy;
 import blater.nq.outputwriter.XmlOutputWriter;
 import blater.nq.parser.ScriptParser;
@@ -49,7 +49,7 @@ class ScriptRunnerInferredRowsTest {
               "phone_number varchar(20), " +
               "phone_label varchar(20))");
 
-      run(database, ambiguousScript() + "onWarning('ambiguous');\n\\g\n", ambiguousInput());
+      run(database, ambiguousScript() + "onWarning('ambiguous');\n", ambiguousInput());
 
       assertEquals(0, database.queryInt("select count(*) from person_phone"));
     }
@@ -83,10 +83,10 @@ class ScriptRunnerInferredRowsTest {
               insert into person (firstname)
               values ({message.person.firstname})
               returns personid into {message.person.id}
-              \\g
+              ;
               insert into nickname (nicknameid, personid, nickname)
               values ({message.person.nickname.@id}, {message.person.id}, {message.person.nickname})
-              \\g
+              ;
               """);
 
       Document returned = run(database, new NestScript(parsed.statements()), inputXml);
@@ -108,7 +108,7 @@ class ScriptRunnerInferredRowsTest {
     try {
       Files.writeString(tempFile, inputXml, StandardCharsets.UTF_8);
       Map<String, String> params = new HashMap<>(database.jdbcProperties());
-      params.put(ParameterParser.INPUT_FILENAME, tempFile.toString());
+      params.put(EngineParameterNames.INPUT_FILENAME, tempFile.toString());
       Hierarchy hierarchy = ScriptRunner.run(script, params);
       return XmlOutputWriter.map(hierarchy);
     } finally {
@@ -119,7 +119,7 @@ class ScriptRunnerInferredRowsTest {
   private String ambiguousScript() {
     return "insert into person_phone (personid, phone_number, phone_label)\n"
         + "values ({person.@id}, {person.phone}, {person.phoneLabel})\n"
-        + "\\g\n";
+        + ";\n";
   }
 
   private String ambiguousInput() {

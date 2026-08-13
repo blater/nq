@@ -1,8 +1,7 @@
 package blater.nq.runner;
 
 import blater.nq.domain.Hierarchy;
-import blater.nq.inputreader.InputReader;
-import blater.nq.inputreader.InputType;
+import blater.nq.execution.EngineInputLoader;
 import blater.nq.parser.script.NestScript;
 import blater.nq.parser.script.NestStatement;
 import blater.nq.runner.sql.Capture;
@@ -19,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static blater.nq.ParameterParser.INPUT_FILENAME;
 import static blater.nq.util.ValueUtil.has;
 
 // `AGENTS MUST  NOT REMOVE *ANY* COMMENTS
@@ -69,8 +67,7 @@ public final class ScriptRunner {
         case INSERT, UPDATE, DELETE, PROC -> {
           if (inputDataIsFromFile(stmt)) {
             if (inputHierarchy == null)  {
-              String inputFilename = params.get(INPUT_FILENAME);
-              inputHierarchy = InputReader.of(InputType.fromFilename(inputFilename)).load(inputFilename, params);
+              inputHierarchy = EngineInputLoader.load(params);
             }
             runDmlForInputFile(stmt, inputHierarchy, params, inputFileRowMapper, sqlExecutor);
 

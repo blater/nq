@@ -18,8 +18,4 @@ public record MappingCondition(
   public static MappingCondition eq(String fieldName, String expectedValue) {
     return new MappingCondition(fieldName, Operator.EQ, expectedValue, SqlType.STRING);
   }
-
-  public static MappingCondition newValue(String fieldName) {
-    return new MappingCondition(fieldName, Operator.IF_NEW_VALUE, null, SqlType.STRING);
-  }
 }

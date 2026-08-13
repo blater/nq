@@ -44,9 +44,4 @@ public class QueryResultRow {
     var column = columnValues.get(columnName);
     return column == null || column.columnValueIsNull();
   }
-
-  public boolean newValue(final String columnName) {
-    var column = columnValues.get(columnName);
-    return column != null && column.hasChanged();
-  }
 }

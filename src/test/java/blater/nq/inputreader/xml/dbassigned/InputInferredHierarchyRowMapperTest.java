@@ -31,7 +31,7 @@ class InputInferredHierarchyRowMapperTest {
   void infersRepeatedChildRowsFromNestedXml() throws Exception {
     String script = "insert into nickname (nicknameid, personid, nickname)\n"
         + "values ({message.person.nickname.@id}, {message.person.@id}, {message.person.nickname})\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<message>"
         + "<person id=\"7\">"
         + "<nickname id=\"10\">Ace</nickname>"
@@ -51,7 +51,7 @@ class InputInferredHierarchyRowMapperTest {
   void infersRowContextForSiblingTerminalValues() throws Exception {
     String script = "insert into orderline (lineid, sku, quantity)\n"
         + "values ({order.line.@id}, {order.line.sku}, {order.line.quantity})\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<order>"
         + "<line id=\"1\"><sku>A-1</sku><quantity>2</quantity></line>"
         + "<line id=\"2\"><sku>B-2</sku><quantity>5</quantity></line>"
@@ -70,7 +70,7 @@ class InputInferredHierarchyRowMapperTest {
     String script = "insert into orderline (customerid, orderid, lineid, sku, status)\n"
         + "values ({message.customer.@id}, {message.customer.order.@id}, "
         + "{message.customer.order.line.@id}, {message.customer.order.line.sku}, 'READY')\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<message>"
         + "<customer id=\"1\">"
         + "<order id=\"10\">"
@@ -97,7 +97,7 @@ class InputInferredHierarchyRowMapperTest {
   void infersCompositeKeysAtTheSameRepeatedEntityLevel() throws Exception {
     String script = "insert into inventory_item (warehouseid, sku, quantity)\n"
         + "values ({inventory.item.warehouseid}, {inventory.item.sku}, {inventory.item.quantity})\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<inventory>"
         + "<item><warehouseid>1</warehouseid><sku>A-1</sku><quantity>3</quantity></item>"
         + "<item><warehouseid>1</warehouseid><sku>B-2</sku><quantity>5</quantity></item>"
@@ -115,7 +115,7 @@ class InputInferredHierarchyRowMapperTest {
   void infersRepeatedChildRowsWithoutKey() throws Exception {
     String script = "insert into phone (number)\n"
         + "values ({person.phone.number})\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<person>"
         + "<phone><number>111</number></phone>"
         + "<phone><number>222</number></phone>"
@@ -133,7 +133,7 @@ class InputInferredHierarchyRowMapperTest {
   void preservesMissingRepeatedRowSourceAsOneMissingRow() throws Exception {
     String script = "insert into orderline (lineid, sku)\n"
         + "values ({order.line.@id}, {order.line.sku})\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<order id=\"99\"/>";
 
     MappingResult mapping = infer(script, inputXml);
@@ -147,7 +147,7 @@ class InputInferredHierarchyRowMapperTest {
   void reportsAmbiguousSiblingRepeatedLists() throws Exception {
     String script = "insert into person_phone (personid, phone_number, phone_label)\n"
         + "values ({person.@id}, {person.phone}, {person.phoneLabel})\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<person id=\"7\">"
         + "<phone>111</phone>"
         + "<phone>222</phone>"
@@ -165,7 +165,7 @@ class InputInferredHierarchyRowMapperTest {
   void reportsAmbiguousIndependentBranches() throws Exception {
     String script = "insert into contact_pair (customer_phone, supplier_phone)\n"
         + "values ({message.customer.phone}, {message.supplier.phone})\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<message>"
         + "<customer><phone>111</phone><phone>222</phone></customer>"
         + "<supplier><phone>999</phone><phone>888</phone></supplier>"
@@ -181,7 +181,7 @@ class InputInferredHierarchyRowMapperTest {
   void reportsDuplicateTargetColumnAssignment() throws Exception {
     String script = "insert into phone (number, number)\n"
         + "values ({person.phone.number}, {person.phone.label})\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<person>"
         + "<phone><number>111</number><label>home</label></phone>"
         + "</person>";
@@ -211,7 +211,7 @@ class InputInferredHierarchyRowMapperTest {
   void normalizesTerminalElementResultsToTheirParentRowContext() throws Exception {
     String script = "insert into phone (number)\n"
         + "values ({person.phone})\n"
-        + "\\g\n";
+        + ";\n";
     String inputXml = "<person>"
         + "<phone>111</phone>"
         + "<phone>222</phone>"
@@ -229,7 +229,7 @@ class InputInferredHierarchyRowMapperTest {
   void ordinaryColumnsDoNotRegisterWriteBackNodes() throws Exception {
     String script = "insert into person (firstname)\n"
         + "values ({person.firstname})\n"
-        + "\\g\n";
+        + ";\n";
     Hierarchy hierarchy = hierarchy("<person><firstname>Fred</firstname></person>");
     InputFileRowMapper mapper = new InputFileRowMapper();
 
@@ -244,7 +244,7 @@ class InputInferredHierarchyRowMapperTest {
     String script = "insert into person (firstname)\n"
         + "values ({message.person.firstname})\n"
         + "returns personid into {message.person.id}\n"
-        + "\\g\n";
+        + ";\n";
     Hierarchy hierarchy = hierarchy("<message><person><firstname>Fred</firstname></person></message>");
     InputFileRowMapper mapper = new InputFileRowMapper();
 

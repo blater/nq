@@ -38,7 +38,8 @@ class HierarchyMappingTest {
                 firstname into {people.person.firstname},
                 surname into {people.person.surname}
               from person
-              order by personid asc createsNew {people.person}\\G
+              order by personid asc
+              structure {people.person} key (personid);
               """);
 
       Hierarchy hierarchy = hierarchy(database, script);

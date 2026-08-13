@@ -25,7 +25,7 @@ class RowFirstStructureE2ETest {
           """
               select id into {companies.company.id}, name into {companies.company.name}
               from company order by id
-              \\g
+              ;
               """));
 
       assertEquals(2, result.getChildren("companies").size());
@@ -62,7 +62,7 @@ class RowFirstStructureE2ETest {
                 {customers.customer} key (c.id),
                 {customers.customer.phone} key (p.id),
                 {customers.customer.email} key (e.id)
-              \\g
+              ;
               """));
 
       Element customer = child(customers, "customer");
@@ -103,7 +103,7 @@ class RowFirstStructureE2ETest {
                 {customers.customer} key (c.id),
                 {customers.customer.phone} key (p.id),
                 {customers.customer.email} key (e.id)
-              \\g
+              ;
               """);
 
       Element customers = runScript(database, script);

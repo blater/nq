@@ -8,23 +8,35 @@ result data and diagnostics.
 - Query/output data is written to stdout.
 - Warnings, errors, and debug diagnostics are written to stderr.
 - Successful commands return status `0`.
-- Invalid options, script parsing errors, database connection errors, and SQL
-  execution failures return a non-zero status.
+- Usage and configuration errors return status `2`; execution, input, database,
+  and script failures return `1`; interruption returns `130`.
 - `--debug` adds diagnostics and may expose SQL or metadata; sanitize logs.
+
+For machine-readable catalog and cache operations, request a report format
+explicitly. The same format is used for diagnostics on stderr:
+
+```bash
+nq cache list --cache-dir "$RUNNER_TEMP/nq-cache" --report-format json \
+  >cache-report.json 2>nq-diagnostics.jsonl
+```
+
+Operational reports use the stable outer fields `schema_version`, `status`,
+`command`, and `details`. Diagnostics use `schema_version`, `code`, `level`,
+`message`, and optional `usage`.
 
 ## Shell example
 
 ```bash
 set -euo pipefail
 
-nq run --script-file transform.nq --input-file input.json --output json >result.json
+nq transform.nq input.json >result.json
 jq -e . result.json >/dev/null
 ```
 
 Redirect stderr separately when preserving diagnostics:
 
 ```bash
-if ! nq run --script-file transform.nq --input-file input.json >result.json 2>nq-error.log; then
+if ! nq transform.nq input.json >result.json 2>nq-error.log; then
   sed -n '1,120p' nq-error.log >&2
   exit 1
 fi
@@ -53,25 +65,25 @@ jobs:
           tar -xzf "nq-${NQ_VERSION}-linux-x64.tar.gz"
       - name: Transform and validate
         run: |
-          ./nq run --script-file transform.nq --input-file input.json >result.json
+          ./nq transform.nq input.json >result.json
           jq -e . result.json >/dev/null
 ```
 
 ## Credentials
 
-Store a database properties file in a protected temporary location populated
+Store an operational config file in a protected temporary location populated
 from the CI system’s secret store. Never commit it or pass a reusable password
 directly on the command line. Database command lines and debug logs may be
 visible to other processes or retained by the CI provider.
 
 ## Cache isolation
 
-Use a job-specific state directory. Both active-cache configuration and cache
-data remain beneath it:
+Use a job-specific direct cache directory. The active selection and cache data
+remain beneath it:
 
 ```bash
-nq cache load --input-file input.json --state-dir "$RUNNER_TEMP/nq-state" --report-format json
-nq run --script-file report.nq --state-dir "$RUNNER_TEMP/nq-state"
+nq cache load input.json --cache-dir "$RUNNER_TEMP/nq-cache" -r json
+nq report.nq --cache-dir "$RUNNER_TEMP/nq-cache"
 ```
 
 Persistent caches contain source data. Do not upload them as build artifacts

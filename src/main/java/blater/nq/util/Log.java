@@ -1,13 +1,10 @@
 package blater.nq.util;
 
 import blater.nq.parser.HiqlSyntaxException;
-import blater.nq.report.ReportFormat;
-import blater.nq.report.ReportWriter;
+import blater.nq.report.DiagnosticEnvelope;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Slf4j
 /*
@@ -15,62 +12,56 @@ import java.util.Map;
  */
 public class Log {
   private static final String MESSAGE_PREFIX = "- ";
-  private static final boolean THROW_FATAL_ERRORS = Boolean.getBoolean("nq.debug");
-  private static boolean isDebug;
-  private static ReportFormat reportFormat;
+  private static final ThreadLocal<Boolean> DEBUG = ThreadLocal.withInitial(() -> false);
+  private static final ThreadLocal<DiagnosticSink> DIAGNOSTICS = new ThreadLocal<>();
 
-  public static void debug(boolean val) {
-    Log.isDebug = val;
+  public static DebugScope withDebug(boolean enabled) {
+    boolean previous = DEBUG.get();
+    DEBUG.set(enabled);
+    return () -> {
+      if (previous) {
+        DEBUG.set(true);
+      } else {
+        DEBUG.remove();
+      }
+    };
   }
 
-  public static void reportFormat(ReportFormat val) {
-    Log.reportFormat = val;
+  public static DiagnosticScope withDiagnostics(DiagnosticSink sink) {
+    DiagnosticSink previous = DIAGNOSTICS.get();
+    DIAGNOSTICS.set(java.util.Objects.requireNonNull(sink, "sink"));
+    return () -> {
+      if (previous == null) {
+        DIAGNOSTICS.remove();
+      } else {
+        DIAGNOSTICS.set(previous);
+      }
+    };
   }
 
   public static final Class<? extends Throwable> FATAL_SYNTAX_ERROR = HiqlSyntaxException.class;
 
   public static void debug(String msg, Object... args) {
-    if (isDebug) diagnostic("debug", msg, args);
+    if (DEBUG.get()) diagnostic("debug", msg, args);
   }
   public static void info(String msg, Object... args) { diagnostic("info", msg, args); }
   public static void warn(String msg, Object... args) { diagnostic("warning", msg, args); }
   public static void error(String msg, Object... args) { diagnostic("error", msg, args); }
 
   @SuppressWarnings("unchecked")
-  private static <T extends Throwable> void sneakyThrow(Throwable t) throws T {
+  private static <R, T extends Throwable> R sneakyThrow(Throwable t) throws T {
     throw (T) t; // trick to throw checked without declaration
   }
-  private static <R, T extends Throwable> R exit(int status) {
-    System.exit(status);
-    return null;
-  }
-
   public static void fatal(String message) {
     fatal(IllegalStateException.class, message);
   }
 
   public static <R, T extends Throwable> R fatal(Class<T> type, String message) {
-    if (THROW_FATAL_ERRORS) {
-      sneakyThrow(createException(type, message, null));
-    }
-    diagnostic("error", message);
-    if (isDebug) {
-      T ex = createException(type, message, null);
-      sneakyThrow(ex);
-    }
-    return exit(1);
+    return sneakyThrow(createException(type, message, null));
   }
 
   public static <R, T extends Throwable> R fatal(Class<T> type, String message, Throwable cause) {
-    if (THROW_FATAL_ERRORS) {
-      sneakyThrow(createException(type, message, cause));
-    }
-    diagnostic("error", message, cause);
-    if (isDebug) {
-      T ex = createException(type, message, cause);
-      sneakyThrow(ex);
-    }
-    return exit(1);
+    return sneakyThrow(createException(type, message, cause));
   }
 
   private static <T extends Throwable> T createException(Class<T> type, String message, Throwable cause) {
@@ -98,36 +89,56 @@ public class Log {
   }
 
   private static void diagnostic(String level, String message, Object... args) {
-    if (reportFormat == null) {
-      switch (level) {
-        case "debug", "info" -> log.info(MESSAGE_PREFIX + ("debug".equals(level) ? "DEBUG: " : "") + message, args);
-        case "warning" -> log.warn(MESSAGE_PREFIX + message, args);
-        default -> log.error(MESSAGE_PREFIX + message, args);
-      }
+    DiagnosticSink sink = DIAGNOSTICS.get();
+    if (sink != null) {
+      DiagnosticEnvelope.Level envelopeLevel = switch (level) {
+        case "debug" -> DiagnosticEnvelope.Level.DEBUG;
+        case "info" -> DiagnosticEnvelope.Level.INFO;
+        case "warning" -> DiagnosticEnvelope.Level.WARNING;
+        default -> DiagnosticEnvelope.Level.ERROR;
+      };
+      sink.write(new DiagnosticEnvelope(
+          "NQ-RUNTIME-" + level.toUpperCase(java.util.Locale.ROOT),
+          envelopeLevel,
+          interpolate(message, args),
+          new DiagnosticEnvelope.Usage.None()));
       return;
     }
-
-    Map<String, Object> report = new LinkedHashMap<>();
-    report.put("status", "error".equals(level) ? "error" : "diagnostic");
-    report.put("level", level);
-    report.put("message", interpolate(message, args));
-    ReportWriter.write(report, reportFormat, System.err);
+    switch (level) {
+      case "debug", "info" -> log.info(
+          MESSAGE_PREFIX + ("debug".equals(level) ? "DEBUG: " : "") + message, args);
+      case "warning" -> log.warn(MESSAGE_PREFIX + message, args);
+      default -> log.error(MESSAGE_PREFIX + message, args);
+    }
   }
 
   private static String interpolate(String message, Object... args) {
     String rendered = message;
     for (Object arg : args) {
-      if (arg instanceof Throwable) {
-        continue;
-      }
+      if (arg instanceof Throwable) continue;
       int placeholder = rendered.indexOf("{}");
-      if (placeholder < 0) {
-        break;
-      }
+      if (placeholder < 0) break;
       rendered = rendered.substring(0, placeholder)
           + String.valueOf(arg)
           + rendered.substring(placeholder + 2);
     }
     return rendered;
+  }
+
+  @FunctionalInterface
+  public interface DebugScope extends AutoCloseable {
+    @Override
+    void close();
+  }
+
+  @FunctionalInterface
+  public interface DiagnosticScope extends AutoCloseable {
+    @Override
+    void close();
+  }
+
+  @FunctionalInterface
+  public interface DiagnosticSink {
+    void write(DiagnosticEnvelope diagnostic);
   }
 }

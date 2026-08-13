@@ -3,6 +3,8 @@ NQ is a command-line tool for querying and moving data between JSON, YAML, TOML,
 It provides a familiar SQL language for querying JSON, YAML, TOML, XML, CSV, TSV, JSONL, and Parquet files, extracting complex
 data structures into these formats from databases, and generally working with and reshaping data.
 
+Full documentation: [NQ user manual](docs/user-manual.md).
+
 ## Install
 
 | Platform | instructions | 
@@ -23,8 +25,7 @@ echo '{
     {"id": 2, "name": "Bob", "active": false},
     {"id": 3, "name": "Charlie", "active": true}
   ]
-}' | nq run --script-text "select name from users where active = 'true' order by id;" \
-  --input-file - --input-format json
+}' | nq "select name from users where active = 'true' order by id;"
 ```
 
 ```json
@@ -40,27 +41,58 @@ echo '{
     {"id": 2, "name": "Bob", "active": false},
     {"id": 3, "name": "Charlie", "active": true}
    ]
-}' | nq run --script-text "select count(*) into {summary.activeUsers} from users where active = 'true';" \
-  --input-file - --input-format json
+}' | nq "select count(*) into {summary.activeUsers} from users where active = 'true';"
 ```
 
 ```json
 {"summary":{"activeUsers":"2"}}
 ```
 
+## CLI usage
+
+NQ uses positional operands for the main inputs and flags for optional changes
+or explicit disambiguation:
+
+```text
+nq [run] <script> [data] [options]
+nq <data-file> [options]
+nq convert [data] [options]
+nq catalog [data] [pattern] [options]
+nq cache load [data] [name] [options]
+nq cache use <name> [options]
+nq cache list [options]
+nq cache clear (<name> | olderthan <age> | all) [options]
+```
+
+Common flag groups:
+
+- `--cache [--name <cache-name>]` selects persistent cache execution. With data
+  but no script it loads and activates a new cache; with a script it selects the
+  active or named cache without automatically loading the data into it.
+- `--cache-dir <path>` selects the directory that directly contains cache state,
+  making independent runs easy to isolate.
+- `-o, --output <format>` selects result-data output;
+  `-r, --report-format <format>` selects catalog/cache reports. Result data
+  defaults to JSON and operational reports default to Markdown.
+- `--config <file.properties>` supplies operational NQ/JDBC settings.
+  `--params-file <file.properties>` supplies parameters visible to scripts, and
+  repeatable `--param <name=value>` entries override individual parameter values.
+
+Run `nq help <command>` for command-specific syntax and examples.
+
 ## Select data as Yaml/JSON/XML from a database
 
 Queries can be run against databases as well as directly against data files. 
-Use the --output or -o option to specify the output format. 
+Use `-o` to specify the output format.
 It supports markdown, csv, tsv, yaml, toml, xml, jsonl, and json. The default output format is json.
 
 ```bash
-nq run --script-text "select id, name, city
+nq "select id, name, city
     from customer
     order by id;" \
   --db h2 \
   --database file:./target/nq-readme \
-  --output yaml
+  -o yaml
 ```
 
 ```yaml
@@ -92,20 +124,20 @@ you can use all the usual SQL commands to insert/update/delete database data fro
 Insert:
 ```bash
 echo "person:{firstname:Barney, lastname:Rubble, city:London}" | \
-    nq run --script-text "insert into person (firstname, lastname, city) values ({person.firstName}, {person.lastName}, {person.city});" \
-      --input-file - --input-format yaml
+    nq "insert into person (firstname, lastname, city) values ({person.firstName}, {person.lastName}, {person.city});" \
+      -t yaml
 ```
 Update:
 ```bash
-echo "person:{id: 1, city:London}" | nq run \
-  --script-text "update person set city = {person.city} where personid = {person.id};" \
-  --input-file - --input-format yaml --properties mydb.properties
+echo "person:{id: 1, city:London}" | nq \
+  "update person set city = {person.city} where personid = {person.id};" \
+  -t yaml --config mydb.properties
 ```
 Delete:
 ```bash
-echo "<person><id>1</id></person>" | nq run \
-  --script-text "delete from person where personid = {person.id};" \
-  --input-file - --input-format xml
+echo "<person><id>1</id></person>" | nq \
+  "delete from person where personid = {person.id};" \
+  -t xml
 ```
 
 
@@ -114,18 +146,18 @@ echo "<person><id>1</id></person>" | nq run \
 You can supply all the parameters on the command line
 
 ```bash
-nq run --script-file myscript.nq \
+nq myscript.nq \
   --db postgresql \
   --host db.example.com \
   --port 5432 \
   --database sales \
-  --user report_user
+  --user report_user \
   --password secret
 
 ```
-or supply the name of a properties file containing the connection details
+or supply an NQ configuration file containing the connection details
 ```bash
-nq run --script-file myscript.nq --properties mydatabase.properties
+nq myscript.nq --config mydatabase.properties
 ```
 The [JDBC guide](docs/user-manual.md#jdbc-parameters) covers this in detail.
 
@@ -260,12 +292,12 @@ An insert can write database-assigned values back into its input hierarchy.
 This XML insert maps the generated key into `{person.id}`:
 
 ```bash
-nq run --input-file - --input-format xml \
-  --script-text "output xml;
+nq "output xml;
 
    insert into person (firstname, lastname, city)
    values ({person.firstName}, {person.lastName}, {person.city})
    returns personid into {person.id};" \
+  -t xml \
   --db h2 \
   --database file:./target/nq-readme <<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -303,14 +335,14 @@ NQ reads these input formats:
 
 | Format | Extensions or selection |
 | --- | --- |
-| JSON | `.json` or `--input-format json` for stdin |
-| JSON Lines | `.jsonl` or `--input-format jsonl` for stdin |
-| YAML | `.yaml`, `.yml`, or `--input-format yaml` for stdin |
-| TOML | `.toml` or `--input-format toml` for stdin |
-| XML | `.xml` or `--input-format xml` for stdin |
-| CSV | `.csv` or `--input-format csv` for stdin |
-| TSV | `.tsv` or `--input-format tsv` for stdin |
-| Parquet | `.parquet` or `--input-format parquet` for stdin |
+| JSON | `.json` or `-t json` for stdin |
+| JSON Lines | `.jsonl` or `-t jsonl` for stdin |
+| YAML | `.yaml`, `.yml`, or `-t yaml` for stdin |
+| TOML | `.toml` or `-t toml` for stdin |
+| XML | `.xml` or `-t xml` for stdin |
+| CSV | `.csv` or `-t csv` for stdin |
+| TSV | `.tsv` or `-t tsv` for stdin |
+| Parquet | `.parquet` or `-t parquet` for stdin |
 
 Output is available as JSON, JSON Lines, YAML, TOML, XML, CSV, TSV, or Markdown. JSON is
 the default.
@@ -319,9 +351,9 @@ A file supplied without SQL is converted directly and does not create a
 database:
 
 ```bash
-nq convert --input-file customers.xml --output json
-nq convert --input-file customers.json --output yaml
-nq convert --input-file customers.csv --output markdown
+nq customers.xml
+nq customers.json -o yaml
+nq customers.csv -o markdown
 ```
 
 A query and input file use a temporary local database for that command. Use
@@ -329,9 +361,9 @@ A query and input file use a temporary local database for that command. Use
 later NQ commands:
 
 ```bash
-nq cache load --input-file customers.json
-nq catalog --pattern '*'
-nq run --script-text "select id, name from customers order by id;"
+nq cache load customers.json
+nq catalog '*'
+nq "select id, name from customers order by id;"
 ```
 
 The [cache reference](docs/user-manual.md#querying-input-documents-temporary-and-persistent-h2)
@@ -341,11 +373,6 @@ data or send usage telemetry.
 Native release builds include drivers for H2, PostgreSQL, MySQL, and MariaDB.
 Additional driver profiles are available when building from source. The JVM
 build can also load a driver JAR at runtime.
-
-NQ writes result data to stdout and diagnostics to stderr. Successful commands
-return status `0`; invalid options, parsing failures, database connection
-failures, and SQL execution failures return a non-zero status. See the
-[automation guide](docs/automation.md) for scripting and CI examples.
 
 ## Where NQ fits
 
@@ -366,6 +393,22 @@ Use a focused tool when the task stays inside a simpler boundary:
 
 The [comparison guide](docs/comparison.md) describes these boundaries in more
 detail.
+
+## Stdin, diagnostics, and exit status
+
+Piped, redirected, and here-document stdin is always data, never NQ script text.
+It defaults to JSON unless `-t, --input-format` says otherwise. An explicit data
+file or literal input takes precedence; if piped input is immediately detectable,
+NQ warns that stdin is being ignored.
+
+Result data and successful command reports are written to stdout. Warnings,
+errors, and debug output are written to stderr. `--report-format` produces
+versioned, structured catalog/cache reports and structured diagnostics in the
+selected JSON, JSONL, YAML, TOML, XML, CSV, TSV, or Markdown format.
+
+Exit statuses are stable: `0` for success, `1` for execution failure, `2` for
+invalid usage or configuration, and `130` when interrupted. See the
+[automation guide](docs/automation.md) for scripting and CI examples.
 
 ## Documentation
 

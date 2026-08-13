@@ -57,11 +57,10 @@ final class SelectBuilder {
 
     List<OrderItem> orderItems = readOrderItems(ctx.orderByClause());
     List<StructureItem> structureItems = readStructureItems(ctx.structureClause(), branches);
-    structureItems.addAll(readLegacyStructureItems(orderItems, structureItems));
     SelectBlueprint blueprint = new SelectBlueprint(
         branches.stream().map(SelectBuilder::toBlueprintBranch).toList(),
         orderItems.stream().map(item -> new SelectBlueprint.OrderItem(
-            item.expression, item.direction, item.legacyPaths)).toList(),
+            item.expression, item.direction)).toList(),
         structureItems.stream().map(item -> new SelectBlueprint.StructureKey(
             item.path,
             blater.nq.domain.RepetitionPlacement.named(),
@@ -188,9 +187,6 @@ final class SelectBuilder {
       } else if (itemCtx.K_ASC() != null) {
         orderBy.direction = "asc";
       }
-      for (HiQLParser.CreatesNewClauseContext createsNew : itemCtx.createsNewClause()) {
-        orderBy.legacyPaths.add(PathContextMapper.toHierarchyPath(createsNew.path()));
-      }
       orderBy.expressionFacts = QueryShapeExtractor.expressionFacts(itemCtx.orderExpr());
       items.add(orderBy);
     }
@@ -211,9 +207,6 @@ final class SelectBuilder {
         Log.fatal(HiqlSyntaxException.class, "duplicate structure path: " + path);
       if (items.stream().anyMatch(item -> path.isBelow(item.path) == false && item.path.isBelow(path)))
         Log.fatal(HiqlSyntaxException.class, "structure paths must be declared parent before child: " + path);
-      if (branches.stream().anyMatch(branch -> branch.mapsExactPath(path)))
-        Log.fatal(HiqlSyntaxException.class, "structure keys must target object paths, not mapped values: " + path);
-
       List<String> expressions = itemCtx.structureKeyExpr().stream()
           .map(ParseUtils::textOf)
           .map(String::trim)
@@ -223,22 +216,6 @@ final class SelectBuilder {
               .map(QueryShapeExtractor::expressionFacts)
               .toList();
       items.add(new StructureItem(path, expressions, expressionFacts));
-    }
-    return items;
-  }
-
-  private static List<StructureItem> readLegacyStructureItems(
-      List<OrderItem> orderItems, List<StructureItem> explicitItems) {
-    List<StructureItem> items = new ArrayList<>();
-    for (OrderItem orderItem : orderItems) {
-      for (HierarchyPath path : orderItem.legacyPaths) {
-        boolean duplicate = explicitItems.stream().anyMatch(item -> item.path.equals(path))
-            || items.stream().anyMatch(item -> item.path.equals(path));
-        if (duplicate)
-          Log.fatal(HiqlSyntaxException.class, "duplicate structure path: " + path);
-        items.add(new StructureItem(
-            path, List.of(orderItem.expression), List.of(orderItem.expressionFacts)));
-      }
     }
     return items;
   }
@@ -361,7 +338,6 @@ final class SelectBuilder {
     String expression;
     blater.nq.parser.script.QueryShape.ExpressionFacts expressionFacts;
     String direction;
-    final List<HierarchyPath> legacyPaths = new ArrayList<>();
   }
 
   private record StructureItem(

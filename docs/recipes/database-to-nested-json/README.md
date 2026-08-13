@@ -7,18 +7,18 @@ three-level JSON hierarchy.
 From the repository root:
 
 ```bash
-nq run --script-file docs/recipes/database-to-nested-json/database-to-nested-json.nq \
+nq docs/recipes/database-to-nested-json/database-to-nested-json.nq \
   --db h2 --database mem:nq_database_to_nested
 ```
 
 Compare stdout with [`expected.json`](expected.json). The `structure` clause
 states the identity of each repeated output object. Real database scripts omit
-the setup `literal` statements and use `-p database.properties` or connection
+the setup `literal` statements and use `--config database.properties` or connection
 options instead.
 
 Change the boundary output without changing the query:
 
 ```bash
-nq run --script-file docs/recipes/database-to-nested-json/database-to-nested-json.nq \
-  --db h2 --database mem:nq_database_to_yaml --output yaml
+nq docs/recipes/database-to-nested-json/database-to-nested-json.nq \
+  --db h2 --database mem:nq_database_to_yaml -o yaml
 ```

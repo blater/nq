@@ -32,13 +32,13 @@ public class XmlToSqlE2ETest {
       //
       String script = """
           autocommit on
-          \\g
+          ;
           update menu
           set dishname = {message.dish.dishname},
               dishtype = {message.dish.dishtype},
               price = {message.dish.prices.retail}
           where dishid = {message.dish.@id}
-          \\g
+          ;
           """;
       //
       // from an xml file, which sets dish 12  to Dry Toast
@@ -74,11 +74,11 @@ public class XmlToSqlE2ETest {
 
       String script = """
           autocommit on
-          \\g
+          ;
           insert into person (firstname, lastname, dob)
           values ({person.forename}, {person.surname}, {person.dateOfBirth})
           returns personid into {person.id}
-          \\g
+          ;
           """;
       String inputXml = "<person>" +
           "<forename>Fred</forename>" +
@@ -106,10 +106,10 @@ public class XmlToSqlE2ETest {
 
       String script = """
           autocommit on
-          \\g
+          ;
           insert into nickname (nicknameid, personid, nickname)
           values ({message.person.nickname.@id}, {message.person.@id}, {message.person.nickname})
-          \\g
+          ;
           """;
       String inputXml = "<message>" +
           "<person id=\"7\">" +
@@ -140,9 +140,9 @@ public class XmlToSqlE2ETest {
 
       String script = """
           autocommit on
-          \\g
+          ;
           insert into audit_log values ({message.person.id}, {message.person.firstname})
-          \\g
+          ;
           """;
       String inputXml = """
           <message>
@@ -172,12 +172,12 @@ public class XmlToSqlE2ETest {
 
       String script = """
           autocommit on
-          \\g
+          ;
           update person
           set lastupdated = upper({person.lastUpdated})
           where personid = {person.@id}
           returns lastupdated into {person.lastUpdated}
-          \\g
+          ;
           """;
       String inputXml = "<person id=\"7\"><lastUpdated>client</lastUpdated></person>";
 
@@ -201,7 +201,7 @@ public class XmlToSqlE2ETest {
 
       String script = """
           autocommit on
-          \\g
+          ;
           update person
           set firstname = {person.firstname},
               lastupdated = upper({person.lastUpdated}),
@@ -209,7 +209,7 @@ public class XmlToSqlE2ETest {
           where personid = {person.@id}
           returns lastupdated into {person.lastUpdated},
                   version into {person.version}
-          \\g
+          ;
           """;
       String inputXml = "<person id=\"7\"><firstname>Fred</firstname><lastUpdated>client</lastUpdated><version>4</version></person>";
 
@@ -234,13 +234,13 @@ public class XmlToSqlE2ETest {
 
       String script = """
           autocommit on
-          \\g
+          ;
           update person
           set firstname = upper({person.firstname}),
               lastname = coalesce({person.lastname}, 'Unknown'),
               lastupdated = coalesce({person.lastUpdated}, 'fallback')
           where personid = {person.@id}
-          \\g
+          ;
           """;
       String inputXml = "<person id=\"7\"><firstname>fred</firstname></person>";
 
@@ -262,13 +262,12 @@ public class XmlToSqlE2ETest {
           "create table audit_log (personid integer, firstname varchar(80))");
 
       String script =
-          "autocommit on\n\\g\n" +
+          "autocommit on\n;\n" +
               "capture 'people'\n" +
               "select personid, firstname from person where personid < 10 order by personid;\n" +
-              "\\g\n" +
               "insert into audit_log from temp 'people' (personid, firstname)\n" +
               "values ({personid}, {firstname})\n" +
-              "\\g\n";
+              ";\n";
 
       XmlTestHelpers.runScriptString(database, script);
 
@@ -290,14 +289,13 @@ public class XmlToSqlE2ETest {
           "insert into audit_log (personid, firstname) values (2, 'old')");
 
       String script =
-          "autocommit on\n\\g\n" +
+          "autocommit on\n;\n" +
               "capture 'people'\n" +
               "select personid, firstname from person order by personid;\n" +
-              "\\g\n" +
               "update audit_log from temp 'people'\n" +
               "set firstname = {firstname}\n" +
               "where personid = {personid}\n" +
-              "\\g\n";
+              ";\n";
 
       XmlTestHelpers.runScriptString(database, script);
 
@@ -323,13 +321,12 @@ public class XmlToSqlE2ETest {
       String script =
           """
               autocommit on
-              \\g
+              ;
               capture 'people'
               select personid from person order by personid;
-              \\g
               delete from audit_log from temp 'people'
               where personid = {personid}
-              \\g
+              ;
               """;
 
       XmlTestHelpers.runScriptString(database, script);
