@@ -95,8 +95,10 @@ public final class Help {
           nq convert [<data>] [-o <format>]
 
       DESCRIPTION
-          With no operand, conversion reads stdin. Input defaults to JSON unless
-          inferred from a filename or overridden with -t. Output defaults to JSON.
+          The explicit convert command with no operand reads stdin. Input defaults
+          to JSON unless inferred from a filename or overridden with -t. Output
+          defaults to JSON. Bare nq prints brief help because JSON-to-JSON would
+          be an identity operation.
 
       EXAMPLES
           nq customers.yaml

@@ -20,9 +20,9 @@ class InvocationExecutorTest {
   private final InvocationExecutor executor = new InvocationExecutor();
 
   @Test
-  void convertsImplicitStandardInputThroughTypedDispatch() throws Exception {
+  void convertsExplicitStandardInputThroughTypedDispatch() throws Exception {
     String output = capture(() -> executor.execute(
-        parser.parse(), environment("{\"customer\":{\"id\":7}}")));
+        parser.parse("convert"), environment("{\"customer\":{\"id\":7}}")));
 
     assertTrue(output.contains("\"id\":\"7\""));
   }

@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class HierarchyCacheLoaderTest {
@@ -94,11 +95,80 @@ class HierarchyCacheLoaderTest {
       try {
         new HierarchyCacheLoader(executor).load(customerWithoutIdHierarchy());
 
-        String customerId = database.queryString("select id from customer");
+        String customerId = database.queryString("select _nq_id from customer");
         String walletCustomerId = database.queryString("select customer_id from wallet where symbol = 'GBP'");
 
         assertNotNull(customerId);
         assertEquals(customerId, walletCustomerId);
+        assertEquals(0, columnCount(database, "customer", "id"));
+      } finally {
+        executor.close();
+      }
+    }
+  }
+
+  @Test
+  void generatedIdentifiersDoNotMakeSourceIdReferencesAmbiguous() throws Exception {
+    try (H2Database database = new H2Database()) {
+      SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
+      try {
+        new HierarchyCacheLoader(executor).load(usersAndAddressesHierarchy());
+
+        assertEquals("Alice", database.queryString("""
+            select name
+            from users
+            join address on users.id = address.user_id
+            where active = 'true'
+            order by id
+            """));
+        assertEquals(0, columnCount(database, "address", "id"));
+        assertEquals(1, columnCount(database, "address", "_nq_id"));
+      } finally {
+        executor.close();
+      }
+    }
+  }
+
+  @Test
+  void inconsistentSourceIdsUseOneGeneratedIdentityStrategy() throws Exception {
+    Node data = new Node("data");
+    Node first = new Node("customer");
+    first.addNode(value("id", "C1"));
+    first.addNode(value("name", "Alice"));
+    Node second = new Node("customer");
+    second.addNode(value("name", "Bob"));
+    data.addNode(first);
+    data.addNode(second);
+
+    try (H2Database database = new H2Database()) {
+      SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
+      try {
+        new HierarchyCacheLoader(executor).load(new Hierarchy(data));
+
+        assertEquals(2, database.queryInt("select count(distinct _nq_id) from customer"));
+        assertEquals("C1", database.queryString("select id from customer where name = 'Alice'"));
+        assertNull(database.queryString("select id from customer where name = 'Bob'"));
+      } finally {
+        executor.close();
+      }
+    }
+  }
+
+  @Test
+  void rejectsInputNamesUsingReservedTechnicalPrefix() throws Exception {
+    Node customer = new Node("customer");
+    customer.addNode(value("_NQ_ID", "external"));
+
+    try (H2Database database = new H2Database()) {
+      SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
+      try {
+        IllegalArgumentException failure = assertThrows(
+            IllegalArgumentException.class,
+            () -> new HierarchyCacheLoader(executor).load(new Hierarchy(customer)));
+
+        assertEquals(
+            "Input name [_NQ_ID] uses reserved prefix _nq_",
+            failure.getMessage());
       } finally {
         executor.close();
       }
@@ -160,6 +230,8 @@ class HierarchyCacheLoaderTest {
         assertEquals(2, database.queryInt("select count(*) from customer_tag where customer_id = 'C1'"));
         assertEquals(1, database.queryInt("select count(*) from customer_tag where value = 'vip|active'"));
         assertEquals(0, database.queryInt("select count(*) from customer_tag where value = 'vip|active|plain'"));
+        assertEquals(1, columnCount(database, "customer_tag", "_nq_id"));
+        assertEquals(0, columnCount(database, "customer_tag", "id"));
       } finally {
         executor.close();
       }
@@ -354,6 +426,25 @@ class HierarchyCacheLoaderTest {
     data.addNode(customerWithCode("C2", "90", wallet("GBP", "89933.00")));
     data.addNode(country("89", "vietnam"));
     data.addNode(country("90", "vatican city"));
+    return new Hierarchy(data);
+  }
+
+  private Hierarchy usersAndAddressesHierarchy() {
+    Node data = new Node("data");
+    Node alice = new Node("users");
+    alice.addNode(value("id", "1"));
+    alice.addNode(value("name", "Alice"));
+    alice.addNode(value("active", "true"));
+    Node bob = new Node("users");
+    bob.addNode(value("id", "2"));
+    bob.addNode(value("name", "Bob"));
+    bob.addNode(value("active", "false"));
+    Node address = new Node("address");
+    address.addNode(value("user_id", "1"));
+    address.addNode(value("city", "New York"));
+    data.addNode(alice);
+    data.addNode(bob);
+    data.addNode(address);
     return new Hierarchy(data);
   }
 

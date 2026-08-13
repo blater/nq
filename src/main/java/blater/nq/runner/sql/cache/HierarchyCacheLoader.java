@@ -20,10 +20,14 @@ import java.util.stream.Collectors;
  */
 public final class HierarchyCacheLoader {
   private static final String TEXT_SQL_TYPE = "varchar";
+  private static final String SOURCE_ID_COLUMN = "id";
+  private static final String GENERATED_ID_COLUMN = "_nq_id";
+  private static final String RESERVED_PREFIX = "_nq_";
   private static final int INSERT_BATCH_SIZE = 500;
 
   private final SqlExecutor sqlExecutor;
   private final Map<String, TableState> tables = new LinkedHashMap<>();
+  private final Map<String, Boolean> sourceIdentityByTable = new LinkedHashMap<>();
 
   public HierarchyCacheLoader(SqlExecutor sqlExecutor) {
     this.sqlExecutor = sqlExecutor;
@@ -31,17 +35,60 @@ public final class HierarchyCacheLoader {
 
   public void load(Hierarchy hierarchy) {
     tables.clear();
+    sourceIdentityByTable.clear();
     if (hierarchy == null || hierarchy.getRoot() == null) {
       return;
     }
 
     Node root = hierarchy.getRoot();
+    validateInputNames(root);
+    analyzeNode(root, null, true, root.getName());
     writeNode(root, null, null, true, root.getName());
     flushAllTables();
     for (TableState table : tables.values()) {
       if (table.created) {
         Log.debug("Cache table [{}]", table.logicalName);
       }
+    }
+  }
+
+  /*
+   * Responsibility: Chooses one stable identity strategy for every inferred
+   * relation before rows and containment references are emitted. A source id
+   * is the relation identity only when every materialized row supplies one;
+   * otherwise the relation receives a generated _nq_id column.
+   */
+  private void analyzeNode(
+      Node node,
+      String parentTable,
+      boolean root,
+      String rootName) {
+    Map<String, List<String>> valuesByName = new LinkedHashMap<>();
+    Set<String> repeatedNames = new LinkedHashSet<>();
+    List<Node> objectChildren = new ArrayList<>();
+    classifyDirectChildren(node, valuesByName, repeatedNames, objectChildren);
+
+    String currentTable = parentTable;
+    if (shouldMaterialize(node, valuesByName, objectChildren, root)) {
+      currentTable = relationName(node, parentTable, rootName);
+      boolean hasSourceId = firstScalarValue(valuesByName, SOURCE_ID_COLUMN, null) != null;
+      sourceIdentityByTable.merge(currentTable, hasSourceId, (left, right) -> left && right);
+    }
+
+    for (Node child : objectChildren) {
+      analyzeNode(child, currentTable, false, rootName);
+    }
+  }
+
+  private void validateInputNames(Node node) {
+    if (node.getName() != null
+        && node.getName().toLowerCase(java.util.Locale.ROOT).startsWith(RESERVED_PREFIX)) {
+      Log.fatal(
+          IllegalArgumentException.class,
+          "Input name [" + node.getName() + "] uses reserved prefix " + RESERVED_PREFIX);
+    }
+    for (Node child : node.getChildren()) {
+      validateInputNames(child);
     }
   }
 
@@ -140,9 +187,7 @@ public final class HierarchyCacheLoader {
     }
   }
 
-  private TableState table(
-      String logicalName,
-      boolean valueTable) {
+  private TableState table(String logicalName, boolean valueTable) {
     TableState existing = tables.get(logicalName);
     if (existing != null) {
       if (existing.valueTable != valueTable) {
@@ -153,13 +198,11 @@ public final class HierarchyCacheLoader {
       return existing;
     }
 
-    TableState table = new TableState(logicalName, valueTable);
+    boolean sourceIdentity = !valueTable
+        && Boolean.TRUE.equals(sourceIdentityByTable.get(logicalName));
+    TableState table = new TableState(logicalName, valueTable, sourceIdentity);
     tables.put(logicalName, table);
     return table;
-  }
-
-  private String rowIdColumn() {
-    return "id";
   }
 
   private String parentIdColumn(String parentTable) {
@@ -178,17 +221,17 @@ public final class HierarchyCacheLoader {
   private final class TableState {
     private final String logicalName;
     private final boolean valueTable;
+    private final boolean sourceIdentity;
     private final Map<String, String> columnsByLogicalName = new LinkedHashMap<>();
     private final Map<String, FieldStorageType> fieldStorageTypesByLogicalName = new LinkedHashMap<>();
     private final List<Map<String, Object>> pendingRows = new ArrayList<>();
     private int nextGeneratedId = 1;
     private boolean created = false;
 
-    private TableState(
-        String logicalName,
-        boolean valueTable) {
+    private TableState(String logicalName, boolean valueTable, boolean sourceIdentity) {
       this.logicalName = logicalName;
       this.valueTable = valueTable;
+      this.sourceIdentity = sourceIdentity;
     }
 
     private String writeObjectRow(
@@ -197,10 +240,9 @@ public final class HierarchyCacheLoader {
         Map<String, List<String>> valuesByName,
         Set<String> repeatedNames) {
 
-      String rowId = firstScalarValue(valuesByName, rowIdColumn(), null);
-      if (rowId == null) {
-        rowId = nextId();
-      }
+      String rowId = sourceIdentity
+          ? firstScalarValue(valuesByName, SOURCE_ID_COLUMN, null)
+          : nextId();
 
       ensureColumn(rowIdColumn());
       String parentColumn = parentTable == null ? null : parentIdColumn(parentTable);
@@ -323,7 +365,7 @@ public final class HierarchyCacheLoader {
       TableState valueTableState = table(
           valueTableName,
           true);
-      valueTableState.ensureColumn(rowIdColumn());
+      valueTableState.ensureColumn(valueTableState.rowIdColumn());
       valueTableState.ensureColumn(parentIdColumn(logicalName));
       valueTableState.ensureColumn("value");
       return valueTableState;
@@ -384,20 +426,23 @@ public final class HierarchyCacheLoader {
       return rowIdColumn().equals(fieldName) || (parentColumn != null && parentColumn.equals(fieldName));
     }
 
-    private String firstScalarValue(
-        Map<String, List<String>> valuesByName,
-        String fieldName,
-        String defaultValue) {
-
-      List<String> values = valuesByName.get(fieldName);
-      if (values == null || values.isEmpty()) {
-        return defaultValue;
-      }
-      return values.getFirst();
-    }
-
     private String nextId() {
       return Integer.toString(nextGeneratedId++);
     }
+
+    private String rowIdColumn() {
+      return sourceIdentity ? SOURCE_ID_COLUMN : GENERATED_ID_COLUMN;
+    }
+  }
+
+  private static String firstScalarValue(
+      Map<String, List<String>> valuesByName,
+      String fieldName,
+      String defaultValue) {
+    List<String> values = valuesByName.get(fieldName);
+    if (values == null || values.isEmpty()) {
+      return defaultValue;
+    }
+    return values.getFirst();
   }
 }

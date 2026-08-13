@@ -63,4 +63,16 @@ class DatabaseStructureInferrerTest {
               && relationship.sourceColumns().equals(List.of("USER_ID"))));
     }
   }
+
+  @Test
+  void recognizesNqGeneratedIdentifierAsAConventionalKey() throws Exception {
+    try (H2Database database = new H2Database()) {
+      database.execute("create table address (_nq_id varchar, user_id varchar, city varchar)");
+
+      DatabaseStructure structure = DatabaseStructureInferrer.infer(database.connection());
+
+      DatabaseStructure.Relation address = structure.relation("address").orElseThrow();
+      assertEquals(List.of("_NQ_ID"), address.preferredKey().orElseThrow().columns());
+    }
+  }
 }

@@ -283,7 +283,12 @@ Piped and redirected input is always data. It defaults to JSON unless `-t` or
 ```bash
 cat customers.json | nq customers.nq
 nq customers.nq < customers.json
+cat customers.json | nq convert
 ```
+
+Bare `nq` prints brief usage; it does not consume stdin merely to perform the
+default JSON-to-JSON identity conversion. Supply `convert`, a format option, or
+a script to state the intended work.
 
 A script plus data and no database selection uses a temporary H2 database that
 is discarded after the command. With JDBC settings, the data is available to
@@ -649,13 +654,17 @@ Input-structure table rules:
 - The object name becomes the table name, such as `customer`, `country`, or `wallet`.
 - Nodes with the same object name share one table.
 - Direct scalar children and XML attributes become columns.
-- Every structure table has an `id` column.
-- If the input object has a scalar `id`, nq uses it as the row `id`.
-- If the input object has no scalar `id`, nq generates one.
+- If every row of a structure table has a scalar `id`, nq preserves and uses
+  that column as the row identity.
+- Otherwise nq adds `_nq_id` as the generated row identity and preserves any
+  partially supplied `id` field as ordinary nullable data.
+- The `_nq_` prefix is reserved for NQ-generated technical names; input names
+  using that prefix are rejected.
 - Nested objects are separate tables, not embedded columns.
 - Child rows get a containment reference named `<parent>_id`, such as `wallet.customer_id`.
 - If the input child already has that `<parent>_id` field, nq preserves the input value.
-- Repeated direct scalar children become child tables named `<parent>_<field>` with `id`, `<parent>_id`, and `value` columns.
+- Repeated direct scalar children become child tables named `<parent>_<field>`
+  with `_nq_id`, `<parent>_id`, and `value` columns.
 - NQ does not infer primary key constraints, foreign key constraints, uniqueness, or indexes from the input file.
 
 Example input shape:

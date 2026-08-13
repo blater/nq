@@ -4,6 +4,7 @@ import blater.nq.cli.ConvertInvocation;
 import blater.nq.cli.DataInput;
 import blater.nq.cli.DataSourceSpec;
 import blater.nq.cli.ExecutionTarget;
+import blater.nq.cli.HelpInvocation;
 import blater.nq.cli.InputSelection;
 import blater.nq.cli.OutputSelection;
 import blater.nq.cli.RunInvocation;
@@ -139,11 +140,11 @@ class CliParserRunAndConvertTest {
   }
 
   @Test
-  void emptyArgumentsSelectImplicitStandardInputConversion() {
-    var invocation = assertInstanceOf(ConvertInvocation.class, parser.parse());
+  void emptyArgumentsSelectBriefHelpInsteadOfIdentityConversion() {
+    var invocation = assertInstanceOf(HelpInvocation.class, parser.parse());
 
-    assertInstanceOf(DataSourceSpec.StandardInput.class, invocation.input().source());
-    assertEquals(InputType.JSON, invocation.input().format());
+    assertEquals(true, invocation.brief());
+    assertEquals(java.util.List.of(), invocation.topic());
   }
 
   @Test

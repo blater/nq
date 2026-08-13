@@ -400,6 +400,10 @@ It defaults to JSON unless `-t, --input-format` says otherwise. An explicit data
 file or literal input takes precedence; if piped input is immediately detectable,
 NQ warns that stdin is being ignored.
 
+Bare `nq` prints brief usage instead of performing an identity JSON-to-JSON
+conversion. Use `nq convert`, an output option such as `nq -o yaml`, or a script
+when consuming stdin.
+
 Result data and successful command reports are written to stdout. Warnings,
 errors, and debug output are written to stderr. `--report-format` produces
 versioned, structured catalog/cache reports and structured diagnostics in the

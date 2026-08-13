@@ -73,6 +73,9 @@ public final class CliParser {
 
   public NqInvocation parse(String... args) {
     String[] safeArgs = args == null ? new String[0] : args.clone();
+    if (safeArgs.length == 0) {
+      return new HelpInvocation(List.of(), true);
+    }
     validateLexicalSyntax(safeArgs);
     Route route = route(safeArgs);
     RawArguments raw = new RawArguments();

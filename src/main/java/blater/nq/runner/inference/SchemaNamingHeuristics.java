@@ -24,7 +24,8 @@ public final class SchemaNamingHeuristics {
     List<DatabaseStructure.CandidateKey> result = new ArrayList<>();
     for (DatabaseStructure.Column column : columns) {
       String name = DatabaseStructure.normalize(column.name());
-      if (name.equals("id") || name.equals(table + "id") || name.equals(singular + "id")
+      if (name.equals("nqid") || name.equals("id")
+          || name.equals(table + "id") || name.equals(singular + "id")
           || name.equals(table + "key") || name.equals(singular + "key")) {
         result.add(new DatabaseStructure.CandidateKey(
             "convention:" + column.name(), List.of(column.name()), CONVENTIONAL_KEY));

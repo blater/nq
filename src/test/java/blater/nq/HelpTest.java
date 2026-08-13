@@ -24,10 +24,11 @@ class HelpTest {
   }
 
   @Test
-  void noArgumentsConvertsStandardInputUsingJsonDefaults() throws Exception {
+  void noArgumentsPrintBriefHelpEvenWhenStandardInputHasData() throws Exception {
     String output = captureStdin("{\"customer\":{\"id\":7}}", CliTestHarness::run);
 
-    assertTrue(output.contains("\"id\":\"7\""));
+    assertTrue(output.startsWith("Usage:\n"));
+    assertFalse(output.contains("\"id\":\"7\""));
   }
 
   @Test
