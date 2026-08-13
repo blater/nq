@@ -80,29 +80,43 @@ Common flag groups:
 
 Run `nq help <command>` for command-specific syntax and examples.
 
-## Select data as Yaml/JSON/XML from a database
+## Query a local H2 database
 
-Queries can be run against databases as well as directly against data files. 
-Use `-o` to specify the output format.
-It supports markdown, csv, tsv, yaml, toml, xml, jsonl, and json. The default output format is json.
+This complete example creates a local H2 database, adds two customers, and
+queries them as YAML. Use `-o` to select another output format.
 
 ```bash
-nq "select id, name, city
+nq "literal drop table if exists customer;
+    literal create table customer (
+      id integer primary key,
+      name varchar(80),
+      city varchar(80)
+    );
+    literal insert into customer values
+      (1, 'Alice', 'London'),
+      (2, 'Bob', 'Bristol');
+    select id, name, city
     from customer
     order by id;" \
   --db h2 \
-  --database file:./target/nq-readme \
+  --database file:./customer-demo \
   -o yaml
 ```
 
 ```yaml
-- id: "1"
-  name: Alice
-  city: London
-- id: "2"
-  name: Bob
-  city: Bristol
+-
+  id: "1"
+  name: "Alice"
+  city: "London"
+-
+  id: "2"
+  name: "Bob"
+  city: "Bristol"
 ```
+
+H2 stores the database in `customer-demo.mv.db` in the current directory. The
+example resets its `customer` table each time, so it is safe to rerun. Delete
+the database file when you no longer need the demo.
 
 
 Use the ***into*** clause to name fields or place individual values into specific places in the output:
@@ -294,12 +308,20 @@ This XML insert maps the generated key into `{person.id}`:
 ```bash
 nq "output xml;
 
+   literal drop table if exists person;
+   literal create table person (
+     personid integer auto_increment primary key,
+     firstname varchar(80),
+     lastname varchar(80),
+     city varchar(80)
+   );
+
    insert into person (firstname, lastname, city)
    values ({person.firstName}, {person.lastName}, {person.city})
    returns personid into {person.id};" \
   -t xml \
   --db h2 \
-  --database file:./target/nq-readme <<'XML'
+  --database file:./customer-demo <<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <person>
   <firstName>Alice</firstName>
@@ -321,9 +343,9 @@ The returned XML contains the generated ID:
 </person>
 ```
 
-The exact ID depends on the current database sequence. It is `3` after running
-the tutorial from its setup step. `returns` is also available on updates when
-the database calculates timestamps, versions, or other values.
+The example recreates its `person` table, so the returned ID is `1`. `returns`
+is also available on updates when the database calculates timestamps, versions,
+or other values.
 
 Stored-procedure calls, repeated child records, transactions, error policies,
 and captured query rows are covered in the
