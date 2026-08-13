@@ -5,6 +5,89 @@ data structures into these formats from databases, and generally working with an
 
 Full documentation: [NQ user manual](docs/user-manual.md).
 
+## Getting started
+
+You can run SQL directly against JSON/XML/Yaml.  
+For example given a json file 'users.json'
+
+```json
+    {
+        "users": [
+          {"id": 1, "name": "Alice", "active": true},
+          {"id": 2, "name": "Bob", "active": false},
+          {"id": 3, "name": "Charlie", "active": true}
+        ],
+        "address": [
+          {"user_id": 1, "city": "New York"},
+          {"user_id": 2, "city": "New York"},
+          {"user_id": 3, "city": "London"}
+        ]
+    }
+  }
+```
+
+Get all the active users from the file:
+
+`nq "select name from users where active = 'true' order by id;" users.json`
+
+` [{"name":"Alice"},{"name":"Charlie"}] `
+
+You can use very complex selects. This is because Nq treats arrays as tables and fields as columns so you can run SQL over them as if the file is a database. 
+
+If your file has ID fields it can match on, then nq will also infer key relationships, allowing joins and subqueries:
+```
+  nq "select u.id, u.name, u.active, a.city 
+      from users u 
+      join address a on a.user_id = u.id 
+      order by u.id;" --db h2 --database file:./users-db
+```
+
+If it can't infer then you can still tell it how to match fields with its `structure` keyword.
+
+This example inserts the data from the file into a database (a local H2 database in this example):
+```
+nq "insert into users (id, name, active) values ({users.item.id}, {users.item.name}, {users.item.active});"  \
+    users.json --db h2 --database file:./users-db`
+
+This updates a database from the file:
+```
+nq "update users set active = {users.active} where id = {users.id};" \
+    users.json --db h2 --database file:./users-db
+```
+
+And this command converts directly from one format to another
+`nq users.json -o csv > users.csv`
+you can use any of the supported input formats and possible output formats are JSON, YAML, XML, TOML, JSONL, CSV, TSV, and Markdown.
+
+
+## Supported formats
+
+NQ reads these input formats:
+
+| Format | Extensions or selection |
+| --- | --- |
+| JSON | `.json` or `-t json` for stdin |
+| JSON Lines | `.jsonl` or `-t jsonl` for stdin |
+| YAML | `.yaml`, `.yml`, or `-t yaml` for stdin |
+| TOML | `.toml` or `-t toml` for stdin |
+| XML | `.xml` or `-t xml` for stdin |
+| CSV | `.csv` or `-t csv` for stdin |
+| TSV | `.tsv` or `-t tsv` for stdin |
+| Parquet | `.parquet` or `-t parquet` for stdin |
+
+Output is available as JSON, JSON Lines, YAML, TOML, XML, CSV, TSV, or Markdown. JSON is
+the default.
+
+A file supplied without SQL is converted directly and does not create a
+database:
+
+```bash
+nq customers.xml
+nq customers.json -o yaml
+nq customers.csv -o markdown
+```
+
+
 ## Install
 
 | Platform | instructions | 
@@ -13,94 +96,36 @@ Full documentation: [NQ user manual](docs/user-manual.md).
 | Windows x64 | Run from an administrator powershell<br>with Chocolatey installed. <br>`irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1` | 
 | Lunux x64 | This installs the latest NQ package directly<br>from GitHub Releases. Rerun the same command to upgrade.<br>`curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh` |
 
-## Getting started
 
-You can run SQL directly against JSON/XML/Yaml.  
-This filters for active users...
+## Where NQ fits
 
-```bash
-echo '{
-  "users": [
-    {"id": 1, "name": "Alice", "active": true},
-    {"id": 2, "name": "Bob", "active": false},
-    {"id": 3, "name": "Charlie", "active": true}
-  ]
-}' | nq "select name from users where active = 'true' order by id;"
-```
+NQ is intended for work that crosses document and relational boundaries:
 
-```json
-[{"name":"Alice"},{"name":"Charlie"}]
-```
+- exporting joined database data into a deliberate JSON, YAML, or XML shape;
+- applying JSON, YAML, TOML, XML, CSV, TSV, or Parquet data through database DML;
+- joining or aggregating related collections inside structured files;
+- replacing one-off data movement code with a checked-in SQL-like script.
 
-You can use sql functions like count, and you can specify the output structure using "into {a.document.path}"
+Use a focused tool when the task stays inside a simpler boundary:
 
-```bash
-echo '{
-  "users": [
-    {"id": 1, "name": "Alice", "active": true},
-    {"id": 2, "name": "Bob", "active": false},
-    {"id": 3, "name": "Charlie", "active": true}
-   ]
-}' | nq "select count(*) into {summary.activeUsers} from users where active = 'true';"
-```
+- jq for JSON-native filtering and editing;
+- yq or Dasel for direct YAML or document edits;
+- Remarshal for guarded format conversion;
+- Miller for record-stream processing;
+- DuckDB or another SQL-over-file tool for primarily analytical, tabular work.
 
-```json
-{"summary":{"activeUsers":"2"}}
-```
+The [comparison guide](docs/comparison.md) describes these boundaries in more
+detail.
 
-## CLI usage
-
-NQ uses positional operands for the main inputs and flags for optional changes
-or explicit disambiguation:
-
-```text
-nq [run] <script> [data] [options]
-nq <data-file> [options]
-nq convert [data] [options]
-nq catalog [data] [pattern] [options]
-nq cache load [data] [name] [options]
-nq cache use <name> [options]
-nq cache list [options]
-nq cache clear (<name> | olderthan <age> | all) [options]
-```
-
-Common flag groups:
-
-- `--cache [--name <cache-name>]` selects persistent cache execution. With data
-  but no script it loads and activates a new cache; with a script it selects the
-  active or named cache without automatically loading the data into it.
-- `--cache-dir <path>` selects the directory that directly contains cache state,
-  making independent runs easy to isolate.
-- `-o, --output <format>` selects result-data output;
-  `-r, --report-format <format>` selects catalog/cache reports. Result data
-  defaults to JSON and operational reports default to Markdown.
-- `--config <file.properties>` supplies operational NQ/JDBC settings.
-  `--params-file <file.properties>` supplies parameters visible to scripts, and
-  repeatable `--param <name=value>` entries override individual parameter values.
-
-Run `nq help <command>` for command-specific syntax and examples.
 
 ## Query a local H2 database
 
-This complete example creates a local H2 database, adds two customers, and
-queries them as YAML. Use `-o` to select another output format.
+This complete example queries a local database and outputs YAML. 
+The output format can be controlled with "output <format>" in the script or by using `-o <format>` on the command line.
 
 ```bash
-nq "literal drop table if exists customer;
-    literal create table customer (
-      id integer primary key,
-      name varchar(80),
-      city varchar(80)
-    );
-    literal insert into customer values
-      (1, 'Alice', 'London'),
-      (2, 'Bob', 'Bristol');
-    select id, name, city
-    from customer
-    order by id;" \
-  --db h2 \
-  --database file:./customer-demo \
-  -o yaml
+nq "output yaml; select id, name, city from customer order by id;" \
+    --db h2 --database file:./customer-demo -o yaml
 ```
 
 ```yaml
@@ -114,12 +139,8 @@ nq "literal drop table if exists customer;
   city: "Bristol"
 ```
 
-H2 stores the database in `customer-demo.mv.db` in the current directory. The
-example resets its `customer` table each time, so it is safe to rerun. Delete
-the database file when you no longer need the demo.
+Use the ***into*** clause to name fields or place individual values into specific places in the output. Note the use of SQL functions count and min - most SQL & complex constructs are supported:
 
-
-Use the ***into*** clause to name fields or place individual values into specific places in the output:
 ```sql
 select
   count(*) into {summary.customerCount},
@@ -154,26 +175,65 @@ echo "<person><id>1</id></person>" | nq \
   -t xml
 ```
 
+## Running literal sql 
 
-### Connecting to a database
-
-You can supply all the parameters on the command line
+When running nq against a database you can also run literal sql commands with the `literal` keyword.
+For instance, create a table...
 
 ```bash
-nq myscript.nq \
-  --db postgresql \
-  --host db.example.com \
-  --port 5432 \
-  --database sales \
-  --user report_user \
-  --password secret
+nq "
+   literal drop table if exists person;
 
+   literal create table person (
+     personid integer auto_increment primary key,
+     firstname varchar(80),
+     lastname varchar(80),
+     city varchar(80)
+   );
+" --db h2 --database file:./customer-demo
 ```
-or supply an NQ configuration file containing the connection details
+
+
+## Insert rows and return generated keys
+
+An insert can write database-assigned values back into its input hierarchy.
+This XML insert maps the generated key into `{person.id}`:
+
 ```bash
-nq myscript.nq --config mydatabase.properties
+nq "output xml;
+   insert into person (firstname, lastname, city)
+   values ({person.firstName}, {person.lastName}, {person.city})
+   returns personid into {person.id};" \
+  -t xml \
+  --db h2 \
+  --database file:./customer-demo <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<person>
+  <firstName>Alice</firstName>
+  <lastName>Adams</lastName>
+  <city>London</city>
+</person>
+XML
 ```
-The [JDBC guide](docs/user-manual.md#jdbc-parameters) covers this in detail.
+
+The returned XML contains the generated ID:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<person>
+  <firstName>Alice</firstName>
+  <lastName>Adams</lastName>
+  <city>London</city>
+  <id>3</id>
+</person>
+```
+
+The `returns` keyword is also valid on updates when the database calculates 
+timestamps, versions, or other values.
+
+Stored-procedure calls, repeated child records, transactions, error policies,
+and captured query rows are covered in the
+[DML reference](docs/user-manual.md#dml-input-reference).
 
 
 ## Build nested documents from joined rows
@@ -300,83 +360,65 @@ The result contains each customer once and nests orders and items beneath it:
 
 ```
 
-## Insert rows and return generated keys
+## CLI usage
 
-An insert can write database-assigned values back into its input hierarchy.
-This XML insert maps the generated key into `{person.id}`:
+NQ uses positional operands for the main inputs and flags for optional changes
+or explicit disambiguation:
+
+```text
+nq [run] <script> [data] [options]
+nq <data-file> [options]
+nq convert [data] [options]
+nq catalog [data] [pattern] [options]
+nq cache load [data] [name] [options]
+nq cache use <name> [options]
+nq cache list [options]
+nq cache clear (<name> | olderthan <age> | all) [options]
+```
+
+Common flag groups:
+
+- `--cache [--name <cache-name>]` selects persistent cache execution. With data
+  but no script it loads and activates a new cache; with a script it selects the
+  active or named cache without automatically loading the data into it.
+- `--cache-dir <path>` selects the directory that directly contains cache state,
+  making independent runs easy to isolate.
+- `-o, --output <format>` selects result-data output;
+  `-r, --report-format <format>` selects catalog/cache reports. Result data
+  defaults to JSON and operational reports default to Markdown.
+- `--config <file.properties>` supplies operational NQ/JDBC settings.
+  `--params-file <file.properties>` supplies parameters visible to scripts, and
+  repeatable `--param <name=value>` entries override individual parameter values.
+
+Run `nq help <command>` for command-specific syntax and examples.
+
+
+### Connecting to a database
+
+You can supply all the parameters on the command line
 
 ```bash
-nq "output xml;
+nq myscript.nq \
+  --db postgresql \
+  --host db.example.com \
+  --port 5432 \
+  --database sales \
+  --user report_user \
+  --password secret
 
-   literal drop table if exists person;
-   literal create table person (
-     personid integer auto_increment primary key,
-     firstname varchar(80),
-     lastname varchar(80),
-     city varchar(80)
-   );
-
-   insert into person (firstname, lastname, city)
-   values ({person.firstName}, {person.lastName}, {person.city})
-   returns personid into {person.id};" \
-  -t xml \
-  --db h2 \
-  --database file:./customer-demo <<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<person>
-  <firstName>Alice</firstName>
-  <lastName>Adams</lastName>
-  <city>London</city>
-</person>
-XML
 ```
-
-The returned XML contains the generated ID:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<person>
-  <firstName>Alice</firstName>
-  <lastName>Adams</lastName>
-  <city>London</city>
-  <id>3</id>
-</person>
-```
-
-The example recreates its `person` table, so the returned ID is `1`. `returns`
-is also available on updates when the database calculates timestamps, versions,
-or other values.
-
-Stored-procedure calls, repeated child records, transactions, error policies,
-and captured query rows are covered in the
-[DML reference](docs/user-manual.md#dml-input-reference).
-
-## Supported formats
-
-NQ reads these input formats:
-
-| Format | Extensions or selection |
-| --- | --- |
-| JSON | `.json` or `-t json` for stdin |
-| JSON Lines | `.jsonl` or `-t jsonl` for stdin |
-| YAML | `.yaml`, `.yml`, or `-t yaml` for stdin |
-| TOML | `.toml` or `-t toml` for stdin |
-| XML | `.xml` or `-t xml` for stdin |
-| CSV | `.csv` or `-t csv` for stdin |
-| TSV | `.tsv` or `-t tsv` for stdin |
-| Parquet | `.parquet` or `-t parquet` for stdin |
-
-Output is available as JSON, JSON Lines, YAML, TOML, XML, CSV, TSV, or Markdown. JSON is
-the default.
-
-A file supplied without SQL is converted directly and does not create a
-database:
-
+or supply an NQ configuration file containing the connection details
 ```bash
-nq customers.xml
-nq customers.json -o yaml
-nq customers.csv -o markdown
+nq myscript.nq --config mydatabase.properties
 ```
+The [JDBC guide](docs/user-manual.md#jdbc-parameters) covers this in detail.
+
+Native release builds include drivers for H2, PostgreSQL, MySQL, and MariaDB.
+Additional driver profiles are available when building from source. The JVM
+build can also load a driver JAR at runtime.
+
+
+## Local caches speed repeated queries on the same large file
 
 A query and input file use a temporary local database for that command. Use
 `cache load` explicitly only when imported data should remain available to
@@ -392,29 +434,6 @@ The [cache reference](docs/user-manual.md#querying-input-documents-temporary-and
 covers storage, selection, inspection, and cleanup. NQ does not upload source
 data or send usage telemetry.
 
-Native release builds include drivers for H2, PostgreSQL, MySQL, and MariaDB.
-Additional driver profiles are available when building from source. The JVM
-build can also load a driver JAR at runtime.
-
-## Where NQ fits
-
-NQ is intended for work that crosses document and relational boundaries:
-
-- exporting joined database data into a deliberate JSON, YAML, or XML shape;
-- applying JSON, YAML, TOML, XML, CSV, TSV, or Parquet data through database DML;
-- joining or aggregating related collections inside structured files;
-- replacing one-off data movement code with a checked-in SQL-like script.
-
-Use a focused tool when the task stays inside a simpler boundary:
-
-- jq for JSON-native filtering and editing;
-- yq or Dasel for direct YAML or document edits;
-- Remarshal for guarded format conversion;
-- Miller for record-stream processing;
-- DuckDB or another SQL-over-file tool for primarily analytical, tabular work.
-
-The [comparison guide](docs/comparison.md) describes these boundaries in more
-detail.
 
 ## Stdin, diagnostics, and exit status
 

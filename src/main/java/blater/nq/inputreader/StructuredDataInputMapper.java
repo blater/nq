@@ -30,6 +30,18 @@ final class StructuredDataInputMapper {
       return new Hierarchy(toNode(root.getKey().toString(), root.getValue(), parameters));
     }
 
+    if (input instanceof Map<?, ?>) {
+      return new Hierarchy(
+          toNode(syntheticRoot, input, parameters),
+          Hierarchy.RootKind.SYNTHETIC_OBJECT);
+    }
+
+    if (input instanceof List<?>) {
+      return new Hierarchy(
+          toNode(syntheticRoot, input, parameters),
+          Hierarchy.RootKind.SYNTHETIC_ARRAY);
+    }
+
     return new Hierarchy(toNode(syntheticRoot, input, parameters));
   }
 

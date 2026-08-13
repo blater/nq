@@ -17,6 +17,8 @@ import java.util.*;
 // Responsibility: Projects hierarchy input into DML rows and
 // row-local database-produced value targets.
 public class InputFileRowMapper {
+  private static final Set<String> DELIMITED_ROOTS = Set.of("csv", "tsv");
+
   // Responsibility: Maps hierarchy input to DML rows when the statement has no explicit returns write-back mappings.
   public MappingResult map(Hierarchy input, List<InputToColumnMap> mappings, Map<String, String> parameters)
   {
@@ -178,7 +180,67 @@ public class InputFileRowMapper {
    */
   private List<Node> selectNodes(Hierarchy input, String xpath) {
     HierarchyPath path = parsePath(xpath);
-    return path == null ? null : input.select(path);
+    if (path == null) {
+      return null;
+    }
+    for (HierarchyPath candidate : sourcePathCandidates(input, path)) {
+      List<Node> nodes = input.select(candidate);
+      if (!nodes.isEmpty()) {
+        return nodes;
+      }
+    }
+    return List.of();
+  }
+
+  /*
+   * Responsibility: Makes mapped DML paths describe the input document rather
+   * than parser-internal container nodes. A top-level collection can therefore
+   * always be addressed as {users.id}: multi-property structured documents do
+   * not expose their synthetic json/yaml/toml root, and a sole root array does
+   * not expose its anonymous item node. Exact paths remain valid.
+   */
+  private List<HierarchyPath> sourcePathCandidates(
+      Hierarchy input,
+      HierarchyPath requested) {
+    Node root = input.getRoot();
+    if (root == null) {
+      return List.of(requested);
+    }
+
+    List<HierarchyPath> candidates = new ArrayList<>();
+    List<String> parts = requested.getPathParts();
+
+    if (root.getName().equals(requested.getRootName())
+        && hasAnonymousArrayItems(root)
+        && (parts.size() == 1 || !"item".equals(parts.get(1)))) {
+      List<String> expanded = new ArrayList<>(parts);
+      expanded.add(1, "item");
+      candidates.add(new HierarchyPath(expanded, requested.isAttribute()));
+    }
+
+    candidates.add(requested);
+
+    if (input.getRootKind() == Hierarchy.RootKind.SYNTHETIC_OBJECT
+        && !root.getName().equals(requested.getRootName())
+        && hasDirectElementChild(root, requested.getRootName())) {
+      List<String> expanded = new ArrayList<>(parts.size() + 1);
+      expanded.add(root.getName());
+      expanded.addAll(parts);
+      candidates.add(new HierarchyPath(expanded, requested.isAttribute()));
+    }
+
+    return candidates;
+  }
+
+  private boolean hasAnonymousArrayItems(Node root) {
+    return root.getChildren().stream()
+        .anyMatch(child -> "item".equals(child.getName())
+            && (child.isArrayItem() || DELIMITED_ROOTS.contains(root.getName())));
+  }
+
+  private boolean hasDirectElementChild(Node root, String name) {
+    return root.getChildren().stream()
+        .anyMatch(child -> !child.isAttribute() && name.equals(child.getName()));
   }
 
   private HierarchyPath parsePath(String sourcePath) {
@@ -284,7 +346,13 @@ public class InputFileRowMapper {
     if (path == null) {
       return false;
     }
-    input.ensureFinalTargets(path, ifnull);
+    for (HierarchyPath candidate : sourcePathCandidates(input, path)) {
+      HierarchyPath parent = candidate.parent();
+      if (parent != null && !input.select(parent).isEmpty()) {
+        input.ensureFinalTargets(candidate, ifnull);
+        break;
+      }
+    }
     return true;
   }
 

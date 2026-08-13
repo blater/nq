@@ -62,6 +62,18 @@ public class JsonInputReader implements InputReader {
       return new Hierarchy(toNode(root.getKey().toString(), root.getValue(), parameters));
     }
 
+    if (inputJson instanceof Map<?, ?>) {
+      return new Hierarchy(
+          toNode(SYNTHETIC_ROOT, inputJson, parameters),
+          Hierarchy.RootKind.SYNTHETIC_OBJECT);
+    }
+
+    if (inputJson instanceof List<?>) {
+      return new Hierarchy(
+          toNode(SYNTHETIC_ROOT, inputJson, parameters),
+          Hierarchy.RootKind.SYNTHETIC_ARRAY);
+    }
+
     return new Hierarchy(toNode(SYNTHETIC_ROOT, inputJson, parameters));
   }
 

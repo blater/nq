@@ -197,7 +197,7 @@ id = "7"
 firstname = "Fred"
 ```
 
-CSV uses a synthetic root and repeated `item` nodes:
+CSV paths begin with the format root `csv`; each row is mapped automatically:
 
 ```csv
 person.id,person.firstname
@@ -209,11 +209,11 @@ Paths:
 
 ```sql
 insert into person (personid, firstname)
-values ({csv.item.person.id}, {csv.item.person.firstname});
+values ({csv.person.id}, {csv.person.firstname});
 ```
 
 TSV has exactly the same structure and behavior, with tabs as delimiters and a
-`tsv` synthetic root. Replace `.csv` with `.tsv` and `csv` with `tsv` in the
+`tsv` format root. Replace `.csv` with `.tsv` and `csv` with `tsv` in the
 paths above.
 
 Parquet uses domain names from the file stem and schema message name by
@@ -1249,10 +1249,20 @@ Paths:
 
 JSON, YAML, and TOML:
 
-- A single top-level object key becomes the root.
-- Multiple top-level keys use synthetic roots `json`, `yaml`, or `toml`.
-- Named arrays become repeated child nodes.
+- Top-level keys are the first path segment.
+- Multiple top-level keys are addressed directly; internal format roots such
+  as `json`, `yaml`, and `toml` are not part of mapped DML paths.
+- Named arrays become repeated rows without adding an `item` path segment.
 - JSON and YAML null values become hierarchy null values; TOML has no null literal.
+
+Both a sole top-level array and one collection among multiple top-level keys
+use the same direct path. For example, fields in a top-level `users` array are
+referenced as:
+
+```sql
+{users.id}
+{users.active}
+```
 
 CSV and TSV:
 
@@ -1271,11 +1281,12 @@ person.id,person.firstname
 Paths:
 
 ```sql
-{csv.item.person.id}
-{csv.item.person.firstname}
+{csv.person.id}
+{csv.person.firstname}
 ```
 
-The equivalent TSV paths begin with `{tsv.item...}`.
+The equivalent TSV paths begin with `{tsv...}`. The explicit technical forms
+`{csv.item...}` and `{tsv.item...}` are also accepted.
 
 Parquet:
 
