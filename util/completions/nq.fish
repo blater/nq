@@ -1,9 +1,10 @@
 complete -c nq -f
-complete -c nq -n '__fish_use_subcommand' -a 'run convert catalog cache help version'
+complete -c nq -n '__fish_use_subcommand' -a 'run convert catalog cache capabilities help version'
 complete -c nq -n '__fish_seen_subcommand_from cache' -a 'load use list clear'
 complete -c nq -s h -d 'Show brief help'
 complete -c nq -l help -d 'Show full or topic help'
 complete -c nq -l version -d 'Show NQ version'
+complete -c nq -l capabilities -d 'Print machine-readable capability contract'
 complete -c nq -s f -l script-file -r -d 'Read script file' -F
 complete -c nq -s e -l script-text -r -d 'Use inline script text'
 complete -c nq -s i -l input-file -r -d 'Read input file or -' -F

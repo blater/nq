@@ -3,6 +3,7 @@ package blater.nq.cli.parse;
 import blater.nq.cli.CacheInvocation;
 import blater.nq.cli.CacheName;
 import blater.nq.cli.CacheNameSelection;
+import blater.nq.cli.CapabilitiesInvocation;
 import blater.nq.cli.CatalogInvocation;
 import blater.nq.cli.CatalogPattern;
 import blater.nq.cli.ConvertInvocation;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /** Parses the agent-friendly CLI into an immutable typed invocation. */
 public final class CliParser {
@@ -51,6 +53,7 @@ public final class CliParser {
       "--jdbc-driver", "--jdbc-class-name");
   private static final Map<String, String> BOOLEAN_OPTIONS = Map.of(
       "--cache", "cache",
+      "--capabilities", "capabilities",
       "--all", "all",
       "--debug", "debug",
       "--no-key-inference", "no-key-inference",
@@ -58,17 +61,20 @@ public final class CliParser {
       "--help", "help",
       "--version", "version");
 
-  private final Map<String, String> environment;
-  private final Path userHome;
+  private final Supplier<Map<String, String>> environment;
+  private final Supplier<Path> userHome;
 
   public CliParser() {
-    this(System.getenv(), Path.of(System.getProperty("user.home")));
+    environment = System::getenv;
+    userHome = () -> Path.of(System.getProperty("user.home")).toAbsolutePath().normalize();
   }
 
   /** Injectable process settings for hermetic parser tests and embedding. */
   public CliParser(Map<String, String> environment, Path userHome) {
-    this.environment = Map.copyOf(environment);
-    this.userHome = userHome.toAbsolutePath().normalize();
+    Map<String, String> copiedEnvironment = Map.copyOf(environment);
+    Path normalizedUserHome = userHome.toAbsolutePath().normalize();
+    this.environment = () -> copiedEnvironment;
+    this.userHome = () -> normalizedUserHome;
   }
 
   public NqInvocation parse(String... args) {
@@ -89,7 +95,8 @@ public final class CliParser {
       throw usage("-p/--properties was removed; use --config for NQ settings "
           + "or --params-file for task parameters");
     }
-    if (!raw.help && !raw.briefHelp && !raw.version) {
+    if (!raw.help && !raw.briefHelp && !raw.version && !raw.capabilities
+        && route.command() != Command.CAPABILITIES) {
       applyConfiguration(route.command(), raw);
     }
     return bind(route.command(), route.subcommand(), raw);
@@ -157,6 +164,13 @@ public final class CliParser {
   }
 
   private NqInvocation bind(Command command, String subcommand, RawArguments raw) {
+    if (raw.capabilities) {
+      if (command != Command.IMPLICIT || !raw.positionals.isEmpty()
+          || raw.help || raw.briefHelp || raw.version || hasNonCapabilityOptions(raw)) {
+        throw usage("--capabilities is only valid as a root invocation with --report-format");
+      }
+      return capabilitiesInvocation(raw);
+    }
     if (raw.version) {
       if (command != Command.IMPLICIT || !raw.positionals.isEmpty()
           || raw.help || raw.briefHelp || hasNonHelpOptions(raw)) {
@@ -172,14 +186,26 @@ public final class CliParser {
       rejectNonHelpOptions(raw, "version");
       return new VersionInvocation();
     }
+    if (command == Command.CAPABILITIES) {
+      requireNoOperands(raw, "capabilities");
+      validateCapabilitiesOptionOwnership(raw);
+      return capabilitiesInvocation(raw);
+    }
     return switch (command) {
       case RUN -> bindRun(raw);
       case CONVERT -> bindConvert(raw);
       case CATALOG -> bindCatalog(raw);
       case CACHE -> bindCache(subcommand, raw);
       case IMPLICIT -> bindImplicit(raw);
-      case HELP, VERSION -> throw new IllegalStateException("handled above");
+      case CAPABILITIES, HELP, VERSION -> throw new IllegalStateException("handled above");
     };
+  }
+
+  private static CapabilitiesInvocation capabilitiesInvocation(RawArguments raw) {
+    ReportFormat format = raw.reportFormat == null
+        ? ReportFormat.JSON
+        : reportFormat(raw.reportFormat);
+    return new CapabilitiesInvocation(format);
   }
 
   private NqInvocation bindImplicit(RawArguments raw) {
@@ -211,7 +237,7 @@ public final class CliParser {
     Map<String, String> config = raw.config == null
         ? Map.of()
         : operationalConfig(Path.of(raw.config));
-    String environmentCacheDirectory = environment.get("NQ_CACHE_DIR");
+    String environmentCacheDirectory = environment.get().get("NQ_CACHE_DIR");
     if (raw.cacheDirectory == null) {
       if (environmentCacheDirectory != null && !environmentCacheDirectory.isBlank()) {
         raw.cacheDirectory = environmentCacheDirectory;
@@ -537,6 +563,7 @@ public final class CliParser {
       case CONVERT -> List.of("convert");
       case CATALOG -> List.of("catalog");
       case CACHE -> subcommand == null ? List.of("cache") : List.of("cache", subcommand);
+      case CAPABILITIES -> List.of("capabilities");
       case VERSION -> List.of("version");
       case IMPLICIT -> implicitHelpTopic(raw);
       case HELP -> List.of();
@@ -676,7 +703,7 @@ public final class CliParser {
   private Path cacheDirectory(RawArguments raw) {
     String configured = raw.cacheDirectory;
     if (configured == null || configured.isBlank()) {
-      configured = userHome.resolve(".nq").resolve("cache").toString();
+      configured = userHome.get().resolve(".nq").resolve("cache").toString();
     }
     return Path.of(configured).toAbsolutePath().normalize();
   }
@@ -914,6 +941,16 @@ public final class CliParser {
         || raw.cacheDirectory != null || raw.olderThan != null || raw.all
         || raw.config != null || raw.removedProperties != null || raw.paramsFile != null
         || !raw.params.isEmpty() || raw.parquetRoot != null || raw.parquetRecord != null
+        || raw.debug || raw.noKeyInference || raw.capabilities || hasJdbc(raw);
+  }
+
+  private static boolean hasNonCapabilityOptions(RawArguments raw) {
+    return raw.scriptFile != null || raw.scriptText != null || raw.inputFile != null
+        || raw.inputText != null || raw.inputFormat != null || raw.pattern != null
+        || raw.output != null || raw.cache || raw.name != null
+        || raw.cacheDirectoryExplicit || raw.olderThan != null || raw.all
+        || raw.config != null || raw.removedProperties != null || raw.paramsFile != null
+        || !raw.params.isEmpty() || raw.parquetRoot != null || raw.parquetRecord != null
         || raw.debug || raw.noKeyInference || hasJdbc(raw);
   }
 
@@ -939,6 +976,7 @@ public final class CliParser {
       case CONVERT -> validateConvertOptionOwnership(raw);
       case CATALOG -> validateCatalogOptionOwnership(raw);
       case CACHE -> validateCacheOptionOwnership(subcommand, raw);
+      case CAPABILITIES -> validateCapabilitiesOptionOwnership(raw);
       case HELP, VERSION, IMPLICIT -> throw new IllegalStateException("invalid help route");
     }
     validateKnownOptionValues(raw);
@@ -989,6 +1027,11 @@ public final class CliParser {
       reject(raw.parquetRoot != null || raw.parquetRecord != null,
           "Parquet options are not valid for cache " + subcommand);
     }
+  }
+
+  private static void validateCapabilitiesOptionOwnership(RawArguments raw) {
+    reject(hasNonCapabilityOptions(raw),
+        "capabilities accepts only --report-format");
   }
 
   private static void validateKnownOptionValues(RawArguments raw) {
@@ -1055,7 +1098,7 @@ public final class CliParser {
   }
 
   private enum Command {
-    IMPLICIT, RUN, CONVERT, CATALOG, CACHE, HELP, VERSION;
+    IMPLICIT, RUN, CONVERT, CATALOG, CACHE, CAPABILITIES, HELP, VERSION;
 
     static Command from(String value) {
       return switch (value.toLowerCase(Locale.ROOT)) {
@@ -1063,6 +1106,7 @@ public final class CliParser {
         case "convert" -> CONVERT;
         case "catalog" -> CATALOG;
         case "cache" -> CACHE;
+        case "capabilities" -> CAPABILITIES;
         case "help" -> HELP;
         case "version" -> VERSION;
         default -> null;
@@ -1122,5 +1166,6 @@ public final class CliParser {
     @Option(names = "-h") private boolean briefHelp;
     @Option(names = "--help") private boolean help;
     @Option(names = "--version") private boolean version;
+    @Option(names = "--capabilities") private boolean capabilities;
   }
 }

@@ -42,6 +42,8 @@ class HelpTest {
     assertTrue(shortHelp.contains("nq convert [<data>]"));
     assertTrue(shortHelp.contains("nq cache load"));
     assertTrue(shortHelp.contains("nq cache use <name>"));
+    assertTrue(shortHelp.contains("nq capabilities"));
+    assertTrue(shortHelp.contains("--capabilities"));
     assertTrue(shortHelp.contains("-t, --input-format <format>"));
     assertTrue(shortHelp.contains("--input-format"));
     assertTrue(shortHelp.contains("Run 'nq help' for commands"));
@@ -69,6 +71,15 @@ class HelpTest {
     assertTrue(output.startsWith("RUN\n"));
     assertTrue(output.contains("nq <script.nq> [<data>]"));
     assertTrue(output.contains("nq '<literal script>' ['<literal json>']"));
+  }
+
+  @Test
+  void capabilityHelpExplainsTheSideEffectFreeJsonContract() throws Exception {
+    String output = captureStdout(() -> CliTestHarness.run("capabilities", "--help"));
+
+    assertTrue(output.startsWith("CAPABILITIES\n"));
+    assertTrue(output.contains("defaults to JSON"));
+    assertTrue(output.contains("does not inspect stdin"));
   }
 
   @Test

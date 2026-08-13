@@ -1,7 +1,7 @@
 #compdef nq
 
 local -a commands formats inputs drivers
-commands=(run convert catalog cache help version)
+commands=(run convert catalog cache capabilities help version)
 formats=(json jsonl yaml xml csv tsv toml markdown)
 inputs=(json jsonl yaml xml csv tsv toml parquet)
 drivers=(h2 mysql mariadb postgresql oracle sqlserver db2 hana informix)
@@ -12,6 +12,7 @@ _arguments -s \
   '-h[show brief help]' \
   '--help[show full or command-local help]' \
   '--version[show NQ version]' \
+  '--capabilities[print machine-readable capability contract]' \
   '(-f --script-file)'{-f,--script-file}'[read script file]:file:_files' \
   '(-e --script-text)'{-e,--script-text}'[use inline script]:text:' \
   '(-i --input-file)'{-i,--input-file}'[read input file or -]:file:_files' \

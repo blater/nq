@@ -24,6 +24,17 @@ Operational reports use the stable outer fields `schema_version`, `status`,
 `command`, and `details`. Diagnostics use `schema_version`, `code`, `level`,
 `message`, and optional `usage`.
 
+Agents can discover the complete compiled CLI contract without probing local
+state:
+
+```bash
+nq capabilities
+nq --capabilities --report-format yaml
+```
+
+The command does not inspect stdin, files, configuration, environment variables,
+caches, databases, or installed JDBC drivers. Its report defaults to JSON.
+
 ## Shell example
 
 ```bash

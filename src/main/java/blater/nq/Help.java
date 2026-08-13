@@ -13,6 +13,7 @@ public final class Help {
         nq cache use <name> [options]
         nq cache list [options]
         nq cache clear (<name> | olderthan <age> | all) [options]
+        nq capabilities [-r <format>]
         nq help [<command> [<subcommand>]]
         nq version
 
@@ -25,7 +26,7 @@ public final class Help {
 
       Result and report options:
         -o, --output <format>          Run/convert result format (default: json).
-        -r, --report-format <format>   Catalog/cache report format (default: markdown).
+        -r, --report-format <format>   Operational report format.
 
       Cache options:
         --cache                       Select persistent cache execution.
@@ -43,6 +44,7 @@ public final class Help {
         -h                             Brief global help.
         --help                         Full or command-local help.
         --version                      Print the version.
+        --capabilities                 Print the capability contract as JSON.
       """;
 
   static final String HELP_ON_HELP = """
@@ -55,11 +57,32 @@ public final class Help {
           convert     Convert hierarchical data directly.
           catalog     Inspect relations in data, a cache, or JDBC.
           cache       Load, select, list, and clear persistent caches.
+          capabilities
+                      Print the machine-readable capability contract.
           help        Show global or command-specific help.
           version     Print the NQ version.
 
       TOPICS
           connection, output, cache-dir, parameters, parquet
+      """;
+
+  static final String CAPABILITIES_CMD = """
+      CAPABILITIES
+          Print NQ's versioned, machine-readable capability contract.
+
+      SYNOPSIS
+          nq capabilities [-r <format>]
+          nq --capabilities [-r <format>]
+
+      DESCRIPTION
+          The report describes commands, option applicability, formats, JDBC
+          drivers, stdin and cache semantics, report envelopes, and exit codes.
+          It defaults to JSON and does not inspect stdin, configuration, files,
+          caches, databases, environment variables, or installed drivers.
+
+      EXAMPLES
+          nq capabilities
+          nq --capabilities --report-format yaml
       """;
 
   static final String RUN_CMD = """
@@ -224,8 +247,12 @@ public final class Help {
   }
 
   public static void printVersion() {
+    System.out.println("nq " + version());
+  }
+
+  public static String version() {
     String version = Help.class.getPackage().getImplementationVersion();
-    System.out.println("nq " + (version == null || version.isBlank() ? "development" : version));
+    return version == null || version.isBlank() ? "development" : version;
   }
 
   public static void printBriefHelp() {
@@ -241,6 +268,7 @@ public final class Help {
       case "convert" -> CONVERT_CMD;
       case "catalog" -> CATALOG_CMD;
       case "cache", "load", "use", "list", "clear" -> CACHE_CMD;
+      case "capabilities" -> CAPABILITIES_CMD;
       case "connection", "database", "db", "jdbc" -> CONNECTION_CMD;
       case "output", "report-format" -> OUTPUT_CMD;
       case "cache-dir", "cache-directory" -> CACHE_DIR_CMD;

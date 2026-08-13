@@ -1,6 +1,7 @@
 package blater.nq.execution;
 
 import blater.nq.cli.CacheInvocation;
+import blater.nq.cli.CapabilitiesInvocation;
 import blater.nq.cli.CatalogInvocation;
 import blater.nq.cli.ConvertInvocation;
 import blater.nq.cli.Credentials;
@@ -82,6 +83,7 @@ public final class EngineRuntimeParameters {
       }
       case HelpInvocation ignored -> new InputSelection.None();
       case VersionInvocation ignored -> new InputSelection.None();
+      case CapabilitiesInvocation ignored -> new InputSelection.None();
     };
     addInput(parameters, input, materialization);
     return parameters;

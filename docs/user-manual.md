@@ -275,6 +275,7 @@ nq cache load [<data>] [<name>] [options]
 nq cache use <name> [options]
 nq cache list [options]
 nq cache clear (<name> | olderthan <age> | all) [options]
+nq capabilities [-r <format>]
 ```
 
 Piped and redirected input is always data. It defaults to JSON unless `-t` or
@@ -300,6 +301,11 @@ The script may still modify the selected database explicitly.
 versioned operational report; `--report-format` controls its serialization and
 defaults to Markdown.
 
+`nq capabilities` (also available as the root flag `nq --capabilities`) prints
+the versioned discovery contract used by agents and integrations. It defaults
+to JSON, accepts only `--report-format`, and does not inspect stdin, files,
+configuration, environment variables, caches, databases, or installed drivers.
+
 Every operational report has the same versioned envelope:
 
 ```json
@@ -315,6 +321,7 @@ The command-specific `details` fields are:
 | `cache.use` | `cache_name`, `cache_path`, and boolean `active`. |
 | `cache.list` | `cache_dir` and `caches[]`; every item has `name`, ISO-8601 `modified`, and boolean `active`. |
 | `cache.clear` | integer `cleared`. |
+| `capabilities` | `contract_version`, `nq_version`, commands, option applicability and aliases, formats, JDBC drivers, CLI/stdin/cache semantics, report schemas, and exit codes. |
 
 Structured diagnostics use `schema_version`, `code`, `level`, `message`, and an
 optional `usage`. JSON and JSONL emit one object per line; YAML emits one marked
@@ -328,6 +335,7 @@ event row. Result data remains on stdout and diagnostics remain on stderr.
 |----------------------------|--------------------------------------------------|
 | `-h`                       | Print brief usage help.                          |
 | `--help`                   | Print the complete `nq(1)` manual page.      |
+| `--capabilities`           | Root alias for `nq capabilities`; print its JSON discovery contract. |
 | `help [topic]`             | List focused help topics or print one topic.     |
 | `-f`, `--script-file path` | Run a script from an explicitly named file.      |
 | `-e`, `--script-text text` | Run explicitly supplied inline script text.      |
@@ -348,7 +356,7 @@ event row. Result data remains on stdout and diagnostics remain on stderr.
 | `--jdbc-username username` | Set the exact `jdbc.username` value. |
 | `--jdbc-password password` | Set the exact `jdbc.password` value. |
 | `--output type`, `-o type` | Write output as `xml`, `json`, `jsonl`, `csv`, `tsv`, `yaml`, `toml`, or `markdown`. |
-| `-r`, `--report-format type` | Write catalog, cache, or diagnostic reports in a supported output format; default `markdown`. |
+| `-r`, `--report-format type` | Write catalog, cache, capability, or diagnostic reports in a supported output format; capability defaults to `json`, other operational reports to `markdown`. |
 | `--debug`                  | Log each query's inferred output-path, relation, key, and parent relationship decisions to stderr. |
 | `--no-key-inference`       | Disable automatic DQL keys and preserve row-first output for paths without explicit `structure` keys. |
 | `--cache`                  | Select cache execution (active cache by default). |

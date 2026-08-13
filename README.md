@@ -332,6 +332,7 @@ nq cache load [data] [name] [options]
 nq cache use <name> [options]
 nq cache list [options]
 nq cache clear (<name> | olderthan <age> | all) [options]
+nq capabilities [-r <format>]
 ```
 
 Common flag groups:
@@ -342,8 +343,11 @@ Common flag groups:
 - `--cache-dir <path>` selects the directory that directly contains cache state,
   making independent runs easy to isolate.
 - `-o, --output <format>` selects result-data output;
-  `-r, --report-format <format>` selects catalog/cache reports. Result data
-  defaults to JSON and operational reports default to Markdown.
+  `-r, --report-format <format>` selects operational reports. Result data
+  defaults to JSON, catalog/cache reports default to Markdown, and the
+  capability contract defaults to JSON.
+- `nq capabilities` (or `nq --capabilities`) prints a versioned, side-effect-free
+  discovery contract for agents and integrations.
 - `--config <file.properties>` supplies operational NQ/JDBC settings.
   `--params-file <file.properties>` supplies parameters visible to scripts, and
   repeatable `--param <name=value>` entries override individual parameter values.
@@ -406,7 +410,7 @@ when consuming stdin.
 
 Result data and successful command reports are written to stdout. Warnings,
 errors, and debug output are written to stderr. `--report-format` produces
-versioned, structured catalog/cache reports and structured diagnostics in the
+versioned, structured catalog/cache/capability reports and structured diagnostics in the
 selected JSON, JSONL, YAML, TOML, XML, CSV, TSV, or Markdown format.
 
 Exit statuses are stable: `0` for success, `1` for execution failure, `2` for

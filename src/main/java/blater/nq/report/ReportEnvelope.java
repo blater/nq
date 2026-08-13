@@ -1,6 +1,7 @@
 package blater.nq.report;
 
 import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -14,7 +15,7 @@ public record ReportEnvelope(String command, Map<String, ?> details) {
     if (!command.matches("[a-z]+(?:\\.[a-z]+)*")) {
       throw new IllegalArgumentException("Invalid report command identifier: " + command);
     }
-    details = Map.copyOf(new LinkedHashMap<>(details));
+    details = Collections.unmodifiableMap(new LinkedHashMap<>(details));
   }
 
   public Map<String, ?> fields() {

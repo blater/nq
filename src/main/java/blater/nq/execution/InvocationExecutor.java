@@ -3,6 +3,7 @@ package blater.nq.execution;
 import blater.nq.Help;
 import blater.nq.cli.CacheInvocation;
 import blater.nq.cli.CacheNameSelection;
+import blater.nq.cli.CapabilitiesInvocation;
 import blater.nq.cli.CatalogInvocation;
 import blater.nq.cli.CatalogPattern;
 import blater.nq.cli.ConvertInvocation;
@@ -27,6 +28,7 @@ import blater.nq.runner.sql.cache.CacheHandle;
 import blater.nq.runner.sql.cache.CacheLookup;
 import blater.nq.runner.sql.cache.PersistentCache;
 import blater.nq.report.ReportEnvelope;
+import blater.nq.report.CapabilityContract;
 import blater.nq.report.HierarchyReportMapper;
 import blater.nq.report.ReportWriter;
 import blater.nq.util.Log;
@@ -58,6 +60,8 @@ public final class InvocationExecutor {
       switch (invocation) {
         case HelpInvocation help -> executeHelp(help);
         case VersionInvocation ignoredVersion -> Help.printVersion();
+        case CapabilitiesInvocation capabilities -> writeReport(
+            "capabilities", CapabilityContract.details(), capabilities.reportFormat());
         case ConvertInvocation convert -> executeConvert(convert, environment);
         case RunInvocation run -> executeRun(run, environment);
         case CatalogInvocation catalog -> executeCatalog(catalog, environment);
@@ -77,6 +81,7 @@ public final class InvocationExecutor {
       case CacheInvocation.Clear clear -> clear.debug();
       case HelpInvocation ignored -> false;
       case VersionInvocation ignored -> false;
+      case CapabilitiesInvocation ignored -> false;
     };
   }
 

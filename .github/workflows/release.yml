@@ -125,6 +125,9 @@ jobs:
           executable="${{ matrix.executable }}"
           "$executable" -h >/dev/null
           test "$("$executable" --version)" = "nq $VERSION"
+          "$executable" capabilities > capabilities.json
+          grep -F '"command":"capabilities"' capabilities.json
+          grep -F '"contract_version":1' capabilities.json
           "$executable" docs/examples/identity-country-counts.nq \
             docs/examples/identity-customers.json > actual.json
           diff -u \
@@ -155,6 +158,11 @@ jobs:
           & $executable -h | Out-Null
           if ((& $executable --version) -ne "nq $env:VERSION") {
             throw "Version output does not match release version"
+          }
+          $capabilities = & $executable capabilities | ConvertFrom-Json
+          if ($capabilities.command -ne "capabilities" -or `
+              $capabilities.details.contract_version -ne 1) {
+            throw "Capability contract smoke output mismatch"
           }
           $actual = & $executable `
             docs/examples/identity-country-counts.nq `
@@ -284,6 +292,9 @@ jobs:
           mvn --batch-mode --no-transfer-progress -DskipTests package
           jar="target/nq-${VERSION}.jar"
           test "$(java -jar "$jar" --version)" = "nq $VERSION"
+          java -jar "$jar" capabilities > capabilities.json
+          grep -F '"command":"capabilities"' capabilities.json
+          grep -F '"contract_version":1' capabilities.json
           java -jar "$jar" docs/examples/identity-country-counts.nq \
             docs/examples/identity-customers.json > actual.json
           diff -u \
