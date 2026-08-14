@@ -3,6 +3,7 @@ package blater.nq.runner.sql.cache;
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.Node;
 import blater.nq.inputreader.CsvInputReader;
+import blater.nq.inputreader.JsonInputReader;
 import blater.nq.inputreader.ParquetInputReader;
 import blater.nq.runner.sql.SqlExecutor;
 import blater.nq.testsupport.H2Database;
@@ -39,6 +40,55 @@ class HierarchyCacheLoaderTest {
         assertEquals(2, database.queryInt("select count(*) from country"));
         assertEquals("90", database.queryString("select ccode from customer where id = 'C1'"));
         assertEquals("vatican city", database.queryString("select name from country where ccode = '90'"));
+      } finally {
+        executor.close();
+      }
+    }
+  }
+
+  @Test
+  void quotesReservedAndNonSimpleHierarchyNames() throws Exception {
+    Node data = new Node("data");
+    Node user = new Node("user");
+    user.addNode(value("order", "first"));
+    user.addNode(value("display-name", "Alice"));
+    data.addNode(user);
+
+    try (H2Database database = new H2Database()) {
+      SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
+      try {
+        new HierarchyCacheLoader(executor).load(new Hierarchy(data));
+
+        assertEquals("first", database.queryString("select \"order\" from \"user\""));
+        assertEquals("Alice", database.queryString("select \"display-name\" from \"user\""));
+      } finally {
+        executor.close();
+      }
+    }
+  }
+
+  @Test
+  void materializesJsonScalarsWithCompatibleSqlTypes() throws Exception {
+    Path input = tempDir.resolve("typed.json");
+    Files.writeString(input, """
+        {"record":[
+          {"text":"7","count":7,"price":4.8,"active":false},
+          {"text":"8","count":8,"price":2,"active":true}
+        ]}
+        """, StandardCharsets.UTF_8);
+
+    try (H2Database database = new H2Database()) {
+      SqlExecutor executor = new SqlExecutor(database.jdbcProperties());
+      try {
+        Hierarchy hierarchy = new JsonInputReader().load(input.toString(), Map.of());
+        new HierarchyCacheLoader(executor).load(hierarchy);
+
+        assertEquals("CHARACTER VARYING", columnType(database, "record", "text"));
+        assertEquals("DECFLOAT", columnType(database, "record", "count"));
+        assertEquals("DECFLOAT", columnType(database, "record", "price"));
+        assertEquals("BOOLEAN", columnType(database, "record", "active"));
+        assertEquals("6.8", database.queryString("select sum(price) from record"));
+        assertEquals(1, database.queryInt("select count(*) from record where active"));
       } finally {
         executor.close();
       }
@@ -578,5 +628,13 @@ class HierarchyCacheLoaderTest {
         "select count(*) from information_schema.tables "
             + "where table_schema = 'PUBLIC' "
             + "and table_name = '" + table.toUpperCase() + "'");
+  }
+
+  private String columnType(H2Database database, String table, String column) throws Exception {
+    return database.queryString(
+        "select data_type from information_schema.columns "
+            + "where table_schema = 'PUBLIC' "
+            + "and table_name = '" + table.toUpperCase() + "' "
+            + "and column_name = '" + column.toUpperCase() + "'");
   }
 }

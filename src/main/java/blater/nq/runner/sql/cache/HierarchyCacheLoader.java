@@ -2,10 +2,12 @@ package blater.nq.runner.sql.cache;
 
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.Node;
+import blater.nq.domain.ScalarKind;
 import blater.nq.runner.sql.SqlExecutor;
 import blater.nq.runner.sql.SqlRowCursor;
 import blater.nq.util.Log;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -19,7 +21,6 @@ import java.util.stream.Collectors;
  * SQL cache tables for --cache mode.
  */
 public final class HierarchyCacheLoader {
-  private static final String TEXT_SQL_TYPE = "varchar";
   private static final String SOURCE_ID_COLUMN = "id";
   private static final String GENERATED_ID_COLUMN = "_nq_id";
   private static final String RESERVED_PREFIX = "_nq_";
@@ -28,6 +29,7 @@ public final class HierarchyCacheLoader {
   private final SqlExecutor sqlExecutor;
   private final Map<String, TableState> tables = new LinkedHashMap<>();
   private final Map<String, Boolean> sourceIdentityByTable = new LinkedHashMap<>();
+  private final Map<String, Map<String, ScalarKind>> scalarKindsByTable = new LinkedHashMap<>();
 
   public HierarchyCacheLoader(SqlExecutor sqlExecutor) {
     this.sqlExecutor = sqlExecutor;
@@ -36,6 +38,7 @@ public final class HierarchyCacheLoader {
   public void load(Hierarchy hierarchy) {
     tables.clear();
     sourceIdentityByTable.clear();
+    scalarKindsByTable.clear();
     if (hierarchy == null || hierarchy.getRoot() == null) {
       return;
     }
@@ -63,7 +66,7 @@ public final class HierarchyCacheLoader {
       String parentTable,
       boolean root,
       String rootName) {
-    Map<String, List<String>> valuesByName = new LinkedHashMap<>();
+    Map<String, List<ScalarValue>> valuesByName = new LinkedHashMap<>();
     Set<String> repeatedNames = new LinkedHashSet<>();
     List<Node> objectChildren = new ArrayList<>();
     classifyDirectChildren(node, valuesByName, repeatedNames, objectChildren);
@@ -71,8 +74,10 @@ public final class HierarchyCacheLoader {
     String currentTable = parentTable;
     if (shouldMaterialize(node, valuesByName, objectChildren, root)) {
       currentTable = relationName(node, parentTable, rootName);
-      boolean hasSourceId = firstScalarValue(valuesByName, SOURCE_ID_COLUMN, null) != null;
+      ScalarValue sourceId = firstScalarValue(valuesByName, SOURCE_ID_COLUMN);
+      boolean hasSourceId = sourceId != null && sourceId.value() != null;
       sourceIdentityByTable.merge(currentTable, hasSourceId, (left, right) -> left && right);
+      mergeScalarKinds(currentTable, valuesByName);
     }
 
     for (Node child : objectChildren) {
@@ -95,16 +100,16 @@ public final class HierarchyCacheLoader {
   private void writeNode(
       Node node,
       String parentTable,
-      String parentId,
+      Object parentId,
       boolean root,
       String rootName) {
-    Map<String, List<String>> valuesByName = new LinkedHashMap<>();
+    Map<String, List<ScalarValue>> valuesByName = new LinkedHashMap<>();
     Set<String> repeatedNames = new LinkedHashSet<>();
     List<Node> objectChildren = new ArrayList<>();
     classifyDirectChildren(node, valuesByName, repeatedNames, objectChildren);
 
     String currentTable = parentTable;
-    String currentId = parentId;
+    Object currentId = parentId;
     if (shouldMaterialize(node, valuesByName, objectChildren, root)) {
       String logicalName = relationName(node, parentTable, rootName);
       TableState table = table(logicalName, false);
@@ -130,7 +135,7 @@ public final class HierarchyCacheLoader {
 
   private void classifyDirectChildren(
       Node node,
-      Map<String, List<String>> valuesByName,
+      Map<String, List<ScalarValue>> valuesByName,
       Set<String> repeatedNames,
       List<Node> objectChildren) {
 
@@ -146,7 +151,7 @@ public final class HierarchyCacheLoader {
       }
     }
 
-    for (Map.Entry<String, List<String>> value : valuesByName.entrySet()) {
+    for (Map.Entry<String, List<ScalarValue>> value : valuesByName.entrySet()) {
       if (value.getValue().size() > 1) {
         repeatedNames.add(value.getKey());
       }
@@ -155,7 +160,7 @@ public final class HierarchyCacheLoader {
 
   private boolean shouldMaterialize(
       Node node,
-      Map<String, List<String>> valuesByName,
+      Map<String, List<ScalarValue>> valuesByName,
       List<Node> objectChildren,
       boolean root) {
 
@@ -174,11 +179,37 @@ public final class HierarchyCacheLoader {
     return node.hasValue() && !hasElementChildren;
   }
 
-  private String nodeValue(Node node) {
-    if (node.isNull()) {
-      return null;
+  private ScalarValue nodeValue(Node node) {
+    String value = node.isNull() ? null : node.getValue() == null ? "" : node.getValue();
+    return new ScalarValue(value, node.getScalarKind());
+  }
+
+  private void mergeScalarKinds(
+      String tableName, Map<String, List<ScalarValue>> valuesByName) {
+    Map<String, ScalarKind> fields = scalarKindsByTable.computeIfAbsent(
+        tableName, ignored -> new LinkedHashMap<>());
+    for (Map.Entry<String, List<ScalarValue>> field : valuesByName.entrySet()) {
+      ScalarKind kind = null;
+      for (ScalarValue value : field.getValue()) {
+        if (value.value() != null) {
+          kind = ScalarKind.merge(kind, value.kind());
+        }
+      }
+      if (kind != null) {
+        fields.merge(field.getKey(), kind, ScalarKind::merge);
+      }
     }
-    return node.getValue() == null ? "" : node.getValue();
+  }
+
+  private ScalarKind fieldKind(String tableName, String fieldName) {
+    return scalarKindsByTable.getOrDefault(tableName, Map.of())
+        .getOrDefault(fieldName, ScalarKind.STRING);
+  }
+
+  private ScalarKind identityKind(String tableName) {
+    return Boolean.TRUE.equals(sourceIdentityByTable.get(tableName))
+        ? fieldKind(tableName, SOURCE_ID_COLUMN)
+        : ScalarKind.STRING;
   }
 
   private void flushAllTables() {
@@ -218,8 +249,20 @@ public final class HierarchyCacheLoader {
     VALUE_TABLE
   }
 
+  private record ScalarValue(String value, ScalarKind kind) {
+    Object databaseValue(ScalarKind targetKind) {
+      if (value == null) return null;
+      return switch (targetKind) {
+        case STRING -> value;
+        case NUMBER -> new BigDecimal(value);
+        case BOOLEAN -> Boolean.valueOf(value);
+      };
+    }
+  }
+
   private final class TableState {
     private final String logicalName;
+    private final String renderedName;
     private final boolean valueTable;
     private final boolean sourceIdentity;
     private final Map<String, String> columnsByLogicalName = new LinkedHashMap<>();
@@ -230,54 +273,64 @@ public final class HierarchyCacheLoader {
 
     private TableState(String logicalName, boolean valueTable, boolean sourceIdentity) {
       this.logicalName = logicalName;
+      this.renderedName = CacheSqlIdentifier.render(logicalName);
       this.valueTable = valueTable;
       this.sourceIdentity = sourceIdentity;
     }
 
-    private String writeObjectRow(
+    private Object writeObjectRow(
         String parentTable,
-        String parentId,
-        Map<String, List<String>> valuesByName,
+        Object parentId,
+        Map<String, List<ScalarValue>> valuesByName,
         Set<String> repeatedNames) {
 
-      String rowId = sourceIdentity
-          ? firstScalarValue(valuesByName, SOURCE_ID_COLUMN, null)
+      ScalarKind rowIdKind = identityKind(logicalName);
+      ScalarValue sourceId = firstScalarValue(valuesByName, SOURCE_ID_COLUMN);
+      Object rowId = sourceIdentity
+          ? sourceId.databaseValue(rowIdKind)
           : nextId();
 
-      ensureColumn(rowIdColumn());
+      ensureColumn(rowIdColumn(), rowIdKind);
       String parentColumn = parentTable == null ? null : parentIdColumn(parentTable);
       if (parentColumn != null) {
-        ensureColumn(parentColumn);
+        ensureColumn(parentColumn, identityKind(parentTable));
       }
 
-      for (Map.Entry<String, List<String>> field : valuesByName.entrySet()) {
+      for (Map.Entry<String, List<ScalarValue>> field : valuesByName.entrySet()) {
         String fieldName = field.getKey();
         if (isStructuralColumn(fieldName, parentColumn)) {
           continue;
         }
-        prepareFieldStorage(fieldName, repeatedNames.contains(fieldName));
+        prepareFieldStorage(
+            fieldName, repeatedNames.contains(fieldName), fieldKind(logicalName, fieldName));
       }
 
       Map<String, Object> row = new LinkedHashMap<>();
       row.put(rowIdColumn(), rowId);
       if (parentColumn != null) {
-        row.put(parentColumn, firstScalarValue(valuesByName, parentColumn, parentId));
+        ScalarValue explicitParent = firstScalarValue(valuesByName, parentColumn);
+        row.put(parentColumn, explicitParent == null || explicitParent.value() == null
+            ? parentId
+            : explicitParent.databaseValue(identityKind(parentTable)));
       }
 
-      for (Map.Entry<String, List<String>> field : valuesByName.entrySet()) {
+      for (Map.Entry<String, List<ScalarValue>> field : valuesByName.entrySet()) {
         String fieldName = field.getKey();
         if (isStructuralColumn(fieldName, parentColumn)) {
           continue;
         }
         if (fieldStorageTypesByLogicalName.get(fieldName) == FieldStorageType.COLUMN) {
-          row.put(fieldName, firstScalarValue(valuesByName, fieldName, null));
+          ScalarValue value = firstScalarValue(valuesByName, fieldName);
+          row.put(fieldName, value == null
+              ? null
+              : value.databaseValue(fieldKind(logicalName, fieldName)));
         }
       }
 
       pendingRows.add(row);
       flushIfFull();
 
-      for (Map.Entry<String, List<String>> field : valuesByName.entrySet()) {
+      for (Map.Entry<String, List<ScalarValue>> field : valuesByName.entrySet()) {
         String fieldName = field.getKey();
         if (!isStructuralColumn(fieldName, parentColumn)
             && fieldStorageTypesByLogicalName.get(fieldName) == FieldStorageType.VALUE_TABLE) {
@@ -288,108 +341,116 @@ public final class HierarchyCacheLoader {
       return rowId;
     }
 
-    private void writeRepeatedValueRows(String parentId, String fieldName, List<String> values) {
-      for (String value : values) {
+    private void writeRepeatedValueRows(
+        Object parentId, String fieldName, List<ScalarValue> values) {
+      for (ScalarValue value : values) {
         writeRepeatedValueRow(parentId, fieldName, value);
       }
     }
 
-    private void writeRepeatedValueRow(String parentId, String fieldName, String value) {
-      TableState valueTableState = ensureValueTable(fieldName);
-      valueTableState.writeValueTableRow(logicalName, parentId, value);
+    private void writeRepeatedValueRow(
+        Object parentId, String fieldName, ScalarValue value) {
+      ScalarKind valueKind = fieldKind(logicalName, fieldName);
+      TableState valueTableState = ensureValueTable(fieldName, valueKind);
+      valueTableState.writeValueTableRow(logicalName, parentId, value, valueKind);
     }
 
-    private void writeValueTableRow(String parentTable, String parentId, String value) {
-      ensureColumn(rowIdColumn());
-      ensureColumn(parentIdColumn(parentTable));
-      ensureColumn("value");
+    private void writeValueTableRow(
+        String parentTable, Object parentId, ScalarValue value, ScalarKind valueKind) {
+      ensureColumn(rowIdColumn(), ScalarKind.STRING);
+      ensureColumn(parentIdColumn(parentTable), identityKind(parentTable));
+      ensureColumn("value", valueKind);
 
       Map<String, Object> row = new LinkedHashMap<>();
       row.put(rowIdColumn(), nextId());
       row.put(parentIdColumn(parentTable), parentId);
-      row.put("value", value);
+      row.put("value", value.databaseValue(valueKind));
       pendingRows.add(row);
       flushIfFull();
     }
 
-    private void prepareFieldStorage(String fieldName, boolean repeated) {
+    private void prepareFieldStorage(
+        String fieldName, boolean repeated, ScalarKind scalarKind) {
       FieldStorageType storageType = fieldStorageTypesByLogicalName.get(fieldName);
       if (storageType == FieldStorageType.VALUE_TABLE) {
-        ensureValueTable(fieldName);
+        ensureValueTable(fieldName, scalarKind);
         return;
       }
       if (storageType == FieldStorageType.COLUMN && repeated) {
-        promoteField(fieldName);
+        promoteField(fieldName, scalarKind);
         return;
       }
       if (storageType == null && repeated) {
         fieldStorageTypesByLogicalName.put(fieldName, FieldStorageType.VALUE_TABLE);
-        ensureValueTable(fieldName);
+        ensureValueTable(fieldName, scalarKind);
         return;
       }
       if (storageType == null) {
         fieldStorageTypesByLogicalName.put(fieldName, FieldStorageType.COLUMN);
       }
-      ensureColumn(fieldName);
+      ensureColumn(fieldName, scalarKind);
     }
 
-    private void promoteField(String fieldName) {
+    private void promoteField(String fieldName, ScalarKind scalarKind) {
       flush();
-      ensureValueTable(fieldName);
+      ensureValueTable(fieldName, scalarKind);
 
       String renderedFieldColumn = columnsByLogicalName.get(fieldName);
       if (renderedFieldColumn != null) {
         String select = "select "
             + columnsByLogicalName.get(rowIdColumn()) + " as \"cache_parent_id\", "
             + renderedFieldColumn + " as \"cache_field_value\" "
-            + "from " + logicalName + " "
+            + "from " + renderedName + " "
             + "where " + renderedFieldColumn + " is not null";
 
         try (SqlRowCursor rows = sqlExecutor.query(select)) {
           while (rows.next()) {
             writeRepeatedValueRow(
-                rows.row().getStringValue("cache_parent_id"),
+                rows.row().getValue("cache_parent_id"),
                 fieldName,
-                rows.row().getStringValue("cache_field_value"));
+                new ScalarValue(
+                    rows.row().getStringValue("cache_field_value"), scalarKind));
           }
         }
 
         columnsByLogicalName.remove(fieldName);
-        sqlExecutor.execute("alter table " + logicalName + " drop column " + renderedFieldColumn);
+        sqlExecutor.execute("alter table " + renderedName + " drop column " + renderedFieldColumn);
       }
       fieldStorageTypesByLogicalName.put(fieldName, FieldStorageType.VALUE_TABLE);
     }
 
-    private TableState ensureValueTable(String fieldName) {
+    private TableState ensureValueTable(String fieldName, ScalarKind valueKind) {
       String valueTableName = repeatedTableName(logicalName, fieldName);
       TableState valueTableState = table(
           valueTableName,
           true);
-      valueTableState.ensureColumn(valueTableState.rowIdColumn());
-      valueTableState.ensureColumn(parentIdColumn(logicalName));
-      valueTableState.ensureColumn("value");
+      valueTableState.ensureColumn(valueTableState.rowIdColumn(), ScalarKind.STRING);
+      valueTableState.ensureColumn(parentIdColumn(logicalName), identityKind(logicalName));
+      valueTableState.ensureColumn("value", valueKind);
       return valueTableState;
     }
 
-    private void ensureColumn(String logicalColumnName) {
+    private void ensureColumn(String logicalColumnName, ScalarKind scalarKind) {
       if (columnsByLogicalName.containsKey(logicalColumnName)) {
         return;
       }
 
       if (!created) {
-        columnsByLogicalName.put(logicalColumnName, logicalColumnName);
+        String renderedColumnName = CacheSqlIdentifier.render(logicalColumnName);
+        columnsByLogicalName.put(logicalColumnName, renderedColumnName);
         sqlExecutor.execute(
-            "create table " + logicalName
-                + " (" + logicalColumnName + " " + TEXT_SQL_TYPE + ")");
+            "create table " + renderedName
+                + " (" + renderedColumnName + " " + sqlType(scalarKind) + ")");
         created = true;
         return;
       }
 
       flush();
-      columnsByLogicalName.put(logicalColumnName, logicalColumnName);
+      String renderedColumnName = CacheSqlIdentifier.render(logicalColumnName);
+      columnsByLogicalName.put(logicalColumnName, renderedColumnName);
       sqlExecutor.execute(
-          "alter table " + logicalName
-              + " add column " + logicalColumnName + " " + TEXT_SQL_TYPE);
+          "alter table " + renderedName
+              + " add column " + renderedColumnName + " " + sqlType(scalarKind));
     }
 
     private void flushIfFull() {
@@ -407,7 +468,7 @@ public final class HierarchyCacheLoader {
       String placeholders = columnsByLogicalName.keySet().stream()
           .map(ignored -> "?")
           .collect(Collectors.joining(", "));
-      String insert = "insert into " + logicalName
+      String insert = "insert into " + renderedName
           + " (" + columns + ") values (" + placeholders + ")";
 
       List<List<Object>> rows = new ArrayList<>(pendingRows.size());
@@ -435,14 +496,21 @@ public final class HierarchyCacheLoader {
     }
   }
 
-  private static String firstScalarValue(
-      Map<String, List<String>> valuesByName,
-      String fieldName,
-      String defaultValue) {
-    List<String> values = valuesByName.get(fieldName);
+  private static ScalarValue firstScalarValue(
+      Map<String, List<ScalarValue>> valuesByName,
+      String fieldName) {
+    List<ScalarValue> values = valuesByName.get(fieldName);
     if (values == null || values.isEmpty()) {
-      return defaultValue;
+      return null;
     }
     return values.getFirst();
+  }
+
+  private static String sqlType(ScalarKind scalarKind) {
+    return switch (scalarKind) {
+      case STRING -> "varchar";
+      case NUMBER -> "decfloat";
+      case BOOLEAN -> "boolean";
+    };
   }
 }

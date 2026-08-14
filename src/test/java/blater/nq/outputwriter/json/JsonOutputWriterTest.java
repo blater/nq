@@ -2,6 +2,7 @@ package blater.nq.outputwriter.json;
 
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.Node;
+import blater.nq.domain.ScalarKind;
 import blater.nq.outputwriter.JsonOutputWriter;
 import blater.nq.outputwriter.OutputType;
 import blater.nq.outputwriter.OutputWriter;
@@ -95,6 +96,21 @@ class JsonOutputWriterTest {
 
     assertEquals(
         "{\"message\":{\"text\":\"quote \\\" slash \\\\ newline\\n\"}}",
+        JsonOutputWriter.map(new Hierarchy(root)));
+  }
+
+  @Test
+  void rendersTypedNumbersAndBooleansAsJsonScalars() {
+    Node root = new Node("record");
+    Node count = valueNode("count", "7.5");
+    count.setScalarKind(ScalarKind.NUMBER);
+    root.addNode(count);
+    Node active = valueNode("active", "false");
+    active.setScalarKind(ScalarKind.BOOLEAN);
+    root.addNode(active);
+
+    assertEquals(
+        "{\"record\":{\"count\":7.5,\"active\":false}}",
         JsonOutputWriter.map(new Hierarchy(root)));
   }
 

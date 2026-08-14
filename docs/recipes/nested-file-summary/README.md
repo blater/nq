@@ -14,7 +14,7 @@ nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.jso
 Expected output:
 
 ```json
-{"result":{"region":[{"country":"GB","customerCount":"2"},{"country":"US","customerCount":"4"}]}}
+{"result":{"region":[{"country":"GB","customerCount":2},{"country":"US","customerCount":4}]}}
 ```
 
 Run the same script against equivalent boundary formats:

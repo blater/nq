@@ -1,5 +1,7 @@
 package blater.nq.runner.sql.domain;
 
+import blater.nq.domain.ScalarKind;
+
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -43,5 +45,15 @@ public class QueryResultRow {
   public boolean isNull(final String columnName) {
     var column = columnValues.get(columnName);
     return column == null || column.columnValueIsNull();
+  }
+
+  public ScalarKind getScalarKind(final String columnName) {
+    var column = columnValues.get(columnName);
+    if (column == null) return ScalarKind.STRING;
+    return switch (column.getSqlType()) {
+      case INTEGER, LONG, SHORT, FLOAT, DOUBLE, NUMBER -> ScalarKind.NUMBER;
+      case BOOLEAN -> ScalarKind.BOOLEAN;
+      case STRING, DATE -> ScalarKind.STRING;
+    };
   }
 }

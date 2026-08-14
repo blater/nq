@@ -24,7 +24,7 @@ class InvocationExecutorTest {
     String output = capture(() -> executor.execute(
         parser.parse("convert"), environment("{\"customer\":{\"id\":7}}")));
 
-    assertTrue(output.contains("\"id\":\"7\""));
+    assertTrue(output.contains("\"id\":7"));
   }
 
   @Test

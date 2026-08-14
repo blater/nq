@@ -73,10 +73,11 @@ final class HierarchyRowMapper {
       OutputField field,
       boolean nullValue) {
     String value = row.getStringValue(field.getSourceColumn());
+    ScalarKind scalarKind = row.getScalarKind(field.getSourceColumn());
     KeyedPath terminalKey = nodeResolver.keyedPath(plan, field.getPath());
     if (terminalKey == null) {
       HierarchyValueWriter.writeResolvedValue(
-          parent, field, value, nullValue, plan, warnedConflictPaths);
+          parent, field, value, nullValue, scalarKind, plan, warnedConflictPaths);
       return;
     }
     HierarchyKeyIndex.KeyState state = keyIndex.keyState(terminalKey, row);
@@ -92,7 +93,7 @@ final class HierarchyRowMapper {
     Node target = keyIndex.keyedChild(
         parent, field.getPath(), keyIndex.keyTuple(terminalKey, row));
     HierarchyValueWriter.writeTerminalKeyedValue(
-        target, field, value, nullValue, terminalKey, warnedConflictPaths);
+        target, field, value, nullValue, scalarKind, terminalKey, warnedConflictPaths);
   }
 
   private static boolean conditionsMatch(OutputField field, QueryResultRow row) {

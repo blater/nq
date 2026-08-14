@@ -2,6 +2,7 @@ package blater.nq.inputreader;
 
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.Node;
+import blater.nq.domain.ScalarKind;
 import blater.nq.util.Template;
 
 import java.util.ArrayList;
@@ -75,6 +76,11 @@ final class StructuredDataInputMapper {
       node.setValue(Template.expand(stringValue, parameters));
     } else {
       node.setValue(value.toString());
+      if (value instanceof Number) {
+        node.setScalarKind(ScalarKind.NUMBER);
+      } else if (value instanceof Boolean) {
+        node.setScalarKind(ScalarKind.BOOLEAN);
+      }
     }
     return node;
   }

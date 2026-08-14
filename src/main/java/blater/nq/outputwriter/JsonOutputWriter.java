@@ -7,12 +7,16 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /*
  * Responsibility: Renders a hierarchy as JSON. XML-only node state such
  * as attributes is approximated as ordinary JSON properties.
  */
 public class JsonOutputWriter implements OutputWriter {
+  private static final Pattern JSON_NUMBER = Pattern.compile(
+      "-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
+
   @Override
   public void write(Hierarchy result) {
     if (result == null || result.isEmpty()) {
@@ -95,9 +99,30 @@ public class JsonOutputWriter implements OutputWriter {
     } else if (node.isNull()) {
       json.append("null");
     } else if (node.hasValue()) {
-      json.append(JsonStringEncoder.quote(node.getValue()));
+      writeScalar(json, node);
     } else {
       writeObject(json, node);
+    }
+  }
+
+  private static void writeScalar(StringBuilder json, Node node) {
+    String value = node.getValue();
+    switch (node.getScalarKind()) {
+      case NUMBER -> {
+        if (JSON_NUMBER.matcher(value).matches()) {
+          json.append(value);
+        } else {
+          json.append(JsonStringEncoder.quote(value));
+        }
+      }
+      case BOOLEAN -> {
+        if ("true".equals(value) || "false".equals(value)) {
+          json.append(value);
+        } else {
+          json.append(JsonStringEncoder.quote(value));
+        }
+      }
+      case STRING -> json.append(JsonStringEncoder.quote(value));
     }
   }
 

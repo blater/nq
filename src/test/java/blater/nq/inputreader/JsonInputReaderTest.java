@@ -2,6 +2,7 @@ package blater.nq.inputreader;
 
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.Node;
+import blater.nq.domain.ScalarKind;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -51,7 +52,10 @@ class JsonInputReaderTest {
     assertEquals("7", child(person, "id").getValue());
     assertEquals("Fred", child(person, "firstname").getValue());
     assertEquals("true", child(person, "active").getValue());
+    assertEquals(ScalarKind.BOOLEAN, child(person, "active").getScalarKind());
     assertEquals("42", child(person, "age").getValue());
+    assertEquals(ScalarKind.NUMBER, child(person, "age").getScalarKind());
+    assertEquals(ScalarKind.STRING, child(person, "firstname").getScalarKind());
   }
 
   @Test

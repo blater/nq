@@ -2,6 +2,7 @@ package blater.nq.inputreader;
 
 import blater.nq.domain.Hierarchy;
 import blater.nq.domain.Node;
+import blater.nq.domain.ScalarKind;
 import blater.nq.util.Log;
 import blater.nq.util.Template;
 
@@ -88,6 +89,7 @@ public class JsonInputReader implements InputReader {
         node.setValue(scalar.templateString()
             ? Template.expand(scalar.value(), parameters)
             : scalar.value());
+        node.setScalarKind(scalar.kind());
       }
       return node;
     }
@@ -125,17 +127,25 @@ public class JsonInputReader implements InputReader {
     return nodes;
   }
 
-  private record JsonScalar(String value, boolean templateString, boolean nullValue) {
+  private record JsonScalar(
+      String value,
+      boolean templateString,
+      boolean nullValue,
+      ScalarKind kind) {
     static JsonScalar string(String value) {
-      return new JsonScalar(value, true, false);
+      return new JsonScalar(value, true, false, ScalarKind.STRING);
     }
 
-    static JsonScalar literal(String value) {
-      return new JsonScalar(value, false, false);
+    static JsonScalar number(String value) {
+      return new JsonScalar(value, false, false, ScalarKind.NUMBER);
+    }
+
+    static JsonScalar bool(String value) {
+      return new JsonScalar(value, false, false, ScalarKind.BOOLEAN);
     }
 
     static JsonScalar jsonNull() {
-      return new JsonScalar(null, false, true);
+      return new JsonScalar(null, false, true, ScalarKind.STRING);
     }
   }
 
@@ -169,11 +179,11 @@ public class JsonInputReader implements InputReader {
         case '"' -> JsonScalar.string(parseString());
         case 't' -> {
           consumeLiteral("true");
-          yield JsonScalar.literal("true");
+          yield JsonScalar.bool("true");
         }
         case 'f' -> {
           consumeLiteral("false");
-          yield JsonScalar.literal("false");
+          yield JsonScalar.bool("false");
         }
         case 'n' -> {
           consumeLiteral("null");
@@ -181,7 +191,7 @@ public class JsonInputReader implements InputReader {
         }
         default -> {
           if (ch == '-' || Character.isDigit(ch)) {
-            yield JsonScalar.literal(parseNumber());
+            yield JsonScalar.number(parseNumber());
           }
           throw error("Expected JSON value");
         }

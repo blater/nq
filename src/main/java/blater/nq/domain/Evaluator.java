@@ -28,7 +28,7 @@ public final class Evaluator {
       case SHORT -> ((Short) left).compareTo((Short) expected);
       case FLOAT -> ((Float) left).compareTo((Float) expected);
       case DOUBLE -> ((Double) left).compareTo((Double) expected);
-      case NUMBER, DATE -> ((Comparable) left).compareTo(expected);
+      case NUMBER, BOOLEAN, DATE -> ((Comparable) left).compareTo(expected);
     };
   }
 }

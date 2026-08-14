@@ -24,7 +24,7 @@ class CliJdbcConnectionE2ETest {
         "--database", "mem:" + databaseName()));
 
     assertEquals("""
-        {"result":{"value":"1"}}
+        {"result":{"value":1}}
         """, output);
   }
 
@@ -36,7 +36,7 @@ class CliJdbcConnectionE2ETest {
         "--jdbc-database", "jdbc:h2:mem:" + databaseName()));
 
     assertEquals("""
-        {"result":{"value":"1"}}
+        {"result":{"value":1}}
         """, output);
   }
 
@@ -47,7 +47,7 @@ class CliJdbcConnectionE2ETest {
         "--jdbc-database", "jdbc:h2:mem:" + databaseName()));
 
     assertEquals("""
-        {"result":{"value":"1"}}
+        {"result":{"value":1}}
         """, output);
   }
 
@@ -68,7 +68,7 @@ class CliJdbcConnectionE2ETest {
         "--jdbc-database", "jdbc:h2:mem:" + databaseName()));
 
     assertEquals("""
-        {"customer":{"id":"7"}}
+        {"customer":{"id":7}}
         """, output);
   }
 

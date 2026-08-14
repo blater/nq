@@ -39,7 +39,7 @@ class CacheQueryExamplesE2ETest {
       }
 
       assertEquals(
-          "{\"result\":{\"region\":[{\"country\":\"GB\",\"customerCount\":\"2\"},{\"country\":\"US\",\"customerCount\":\"4\"}]}}",
+          "{\"result\":{\"region\":[{\"country\":\"GB\",\"customerCount\":2},{\"country\":\"US\",\"customerCount\":4}]}}",
           JsonOutputWriter.map(hierarchy),
           filename);
     }

@@ -101,7 +101,7 @@ class DocumentConversionCliTest {
         """);
 
     assertEquals(
-        "{\"customer\":{\"id\":\"7\",\"name\":\"Alice\"}}\n",
+        "{\"customer\":{\"id\":7,\"name\":\"Alice\"}}\n",
         captureStdout(() -> CliTestHarness.run(
             "convert", "--input-file", toml.toString(), "--output", "json")));
 
@@ -128,7 +128,7 @@ class DocumentConversionCliTest {
         "--output", "json"));
 
     assertEquals("""
-        [{"result":{"id":"7"}}]
+        [{"result":{"id":7}}]
         """, output);
     assertFalse(output.contains("Alice"));
   }
@@ -142,7 +142,7 @@ class DocumentConversionCliTest {
       String output = captureStdout(() -> CliTestHarness.run(
           "convert", "--input-file", "-", "--input-format", "yaml", "-o", "json"));
       assertEquals("""
-          {"customer":{"id":"7","name":"Alice"}}
+          {"customer":{"id":7,"name":"Alice"}}
           """, output);
     } finally {
       System.setIn(original);

@@ -22,6 +22,7 @@ import java.util.Objects;
 public final class Node {
   private String name = null;
   private String value = null;
+  private ScalarKind scalarKind = ScalarKind.STRING;
   private boolean nullValue = false;
   // Renders as an XML attribute on its parent rather than a child element.
   private boolean attribute = false;

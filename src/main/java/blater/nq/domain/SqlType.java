@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * raw values for comparison and SQL binding.
  */
 public enum SqlType {
-  STRING, INTEGER, LONG, SHORT, FLOAT, DOUBLE, NUMBER, DATE;
+  STRING, INTEGER, LONG, SHORT, FLOAT, DOUBLE, NUMBER, BOOLEAN, DATE;
 
   public boolean isQuoted() {
     return this == STRING || this == DATE;
@@ -29,6 +29,7 @@ public enum SqlType {
       case FLOAT   -> Float.valueOf(s);
       case DOUBLE  -> Double.valueOf(s);
       case NUMBER  -> new BigDecimal(s);
+      case BOOLEAN -> Boolean.valueOf(s);
       case DATE    -> LocalDateTime.parse(s, DateFormats.TIMESTAMP);
     };
   }
@@ -45,6 +46,7 @@ public enum SqlType {
       case FLOAT -> value instanceof Number n ? n.floatValue() : Float.valueOf(value.toString());
       case DOUBLE -> value instanceof Number n ? n.doubleValue() : Double.valueOf(value.toString());
       case NUMBER -> toBigDecimal(value);
+      case BOOLEAN -> value instanceof Boolean bool ? bool : Boolean.valueOf(value.toString());
       case DATE -> toLocalDateTime(value);
     };
   }
@@ -58,6 +60,7 @@ public enum SqlType {
       case Types.REAL     -> FLOAT;
       case Types.DOUBLE   -> DOUBLE;
       case Types.DECIMAL, Types.NUMERIC -> NUMBER;
+      case Types.BOOLEAN, Types.BIT -> BOOLEAN;
       case Types.DATE, Types.TIME, Types.TIMESTAMP -> DATE;
       default -> STRING;
     };

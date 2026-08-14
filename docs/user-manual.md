@@ -758,7 +758,7 @@ nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.xml
 Output:
 
 ```json
-{"result":{"region":[{"country":"GB","customerCount":"2"},{"country":"US","customerCount":"4"}]}}
+{"result":{"region":[{"country":"GB","customerCount":2},{"country":"US","customerCount":4}]}}
 ```
 
 Repeated scalar values are queryable through child tables rather than packed strings:

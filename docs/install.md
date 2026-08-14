@@ -145,7 +145,7 @@ nq "select id, name from customers where city = 'London' order by id;" customers
 Expected output:
 
 ```json
-[{"id":"1","name":"Alice"},{"id":"3","name":"Eva"}]
+[{"id":1,"name":"Alice"},{"id":3,"name":"Eva"}]
 ```
 
 If this fails, consult [Troubleshooting](troubleshooting.md) and include the NQ

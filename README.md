@@ -107,7 +107,7 @@ from customer;
 ```
 
 ```json
-{"summary":{"customerCount":"2","firstCustomer":"Alice"}}
+{"summary":{"customerCount":2,"firstCustomer":"Alice"}}
 ```
 
 ## Updating a database from a JSON, XML, YAML, TOML, JSONL, CSV, or TSV file
@@ -274,18 +274,18 @@ The result contains each customer once and nests orders and items beneath it:
         "orders": {
           "order": [
             {
-              "order_id": "1001", "date": "2026-07-01",
+              "order_id": 1001, "date": "2026-07-01",
               "items": {
                 "item": [
-                  { "product": "TEA", "qty": "2" },
-                  { "product": "CAKE", "qty": "1" }
+                  { "product": "TEA", "qty": 2 },
+                  { "product": "CAKE", "qty": 1 }
                 ]
               }
             },
             {
-              "order_id": "1002", "date": "2026-07-15",
+              "order_id": 1002, "date": "2026-07-15",
               "items": {
-                "item": { "product": "MUG", "qty": "2" }
+                "item": { "product": "MUG", "qty": 2 }
               }
             }
           ]
@@ -297,10 +297,10 @@ The result contains each customer once and nests orders and items beneath it:
         "name": "Bob", "city": "Sydney",
         "orders": {
           "order": {
-            "order_id": "1003", "date": "2026-07-20",
+            "order_id": 1003, "date": "2026-07-20",
             "items": {
               "item": {
-                "product": "COFFEE", "qty": "1"
+                "product": "COFFEE", "qty": 1
               }
             }
           }

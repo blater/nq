@@ -25,12 +25,12 @@ class PromotedExamplesE2ETest {
         "run", "--script-text", "select id, name from customers where city = 'London' order by id;",
         "--input-file", "docs/examples/customers.json"));
 
-    assertEquals("[{\"id\":\"1\",\"name\":\"Alice\"},{\"id\":\"3\",\"name\":\"Eva\"}]\n", output);
+    assertEquals("[{\"id\":1,\"name\":\"Alice\"},{\"id\":3,\"name\":\"Eva\"}]\n", output);
   }
 
   @Test
   void promotedNestedSummaryMatchesAcrossJsonYamlAndXml() throws Exception {
-    String expected = "{\"result\":{\"region\":[{\"country\":\"GB\",\"customerCount\":\"2\"},{\"country\":\"US\",\"customerCount\":\"4\"}]}}\n";
+    String expected = "{\"result\":{\"region\":[{\"country\":\"GB\",\"customerCount\":2},{\"country\":\"US\",\"customerCount\":4}]}}\n";
     for (String extension : new String[]{"json", "yaml", "xml"}) {
       String output = captureStdout(() -> CliTestHarness.run(
           "run", "--script-file", "docs/examples/identity-country-counts.nq",
@@ -44,7 +44,7 @@ class PromotedExamplesE2ETest {
     String comparison = captureStdout(() -> CliTestHarness.run(
         "run", "--script-file", "docs/examples/jq/maximal.nq",
         "--input-file", "docs/examples/jq/elements.json"));
-    assertEquals("[{\"id\":\"2\"},{\"id\":\"3\"}]\n", comparison);
+    assertEquals("[{\"id\":2},{\"id\":3}]\n", comparison);
 
     String database = "mem:recipe_" + UUID.randomUUID().toString().replace("-", "");
     String hierarchy = captureStdout(() -> CliTestHarness.run(
@@ -111,7 +111,7 @@ class PromotedExamplesE2ETest {
     Path jsonl = tempDir.resolve("customers.jsonl");
     Files.writeString(jsonl, "{\"id\":1,\"city\":\"London\"}\n{\"id\":2,\"city\":\"Paris\"}\n");
     assertEquals(
-        "[{\"id\":\"2\"}]\n",
+        "[{\"id\":2}]\n",
         captureStdout(() -> CliTestHarness.run(
             "run", "--script-text", "select id from item where city = 'Paris';",
             "--input-file", jsonl.toString())));

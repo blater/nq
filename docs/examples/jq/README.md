@@ -19,7 +19,7 @@ nq docs/examples/jq/maximal.nq docs/examples/jq/elements.json
 Expected NQ output:
 
 ```json
-[{"id":"2"},{"id":"3"}]
+[{"id":2},{"id":3}]
 ```
 
 This fixture compares the expression styles only. It is not a benchmark and
