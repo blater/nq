@@ -5,6 +5,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source_repository="${NQ_SOURCE_REPOSITORY:-blater/nq}"
 
 usage() {
+  printf 'Current release: %s\n\n' "$current_version"
   cat <<'USAGE'
 Usage: ./release.sh X.Y.Z
 
@@ -59,7 +60,17 @@ version_is_greater() {
   return 1
 }
 
+cd "$script_dir"
+
+current_version="$(awk -F '[<>]' '/^[[:space:]]*<version>/ { print $3; exit }' pom.xml)"
+[[ "$current_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
+  die "Current pom.xml version [$current_version] is not in X.Y.Z numeric format."
+
 case "$#" in
+  0)
+    usage
+    exit 0
+    ;;
   1)
     case "$1" in
       -h|--help)
@@ -77,8 +88,6 @@ esac
 version="$1"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
   die "Version must use X.Y.Z numeric format, for example 1.2.3."
-
-cd "$script_dir"
 
 require_command gh
 require_command git
@@ -101,10 +110,6 @@ actions_secrets="$(
   gh secret list --repo "$source_repository" --app actions
 )" || die "Could not read GitHub Actions secrets for $source_repository."
 require_actions_secret HOMEBREW_TAP_TOKEN
-
-current_version="$(awk -F '[<>]' '/^[[:space:]]*<version>/ { print $3; exit }' pom.xml)"
-[[ "$current_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || \
-  die "Current pom.xml version [$current_version] is not in X.Y.Z numeric format."
 
 version_is_greater "$version" "$current_version" || \
   die "Version $version must be greater than current version $current_version."
