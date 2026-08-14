@@ -36,120 +36,19 @@ final class DmlBuilder {
   */
   static NestStatement buildDmlUpdate(HiQLParser.DmlUpdateContext ctx)
   {
-    // these are the db generated fields
-    //   e.g. return userId into {users.id}
-    // columnName, xPath
-    List<ReturnMapping> returnMappings = buildReturnMappings(ctx.returnsClause());
-
-    // build up expressions list
-    List<HiQLParser.DmlExprContext> expressions = new ArrayList<>();
-    for (HiQLParser.DmlAssignmentContext assignment : ctx.dmlAssignmentList().dmlAssignment()) {
-      expressions.add(assignment.dmlExpr());
-    }
-    if (ctx.dmlPredicateList() != null) {
-      for (HiQLParser.DmlPredicateContext predicate : ctx.dmlPredicateList().dmlPredicate()) {
-        expressions.add(predicate.dmlExpr());
-      }
-    }
-
-    if (hasNoMappedSources(expressions)) {
-      // it is an Update which doesn't reference data from the input document, just return the literal SQL
-      if (!returnMappings.isEmpty())
-        fatal(FATAL_SYNTAX_ERROR,"DML returns requires at least one mapped input source.");
-      return NestStatement.literal(ParseUtils.textOf(ctx).trim());
-
-    } else {
-      // The update references data from the input. Return a fully mapped statement
-      boolean fromTempRowset = ctx.STRING() != null;
-      List<InputToColumnMap> mappings = new ArrayList<>();
-
-      for (HiQLParser.DmlAssignmentContext assignment : ctx.dmlAssignmentList().dmlAssignment()) {
-        mappings.add(buildExpressionMapping(assignment.name().getText(), assignment.dmlExpr(), false, fromTempRowset));
-      }
-      if (ctx.dmlPredicateList() != null) {
-        for (HiQLParser.DmlPredicateContext predicate : ctx.dmlPredicateList().dmlPredicate()) {
-          mappings.add(buildExpressionMapping(predicate.name().getText(), predicate.dmlExpr(), true, fromTempRowset));
-        }
-      }
-      return NestStatement.dml(UPDATE, ctx.name().getText(), sourceRowsetName(ctx.STRING()), mappings, returnMappings);
-    }
+    return DmlMutationBuilder.buildUpdate(ctx);
   }
 
   /*
      Insert into table
    */
   static NestStatement buildDmlInsert(HiQLParser.DmlInsertContext parseCtx) {
-    /*
-       Store the mappings of column+path for returned values into the response document
-       e.g  "returns personid into {person.id}, anotherId into {another.path.id}"
-     */
-    List<ReturnMapping> returnMappings = buildReturnMappings(parseCtx.returnsClause());
-
-    if (parseCtx.selectStatement() != null)  {
-      //
-      // It's an INSERT ... FROM SELECT.  Return the literal SQL
-      //
-      validateInsertSourceSelect(parseCtx.selectStatement(), returnMappings);
-      return NestStatement.literal(ParseUtils.textOf(parseCtx).trim());
-
-    } else if (hasNoMappedSources(parseCtx.dmlExprList().dmlExpr())) {
-      //
-      // It's an INSERT but has no mapped paths, Return the literal SQL
-      //
-      if (!returnMappings.isEmpty())
-        fatal(FATAL_SYNTAX_ERROR, "DML returns requires at least one mapped input source.");
-
-      return NestStatement.literal(ParseUtils.textOf(parseCtx).trim());
-
-    } else {
-      //
-      // it is an insert which references paths, return a fully mapped stqtement
-      //
-      List<HiQLParser.NameContext> names = parseCtx.nameList() == null ? List.of() : parseCtx.nameList().name();
-      List<HiQLParser.DmlExprContext> values = parseCtx.dmlExprList().dmlExpr();
-      if (!names.isEmpty() && names.size() != values.size()) {
-        fatal(FATAL_SYNTAX_ERROR, "INSERT column count does not match value count.");
-      }
-
-      List<InputToColumnMap> mappings = new ArrayList<>();
-      boolean fromTempRowset = parseCtx.STRING() != null;
-      for (int index = 0; index < values.size(); index++) {
-        String sqlName = names.isEmpty() ? "$" + (index + 1) : names.get(index).getText();
-        mappings.add(buildExpressionMapping(sqlName, values.get(index), false, fromTempRowset));
-      }
-
-      return NestStatement.dml(INSERT, parseCtx.name().getText(), sourceRowsetName(parseCtx.STRING()), mappings, returnMappings);
-    }
+    return DmlMutationBuilder.buildInsert(parseCtx);
   }
 
 
-  private static boolean hasNoMappedSources(List<HiQLParser.DmlExprContext> expressions) {
+  static boolean hasNoMappedSources(List<HiQLParser.DmlExprContext> expressions) {
     return expressions.stream().allMatch(expr -> findDmlSources(expr).isEmpty());
-  }
-
-  /*
-   * runs syntax/semantic checks on an insert statement.
-   * throws fatal error/system.exit if any found.
-   */
-  static void validateInsertSourceSelect(HiQLParser.SelectStatementContext ctx, List<ReturnMapping> returnMappings) {
-    if (!returnMappings.isEmpty())
-      fatal(FATAL_SYNTAX_ERROR,"INSERT ... SELECT does not support returns.");
-
-    if (ctx.selectBranch().size() > 1)
-      fatal(FATAL_SYNTAX_ERROR, "insert select source cannot use hierarchy union.");
-
-    if (ctx.structureClause() != null)
-      fatal(FATAL_SYNTAX_ERROR, "insert select source cannot use structure.");
-
-    for (HiQLParser.SelectBranchContext branch : ctx.selectBranch()) {
-      if (branch.usingClause() != null)
-        fatal(FATAL_SYNTAX_ERROR, "insert select source cannot use 'using' metadata.");
-
-      for (HiQLParser.SelectItemContext item : branch.selectItem()) {
-        if (item.mappingAlias() != null)
-          fatal(FATAL_SYNTAX_ERROR, "insert select source cannot use hierarchy mapping aliases.");
-      }
-    }
   }
 
   public static Hierarchy builderReturnHierarchy(HiQLParser.ReturnsClauseContext ctx) {
@@ -163,7 +62,7 @@ ReturnMapping
   - String columnName
   - String sourceText
  */
-  private static List<ReturnMapping> buildReturnMappings(HiQLParser.ReturnsClauseContext ctx) {
+  static List<ReturnMapping> buildReturnMappings(HiQLParser.ReturnsClauseContext ctx) {
     // todo - change this to build a Hierarchy instead.
     /*
      * activeObjects records the latest Node opened or created for a path.
@@ -274,12 +173,12 @@ HierarchyPath
   + private boolean attribute = false;
 */
 
-  private static String sourceRowsetName(org.antlr.v4.runtime.tree.TerminalNode token) {
+  static String sourceRowsetName(org.antlr.v4.runtime.tree.TerminalNode token) {
     return token == null ? null : unquoteString(token.getText());
   }
 
 
-  private static InputToColumnMap buildExpressionMapping(String sqlName, HiQLParser.DmlExprContext expr, boolean key, boolean fromTempRowset)
+  static InputToColumnMap buildExpressionMapping(String sqlName, HiQLParser.DmlExprContext expr, boolean key, boolean fromTempRowset)
   {
     List<HiQLParser.DmlSourceContext> sources = findDmlSources(expr);
     String text = ParseUtils.textOf(expr).trim();

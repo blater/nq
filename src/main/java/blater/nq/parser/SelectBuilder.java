@@ -1,17 +1,12 @@
 package blater.nq.parser;
 
-import blater.nq.core.parser.HiQLLexer;
 import blater.nq.core.parser.HiQLParser;
 import blater.nq.domain.HierarchyPath;
 import blater.nq.domain.MappingPlan;
 import blater.nq.parser.script.NestStatement;
 import blater.nq.parser.script.SelectBlueprint;
 import blater.nq.util.Log;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -150,11 +145,11 @@ final class SelectBuilder {
 
   private static SelectItem readSelectItem(HiQLParser.SelectItemContext ctx) {
     SelectItem selectItem = null;
-    List<Token> exprTokens = tokensIn(ctx.selectExpr());
-    String exprText = joinText(exprTokens);
+    List<Token> exprTokens = SelectTokenReader.tokensIn(ctx.selectExpr());
+    String exprText = SelectTokenReader.joinText(exprTokens);
     String alias = ctx.sqlAlias() == null ? null : ParseUtils.unquoteIdentifier(ctx.sqlAlias().name().getText());
 
-    String name = alias != null ? alias : trailingIdentifier(exprTokens);
+    String name = alias != null ? alias : SelectTokenReader.trailingIdentifier(exprTokens);
     if (ctx.mappingAlias() != null) {
       String cmd = null;
       String cmdArg = null;
@@ -218,45 +213,6 @@ final class SelectBuilder {
       items.add(new StructureItem(path, expressions, expressionFacts));
     }
     return items;
-  }
-
-  private static List<Token> tokensIn(ParserRuleContext ctx) {
-    List<Token> result = new ArrayList<>();
-    if (ctx != null)
-      collectLeafTokens(ctx, result);
-    return result;
-  }
-
-  private static void collectLeafTokens(ParseTree node, List<Token> out) {
-    if (node instanceof TerminalNode terminal) {
-      Token token = terminal.getSymbol();
-      if (token.getType() != Token.EOF)
-        out.add(token);
-      return;
-    }
-    for (int idx = 0; idx < node.getChildCount(); idx++) {
-      collectLeafTokens(node.getChild(idx), out);
-    }
-  }
-
-  private static String joinText(List<Token> tokens) {
-    if (tokens.isEmpty())
-      return "";
-
-    Token first = tokens.getFirst();
-    Token last = tokens.getLast();
-    return first.getInputStream().getText(new Interval(first.getStartIndex(), last.getStopIndex()));
-  }
-
-  private static String trailingIdentifier(List<Token> tokens) {
-    for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-      Token token = tokens.get(idx);
-      if (token.getType() == HiQLLexer.IDENT
-          || token.getType() == HiQLLexer.QUOTED_IDENTIFIER) {
-        return ParseUtils.unquoteIdentifier(token.getText());
-      }
-    }
-    return null;
   }
 
   /*

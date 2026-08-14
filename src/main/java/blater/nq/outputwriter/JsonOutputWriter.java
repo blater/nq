@@ -63,7 +63,7 @@ public class JsonOutputWriter implements OutputWriter {
   }
 
   private static void writeProperty(StringBuilder json, String name, Node node) {
-    json.append(quote(name)).append(":");
+    json.append(JsonStringEncoder.quote(name)).append(":");
     writeValue(json, node);
   }
 
@@ -95,7 +95,7 @@ public class JsonOutputWriter implements OutputWriter {
     } else if (node.isNull()) {
       json.append("null");
     } else if (node.hasValue()) {
-      json.append(quote(node.getValue()));
+      json.append(JsonStringEncoder.quote(node.getValue()));
     } else {
       writeObject(json, node);
     }
@@ -110,7 +110,7 @@ public class JsonOutputWriter implements OutputWriter {
       }
       first = false;
 
-      json.append(quote(entry.getKey())).append(":");
+      json.append(JsonStringEncoder.quote(entry.getKey())).append(":");
       List<Node> children = entry.getValue();
       if (children.size() == 1 && !children.getFirst().isArrayItem()) {
         writeValue(json, children.getFirst());
@@ -140,29 +140,4 @@ public class JsonOutputWriter implements OutputWriter {
     return grouped;
   }
 
-  private static String quote(String value) {
-    StringBuilder escaped = new StringBuilder(value.length() + 2);
-    escaped.append('"');
-    for (int index = 0; index < value.length(); index++) {
-      char ch = value.charAt(index);
-      switch (ch) {
-        case '"' -> escaped.append("\\\"");
-        case '\\' -> escaped.append("\\\\");
-        case '\b' -> escaped.append("\\b");
-        case '\f' -> escaped.append("\\f");
-        case '\n' -> escaped.append("\\n");
-        case '\r' -> escaped.append("\\r");
-        case '\t' -> escaped.append("\\t");
-        default -> {
-          if (ch < 0x20) {
-            escaped.append(String.format("\\u%04x", (int) ch));
-          } else {
-            escaped.append(ch);
-          }
-        }
-      }
-    }
-    escaped.append('"');
-    return escaped.toString();
-  }
 }
