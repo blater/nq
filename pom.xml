@@ -5,13 +5,13 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>blater</groupId>
-  <artifactId>nq</artifactId>
+  <artifactId>nql</artifactId>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <main.class>blater.nq.Main</main.class>
+    <main.class>blater.nql.Main</main.class>
     <maven.compiler.release>25</maven.compiler.release>
-    <native.image.name>nq</native.image.name>
+    <native.image.name>nql</native.image.name>
 
     <!-- dependency versions -->
     <jdom2.version>2.0.6.1</jdom2.version>
@@ -153,7 +153,7 @@
         rather than through a Maven repository. Prefer a sibling development
         build when present; otherwise download the pinned release. Only its
         library classes, dictionaries, licence, and native-image metadata are
-        embedded in NQ.
+        embedded in NQL.
       -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -292,7 +292,7 @@
         <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <native.image.name>nq</native.image.name>
+        <native.image.name>nql</native.image.name>
       </properties>
       <dependencies>
         <dependency>
@@ -315,7 +315,7 @@
     <profile>
       <id>jdbc-enterprise</id>
       <properties>
-        <native.image.name>nq-enterprise</native.image.name>
+        <native.image.name>nql-enterprise</native.image.name>
       </properties>
       <dependencies>
         <dependency>
@@ -358,7 +358,7 @@
     <profile>
       <id>jdbc-all</id>
       <properties>
-        <native.image.name>nq-all</native.image.name>
+        <native.image.name>nql-all</native.image.name>
       </properties>
       <dependencies>
         <dependency>
@@ -430,7 +430,7 @@
                 <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
                 <buildArg>-Os</buildArg>
                 <buildArg>-H:-UnlockExperimentalVMOptions</buildArg>
-                <buildArg>--exact-reachability-metadata=blater.nq</buildArg>
+                <buildArg>--exact-reachability-metadata=blater.nql</buildArg>
                 <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
                 <buildArg>--initialize-at-run-time=sun.security.util.Password$ConsoleHolder</buildArg>
               </buildArgs>

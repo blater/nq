@@ -1,4 +1,4 @@
-# Small jq/NQ syntax comparison
+# Small jq/NQL syntax comparison
 
 The fixture [`elements.json`](elements.json) contains four objects with fields
 `a` and `id`. The task is to select every object whose `a` equals the maximum
@@ -10,13 +10,13 @@ With jq:
 jq -f docs/examples/jq/maximal.jq docs/examples/jq/elements.json
 ```
 
-With NQ:
+With NQL:
 
 ```bash
-nq docs/examples/jq/maximal.nq docs/examples/jq/elements.json
+nql docs/examples/jq/maximal.nql docs/examples/jq/elements.json
 ```
 
-Expected NQ output:
+Expected NQL output:
 
 ```json
 [{"id":2},{"id":3}]

@@ -1,6 +1,6 @@
-# NQ recipes
+# NQL recipes
 
-These task-oriented recipes for NQ — SQL for nested data use checked-in,
+These task-oriented recipes for NQL — SQL for nested data use checked-in,
 sanitized fixtures and scripts. Commands are exercised by the test suite.
 
 ## Start here

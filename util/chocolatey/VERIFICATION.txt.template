@@ -2,22 +2,22 @@ VERIFICATION
 
 DISTRIBUTION RIGHTS
 
-NQ is released under the GNU Affero General Public License version 3. The
-license grants the right to redistribute nq.exe. A complete copy of the
+NQL is released under the GNU Affero General Public License version 3. The
+license grants the right to redistribute nql.exe. A complete copy of the
 license is included in this package as LICENSE.txt.
 
 The corresponding source code for this exact build is available at:
 
-https://github.com/blater/nq/tree/v__VERSION__
+https://github.com/blater/nql/tree/v__VERSION__
 
 BINARY VERIFICATION
 
-The nq.exe included in this package is built from the tagged NQ source by the
+The nql.exe included in this package is built from the tagged NQL source by the
 official GitHub Actions release workflow. The same executable is included in:
 
-https://github.com/blater/nq/releases/download/v__VERSION__/nq-__VERSION__-windows-x64.zip
+https://github.com/blater/nql/releases/download/v__VERSION__/nql-__VERSION__-windows-x64.zip
 
-The SHA-256 hash of the packaged nq.exe is:
+The SHA-256 hash of the packaged nql.exe is:
 
 __EXE_SHA256__
 
@@ -25,8 +25,8 @@ To verify it:
 
 1. Download the Windows archive and SHA256SUMS from the release above.
 2. Check the archive against its entry in SHA256SUMS.
-3. Extract nq.exe and run:
+3. Extract nql.exe and run:
 
-   Get-FileHash nq.exe -Algorithm SHA256
+   Get-FileHash nql.exe -Algorithm SHA256
 
 The resulting hash must match the hash recorded in this file.

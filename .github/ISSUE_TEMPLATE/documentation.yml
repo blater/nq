@@ -25,4 +25,4 @@ body:
   - type: input
     id: version
     attributes:
-      label: NQ version, if the problem is version-specific
+      label: NQL version, if the problem is version-specific

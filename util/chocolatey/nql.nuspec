@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>nql</id>
+    <version>0.0.0</version>
+    <title>NQL</title>
+    <authors>NQL contributors</authors>
+    <owners>blater</owners>
+    <projectUrl>https://github.com/blater/nql</projectUrl>
+    <packageSourceUrl>https://github.com/blater/nql/tree/master/util/chocolatey</packageSourceUrl>
+    <docsUrl>https://github.com/blater/nql/blob/master/docs/install.md</docsUrl>
+    <bugTrackerUrl>https://github.com/blater/nql/issues</bugTrackerUrl>
+    <licenseUrl>https://github.com/blater/nql/blob/master/LICENSE.txt</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <summary>Bridge the gap between data files and databases with SQL.</summary>
+    <description>NQL uses SQL to query, extract, transform, and load JSON, YAML, XML, CSV, JSON Lines, and Parquet in files and relational databases.</description>
+    <releaseNotes>https://github.com/blater/nql/releases</releaseNotes>
+    <tags>nql sql etl cli database jdbc json yaml xml csv parquet</tags>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

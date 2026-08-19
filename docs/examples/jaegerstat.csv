@@ -1,2 +1,2 @@
 service, operation, date, count, mean, median, variance, standard-deviation, jitter
-nq-api, HTTP POST /api/1/load, 2026-07-25T019:00:00, 242, 151.16, 79.00, 93882.32, 306.31, 155.67, 112,57, 189.75, 100.44, 201.88
+nql-api, HTTP POST /api/1/load, 2026-07-25T019:00:00, 242, 151.16, 79.00, 93882.32, 306.31, 155.67, 112,57, 189.75, 100.44, 201.88

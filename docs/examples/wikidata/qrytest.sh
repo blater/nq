@@ -2,8 +2,8 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-nq_command="${NQ_COMMAND:-nq}"
+nql_command="${NQL_COMMAND:-nql}"
 
-"$nq_command" \
-  "$script_dir/wikidata-keyed-companies.nq" \
+"$nql_command" \
+  "$script_dir/wikidata-keyed-companies.nql" \
   "$script_dir/wikidata-companies.json"

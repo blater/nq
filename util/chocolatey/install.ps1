@@ -5,9 +5,9 @@ if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
 }
 
 $release = Invoke-RestMethod `
-  -Uri "https://api.github.com/repos/blater/nq/releases/latest"
+  -Uri "https://api.github.com/repos/blater/nql/releases/latest"
 $version = $release.tag_name.TrimStart("v")
-$packageName = "nq.$version.nupkg"
+$packageName = "nql.$version.nupkg"
 $packageAsset = $release.assets | Where-Object { $_.name -eq $packageName }
 $checksumsAsset = $release.assets | Where-Object { $_.name -eq "SHA256SUMS" }
 
@@ -15,7 +15,7 @@ if (-not $packageAsset -or -not $checksumsAsset) {
   throw "GitHub release $($release.tag_name) does not contain the Chocolatey package and checksums."
 }
 
-$temp = Join-Path ([IO.Path]::GetTempPath()) ("nq-chocolatey-" + [guid]::NewGuid())
+$temp = Join-Path ([IO.Path]::GetTempPath()) ("nql-chocolatey-" + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $temp | Out-Null
 
 try {
@@ -37,7 +37,7 @@ try {
     throw "Checksum verification failed for $packageName."
   }
 
-  & choco upgrade nq `
+  & choco upgrade nql `
     --version $version `
     --source $temp `
     --yes `

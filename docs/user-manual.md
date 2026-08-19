@@ -1,8 +1,8 @@
-# NQ User Manual
+# NQL User Manual
 
 ## Introduction
 
-NQ is a SQL-like scripting language for moving data between relational databases and hierarchical documents. It lets you write ordinary SQL and add small mapping clauses that describe where values should be read from or written to in a neutral `Hierarchy` tree.
+NQL is a SQL-like scripting language for moving data between relational databases and hierarchical documents. It lets you write ordinary SQL and add small mapping clauses that describe where values should be read from or written to in a neutral `Hierarchy` tree.
 
 Typical uses are:
 
@@ -28,7 +28,7 @@ select 1 into {result.value};
 Run it with an operational configuration file:
 
 ```bash
-nq script.nq --config database.properties
+nql script.nql --config database.properties
 ```
 
 Example `database.properties`:
@@ -42,13 +42,13 @@ jdbc.password=
 
 ### Convert Input
 
-An input file supplied without a script is read into NQ's neutral hierarchy and
+An input file supplied without a script is read into NQL's neutral hierarchy and
 written directly as JSON by default. Use `--output` to select another format:
 
 ```bash
-nq customers.xml
-nq customers.json -o yaml
-nq customers.csv -o markdown
+nql customers.xml
+nql customers.json -o yaml
+nql customers.csv -o markdown
 ```
 
 Direct conversion does not materialize H2 tables, create or select a cache, or
@@ -58,7 +58,7 @@ conversion and writes only the hierarchy produced by the script.
 Standard input defaults to JSON, so only non-JSON streams need `-t`:
 
 ```bash
-echo '{"customer":{"id":7,"name":"Alice"}}' | nq -o yaml
+echo '{"customer":{"id":7,"name":"Alice"}}' | nql -o yaml
 ```
 
 ### Query An Input Document
@@ -94,7 +94,7 @@ structure {result.customer} key (c.id);
 Run:
 
 ```bash
-nq customers.nq customers.json
+nql customers.nql customers.json
 ```
 
 Output:
@@ -106,8 +106,8 @@ Output:
 The same query can read JSON from a pipeline or shell redirection:
 
 ```bash
-cat customers.json | nq customers.nq
-nq customers.nq < customers.json
+cat customers.json | nql customers.nql
+nql customers.nql < customers.json
 ```
 
 ### Query SQL To Hierarchical Output
@@ -153,7 +153,7 @@ where personid = {message.person.@id};
 Run:
 
 ```bash
-nq update-person.nq input.xml --config database.properties
+nql update-person.nql input.xml --config database.properties
 ```
 
 ### Use JSON, YAML, TOML, CSV, TSV, Or Parquet Input
@@ -240,7 +240,7 @@ where region = '${region:EMEA}';
 Run:
 
 ```bash
-nq people.nq --config database.properties --param region=APAC
+nql people.nql --config database.properties --param region=APAC
 ```
 
 `${name}` is replaced by a runtime parameter or Java system property. `${name:default}` uses a default when no value is found.
@@ -261,33 +261,33 @@ values ({personid}, {firstname});
 
 ### Usage
 
-NQ uses positional operands for each command's primary inputs. Named options
+NQL uses positional operands for each command's primary inputs. Named options
 provide disambiguation and optional modifications; they are not required for
 the normal path.
 
 ```bash
-nq [<script.nq> [<data>]]
-nq [<data>]
-nq run <script> [<data>] [options]
-nq convert [<data>] [options]
-nq catalog [<data>] [<pattern>] [options]
-nq cache load [<data>] [<name>] [options]
-nq cache use <name> [options]
-nq cache list [options]
-nq cache clear (<name> | olderthan <age> | all) [options]
-nq capabilities [-r <format>]
+nql [<script.nql> [<data>]]
+nql [<data>]
+nql run <script> [<data>] [options]
+nql convert [<data>] [options]
+nql catalog [<data>] [<pattern>] [options]
+nql cache load [<data>] [<name>] [options]
+nql cache use <name> [options]
+nql cache list [options]
+nql cache clear (<name> | olderthan <age> | all) [options]
+nql capabilities [-r <format>]
 ```
 
 Piped and redirected input is always data. It defaults to JSON unless `-t` or
 `--input-format` says otherwise:
 
 ```bash
-cat customers.json | nq customers.nq
-nq customers.nq < customers.json
-cat customers.json | nq convert
+cat customers.json | nql customers.nql
+nql customers.nql < customers.json
+cat customers.json | nql convert
 ```
 
-Bare `nq` prints brief usage; it does not consume stdin merely to perform the
+Bare `nql` prints brief usage; it does not consume stdin merely to perform the
 default JSON-to-JSON identity conversion. Supply `convert`, a format option, or
 a script to state the intended work.
 
@@ -301,7 +301,7 @@ The script may still modify the selected database explicitly.
 versioned operational report; `--report-format` controls its serialization and
 defaults to Markdown.
 
-`nq capabilities` (also available as the root flag `nq --capabilities`) prints
+`nql capabilities` (also available as the root flag `nql --capabilities`) prints
 the versioned discovery contract used by agents and integrations. It defaults
 to JSON, accepts only `--report-format`, and does not inspect stdin, files,
 configuration, environment variables, caches, databases, or installed drivers.
@@ -321,7 +321,7 @@ The command-specific `details` fields are:
 | `cache.use` | `cache_name`, `cache_path`, and boolean `active`. |
 | `cache.list` | `cache_dir` and `caches[]`; every item has `name`, ISO-8601 `modified`, and boolean `active`. |
 | `cache.clear` | integer `cleared`. |
-| `capabilities` | `contract_version`, `nq_version`, commands, option applicability and aliases, formats, JDBC drivers, CLI/stdin/cache semantics, report schemas, and exit codes. |
+| `capabilities` | `contract_version`, `nql_version`, commands, option applicability and aliases, formats, JDBC drivers, CLI/stdin/cache semantics, report schemas, and exit codes. |
 
 Structured diagnostics use `schema_version`, `code`, `level`, `message`, and an
 optional `usage`. JSON and JSONL emit one object per line; YAML emits one marked
@@ -334,15 +334,15 @@ event row. Result data remains on stdout and diagnostics remain on stderr.
 | Option                     | Meaning                                          |
 |----------------------------|--------------------------------------------------|
 | `-h`                       | Print brief usage help.                          |
-| `--help`                   | Print the complete `nq(1)` manual page.      |
-| `--capabilities`           | Root alias for `nq capabilities`; print its JSON discovery contract. |
+| `--help`                   | Print the complete `nql(1)` manual page.      |
+| `--capabilities`           | Root alias for `nql capabilities`; print its JSON discovery contract. |
 | `help [topic]`             | List focused help topics or print one topic.     |
 | `-f`, `--script-file path` | Run a script from an explicitly named file.      |
 | `-e`, `--script-text text` | Run explicitly supplied inline script text.      |
 | `-i`, `--input-file path`  | Read an explicitly named input file; use `-` for stdin. |
 | `-t`, `--input-format type` | Name the format of stdin.                        |
 | `--param name=value`       | Add or override a runtime template parameter.    |
-| `--config path`            | Load whitelisted operational NQ/JDBC settings.   |
+| `--config path`            | Load whitelisted operational NQL/JDBC settings.   |
 | `--params-file path`       | Load task parameters visible to scripts/readers. |
 | `--db type`                | Select a supported logical database type and infer its driver class and JDBC URL. |
 | `--database name`          | Set the simple-form database name, Oracle service name, or H2 URL suffix. |
@@ -378,8 +378,8 @@ rejected. Use `--` when a positional operand begins with `-`.
 <cache-dir>/<logical-name>.mv.db
 ```
 
-Resolution is `~/.nq/cache`, then `cache.dir` from `--config`, then
-`NQ_CACHE_DIR`, then explicit `--cache-dir`. Command-line options override every
+Resolution is `~/.nql/cache`, then `cache.dir` from `--config`, then
+`NQL_CACHE_DIR`, then explicit `--cache-dir`. Command-line options override every
 inherited value. Read-only operations do not create an absent directory.
 
 `--config` and `--params-file` are deliberately distinct. The former accepts
@@ -392,7 +392,7 @@ overrides a task parameter from a file.
 The simple command-line form builds a JDBC URL and infers the driver class:
 
 ```bash
-nq report.nq \
+nql report.nql \
   --db postgresql \
   --database customer_data \
   --host db.internal.example \
@@ -419,7 +419,7 @@ The host defaults to `localhost`. HANA and Informix require an explicit port bec
 For a complete JDBC URL or custom JVM driver, use the exact form:
 
 ```bash
-nq report.nq \
+nql report.nql \
   --jdbc-database 'jdbc:postgresql://db.internal.example:5432/customer_data' \
   --jdbc-username report_user
 ```
@@ -453,8 +453,8 @@ jdbc.password=change-me
 ```
 
 ```bash
-nq report.nq --config database.properties --db postgresql --database customer_data
-nq report.nq --db postgresql --database customer_data --config database.properties
+nql report.nql --config database.properties --db postgresql --database customer_data
+nql report.nql --db postgresql --database customer_data --config database.properties
 ```
 
 Both commands use the generated PostgreSQL URL and credentials from the config
@@ -466,11 +466,11 @@ exclusive escape hatches for unusual drivers.
 
 #### Supplying a JDBC Driver JAR
 
-The JVM build can use a JDBC driver that is not bundled with NQ. Put both the NQ fat JAR and the driver JAR on the Java classpath, invoke the main class directly, and supply the driver's class name and complete JDBC URL:
+The JVM build can use a JDBC driver that is not bundled with NQL. Put both the NQL fat JAR and the driver JAR on the Java classpath, invoke the main class directly, and supply the driver's class name and complete JDBC URL:
 
 ```bash
-java -cp '/path/to/nq.jar:/path/to/vendor-driver.jar' \
-  blater.nq.Main report.nq \
+java -cp '/path/to/nql.jar:/path/to/vendor-driver.jar' \
+  blater.nql.Main report.nql \
   --jdbc-class-name com.vendor.jdbc.Driver \
   --jdbc-database 'jdbc:vendor://db.internal.example/customer_data' \
   --jdbc-username report_user
@@ -478,11 +478,11 @@ java -cp '/path/to/nq.jar:/path/to/vendor-driver.jar' \
 
 On Windows, separate classpath entries with `;` instead of `:`. Add any other JARs required by the driver to the classpath as well. Do not combine `--jdbc-class-name` with `--jdbc-driver`; they are mutually exclusive driver-selection forms.
 
-Use `java -cp` and `blater.nq.Main`, not `java -jar`; Java's `-jar` launch mode does not add user-supplied classpath entries. The native `nq`, `nq-enterprise`, and `nq-all` executables cannot load JARs at runtime. A custom driver for a native executable must be added as a build dependency and included when the executable is rebuilt, with any GraalVM Native Image configuration the driver requires.
+Use `java -cp` and `blater.nql.Main`, not `java -jar`; Java's `-jar` launch mode does not add user-supplied classpath entries. The native `nql`, `nql-enterprise`, and `nql-all` executables cannot load JARs at runtime. A custom driver for a native executable must be added as a build dependency and included when the executable is rebuilt, with any GraalVM Native Image configuration the driver requires.
 
-For predefined drivers, the selected JAR or native executable must contain the requested JDBC dependency. If it does not, driver class loading fails when the connection is opened; NQ does not maintain a separate build-profile validation registry.
+For predefined drivers, the selected JAR or native executable must contain the requested JDBC dependency. If it does not, driver class loading fails when the connection is opened; NQL does not maintain a separate build-profile validation registry.
 
-Supplied values are used as written. NQ does not validate port ranges, encode
+Supplied values are used as written. NQL does not validate port ranges, encode
 URL components, or reconcile inconsistent credentials; the JDBC driver or
 database reports those errors. The simple form requires `--db` and `--database`
 together and does not decompose an inherited `jdbc.database` URL.
@@ -513,19 +513,19 @@ Input file type is selected by file extension:
 Extension matching is case-insensitive. Blank or missing input filenames preserve the historical empty XML-input behavior.
 
 For pipelines and redirected input, specify the format explicitly with `-i` or
-`--input`. NQ spools standard input only for the duration of the command and
-uses its normal direct-conversion or query path. With `--cache`, NQ creates and
+`--input`. NQL spools standard input only for the duration of the command and
+uses its normal direct-conversion or query path. With `--cache`, NQL creates and
 activates a fresh persistent cache from that stream.
 
 ```bash
-cat customers.json | nq -i json "select id, name from customers;"
-nq -i json "select id, name from customers;" < customers.json
-cat customers.json | nq -i json --cache "select id, name from customers;"
+cat customers.json | nql -i json "select id, name from customers;"
+nql -i json "select id, name from customers;" < customers.json
+cat customers.json | nql -i json --cache "select id, name from customers;"
 ```
 
 ### Source Relation Names
 
-For JSON, YAML, and TOML, NQ names a materialized object-record relation from the
+For JSON, YAML, and TOML, NQL names a materialized object-record relation from the
 source member that declares it. The rule applies at every depth:
 
 | Source shape | SQL relation |
@@ -545,20 +545,20 @@ rows share that table; incompatible SQL identifier collisions fail clearly.
 
 ### Querying Input Documents: Temporary and Persistent H2
 
-NQ creates the same SQL tables for both modes. The difference is how long the H2 database lives.
+NQL creates the same SQL tables for both modes. The difference is how long the H2 database lives.
 
 #### Temporary loading by default
 
 Supplying a script and input file without `--cache` or JDBC settings loads the file into an in-memory H2 database:
 
 ```bash
-nq 'select id from item where a in (select max(a) from item);' elements.json
+nql 'select id from item where a in (select max(a) from item);' elements.json
 ```
 
 Typed standard input uses the same temporary path:
 
 ```bash
-cat elements.json | nq 'select id from item where a in (select max(a) from item);'
+cat elements.json | nql 'select id from item where a in (select max(a) from item);'
 ```
 
 The database exists only for that command and is discarded when the command
@@ -576,8 +576,8 @@ Loading and querying are separate, explicit operations. Load a document with
 the `cache load` command:
 
 ```bash
-nq cache load customers.json
-cat customers.json | nq cache load --name customers
+nql cache load customers.json
+cat customers.json | nql cache load --name customers
 ```
 
 The first form generates a logical name; the second creates `customers`. A
@@ -588,18 +588,18 @@ versioned report in the selected `--report-format`.
 Query the active cache without repeating the input source:
 
 ```bash
-nq totals.nq
+nql totals.nql
 ```
 
 Use `--cache` to be explicit, or use `--name` to query an existing named cache
 without changing the active selection:
 
 ```bash
-nq totals.nq --cache
-nq totals.nq --cache --name customers
+nql totals.nql --cache
+nql totals.nql --cache --name customers
 ```
 
-When a data source accompanies a cache-targeted run, NQ does not automatically
+When a data source accompanies a cache-targeted run, NQL does not automatically
 load that data into the cache. It remains available to mapped DML, so a script
 may insert/update/delete explicitly. This prevents invisible cache growth and
 keeps persistence intentional.
@@ -608,7 +608,7 @@ To switch the active selection without running a query or loading the source
 file, use:
 
 ```bash
-nq cache use customers
+nql cache use customers
 ```
 
 `cache use` only activates an existing logical cache name. No cache is created
@@ -617,16 +617,16 @@ or rebuilt when the name is missing.
 By default, cache files are stored under:
 
 ```text
-~/.nq/cache
+~/.nql/cache
 ```
 
-Use `--cache-dir path` or `NQ_CACHE_DIR` to choose another direct cache
+Use `--cache-dir path` or `NQL_CACHE_DIR` to choose another direct cache
 directory.
 
 The active selection is stored in:
 
 ```text
-~/.nq/cache/.active
+~/.nql/cache/.active
 ```
 
 It records the logical cache name, so the directory remains relocatable. A
@@ -643,7 +643,7 @@ File-backed persistent caches are not synchronized with source-file changes.
 Run the query with its input file and without `--cache` for a fresh temporary
 load, or run `cache load` again to create and activate a fresh persistent cache.
 
-When a cache is built, nq creates input-structure tables. Object names become table names, direct scalar children become columns, and nested objects become related tables.
+When a cache is built, nql creates input-structure tables. Object names become table names, direct scalar children become columns, and nested objects become related tables.
 
 Inspect the active cache or configured database with a `catalog` statement:
 
@@ -662,18 +662,18 @@ Input-structure table rules:
 - The object name becomes the table name, such as `customer`, `country`, or `wallet`.
 - Nodes with the same object name share one table.
 - Direct scalar children and XML attributes become columns.
-- If every row of a structure table has a scalar `id`, nq preserves and uses
+- If every row of a structure table has a scalar `id`, nql preserves and uses
   that column as the row identity.
-- Otherwise nq adds `_nq_id` as the generated row identity and preserves any
+- Otherwise nql adds `_nql_id` as the generated row identity and preserves any
   partially supplied `id` field as ordinary nullable data.
-- The `_nq_` prefix is reserved for NQ-generated technical names; input names
+- The `_nql_` prefix is reserved for NQL-generated technical names; input names
   using that prefix are rejected.
 - Nested objects are separate tables, not embedded columns.
 - Child rows get a containment reference named `<parent>_id`, such as `wallet.customer_id`.
-- If the input child already has that `<parent>_id` field, nq preserves the input value.
+- If the input child already has that `<parent>_id` field, nql preserves the input value.
 - Repeated direct scalar children become child tables named `<parent>_<field>`
-  with `_nq_id`, `<parent>_id`, and `value` columns.
-- NQ does not infer primary key constraints, foreign key constraints, uniqueness, or indexes from the input file.
+  with `_nql_id`, `<parent>_id`, and `value` columns.
+- NQL does not infer primary key constraints, foreign key constraints, uniqueness, or indexes from the input file.
 
 Example input shape:
 
@@ -750,9 +750,9 @@ structure {result.region} key (country_key);
 Run it against any of the equivalent example inputs:
 
 ```bash
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.json
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.yaml
-nq docs/examples/identity-country-counts.nq docs/examples/identity-customers.xml
+nql docs/examples/identity-country-counts.nql docs/examples/identity-customers.json
+nql docs/examples/identity-country-counts.nql docs/examples/identity-customers.yaml
+nql docs/examples/identity-country-counts.nql docs/examples/identity-customers.xml
 ```
 
 Output:
@@ -788,7 +788,7 @@ Input-structure tables are loaded into the persistent cache. Secondary path/valu
 List caches:
 
 ```bash
-nq cache list
+nql cache list
 ```
 
 The report shows each logical cache name, modification time, and active state.
@@ -796,19 +796,19 @@ The report shows each logical cache name, modification time, and active state.
 Switch the active cache without loading or rebuilding it:
 
 ```bash
-nq cache use bright-otter
+nql cache use bright-otter
 ```
 
 Clear all caches:
 
 ```bash
-nq cache clear all
+nql cache clear all
 ```
 
 Clear one cache by logical name:
 
 ```bash
-nq cache clear bright-otter
+nql cache clear bright-otter
 ```
 
 Logical cache names are resolved under the selected direct cache directory.
@@ -816,9 +816,9 @@ Logical cache names are resolved under the selected direct cache directory.
 Clear caches not modified within a duration:
 
 ```bash
-nq cache clear olderthan 30m
-nq cache clear olderthan 6h
-nq cache clear olderthan 7d
+nql cache clear olderthan 30m
+nql cache clear olderthan 6h
+nql cache clear olderthan 7d
 ```
 
 Supported duration units are minutes, hours, and days. Short forms such as `m`, `h`, and `d` are accepted.
@@ -826,7 +826,7 @@ Supported duration units are minutes, hours, and days. Short forms such as `m`, 
 Cache maintenance commands accept `--cache-dir`:
 
 ```bash
-nq cache clear all --cache-dir /tmp/nq-cache
+nql cache clear all --cache-dir /tmp/nql-cache
 ```
 
 ### Output Format
@@ -843,7 +843,7 @@ the result as one space-padded table, using dotted columns for nested scalar val
 
 With no script, the input hierarchy is written directly in the selected output
 format. With a script, only the hierarchy produced by the script is written;
-NQ never falls back to converting the input when the script produces no output
+NQL never falls back to converting the input when the script produces no output
 or fails.
 
 JSON Lines input treats each nonblank line as one JSON value and produces the
@@ -854,18 +854,18 @@ synthetic-object result is preserved as one complete JSON value on one line.
 Examples:
 
 ```bash
-nq people.xml
-nq people.json -o yaml
-nq people.csv -o markdown
-nq people.tsv -o csv
+nql people.xml
+nql people.json -o yaml
+nql people.csv -o markdown
+nql people.tsv -o csv
 ```
 
 ```bash
-nq people.nq --config database.properties
+nql people.nql --config database.properties
 ```
 
 ```bash
-nq people.nq --config database.properties -o jsonl > people.jsonl
+nql people.nql --config database.properties -o jsonl > people.jsonl
 ```
 
 ```sql
@@ -950,7 +950,7 @@ where region = '${region:EMEA}';
 ```
 
 ```bash
-nq people.nq --config database.properties --param region=APAC
+nql people.nql --config database.properties --param region=APAC
 ```
 
 ### Paths
@@ -992,7 +992,7 @@ order by personid asc
 structure {people.person} key (personid);
 ```
 
-The mapping clause is removed from the SQL sent to the database. NQ creates generated column aliases internally. Key expressions are also projected internally when they are needed to resolve a `structure` path.
+The mapping clause is removed from the SQL sent to the database. NQL creates generated column aliases internally. Key expressions are also projected internally when they are needed to resolve a `structure` path.
 
 SQL aliases are allowed:
 
@@ -1002,7 +1002,7 @@ select name as personName into {person.name} from person;
 
 ### `structure`
 
-Without a `structure` key, nq uses JDBC metadata to infer primary, unique, composite, conventional, and logical keys for mapped object paths. Required key columns are projected internally and never appear in output. Inference uses metadata only; it never samples query rows.
+Without a `structure` key, nql uses JDBC metadata to infer primary, unique, composite, conventional, and logical keys for mapped object paths. Required key columns are projected internally and never appear in output. Inference uses metadata only; it never samples query rows.
 
 ```sql
 select
@@ -1036,7 +1036,7 @@ The final path segment is the field, the segment above it is the object that own
 
 Inferred collections remain arrays for zero, one, or many objects. XML introduces a `<result>` document element when the inferred collection has no ordinary named root.
 
-NQ also recognizes one explicit collection/item naming convention. If a plural relation name matches the container and its singular form matches the item, the item path itself repeats. For example, a `customers` relation mapped to `{customers.customer.*}` produces a `customers` object containing repeated `customer` items. Other names retain the row-first shapes shown above.
+NQL also recognizes one explicit collection/item naming convention. If a plural relation name matches the container and its singular form matches the item, the item path itself repeats. For example, a `customers` relation mapped to `{customers.customer.*}` produces a `customers` object containing repeated `customer` items. Other names retain the row-first shapes shown above.
 
 The explicit tuple is complete and authoritative for `{companies.company}`. Inference cannot add to or replace it, but remains available for undeclared sibling and descendant paths, even when they use the same table or alias. Use `--no-key-inference` to disable inference for the entire query.
 
@@ -1203,7 +1203,7 @@ structure
   {customers.customer.email} key (e.id);
 ```
 
-Branches must map under the same document wrapper. NQ combines them with SQL `union all`, so duplicate source rows are preserved and keys decide whether output objects coalesce.
+Branches must map under the same document wrapper. NQL combines them with SQL `union all`, so duplicate source rows are preserved and keys decide whether output objects coalesce.
 
 `using` metadata is only valid on the first `hierarchy union` branch.
 
@@ -1239,7 +1239,7 @@ having count(*) > 1
 order by upper(surname) asc, 1 desc
 ```
 
-The parser recognizes nq mapping markers at top level and otherwise leaves SQL text to the database.
+The parser recognizes nql mapping markers at top level and otherwise leaves SQL text to the database.
 
 ## DML Input Reference
 
@@ -1401,7 +1401,7 @@ Procedure arguments are mapped similarly to DML columns.
 
 ### Repeated Input Rows
 
-When input contains repeated nodes, nq infers row context from mapped paths.
+When input contains repeated nodes, nql infers row context from mapped paths.
 
 XML:
 
@@ -1499,7 +1499,7 @@ The SQL after `capture 'name'` is stored as the capture query.
 
 ```sql
 include 'setup.sql';
-submapping 'person-summary.nq';
+submapping 'person-summary.nql';
 ```
 
 Included paths are resolved relative to the including file. Circular includes fail. Both directive names behave the same.

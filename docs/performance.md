@@ -1,6 +1,6 @@
 # Performance and practical limits
 
-NQ does not currently publish a universal input-size limit or comparative speed
+NQL does not currently publish a universal input-size limit or comparative speed
 claim. Workload shape, format, nesting, available memory, temporary storage,
 cache mode, database driver, query plan, and output hierarchy all affect
 behaviour.
@@ -20,7 +20,7 @@ files, benchmark an idiomatic DuckDB or dedicated columnar workflow as well.
 
 Use production-shaped, sanitized data and record:
 
-- NQ version and artifact type;
+- NQL version and artifact type;
 - OS, architecture, CPU, memory, filesystem, and JDK where applicable;
 - input format, compressed/uncompressed byte size, record counts, maximum
   nesting, and number of discovered relations;

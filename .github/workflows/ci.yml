@@ -30,7 +30,7 @@ jobs:
       - name: Check Bash scripts and completion syntax
         shell: bash
         run: |
-          bash -n util/completions/nq.bash
+          bash -n util/completions/nql.bash
           bash -n docs/examples/wikidata/fetch-wikidata-data.sh
           bash -n docs/examples/wikidata/qrytest.sh
           bash -n docs/assets/generate-terminal-demo.sh

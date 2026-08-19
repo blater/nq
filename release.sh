@@ -2,7 +2,7 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source_repository="${NQ_SOURCE_REPOSITORY:-blater/nq}"
+source_repository="${NQL_SOURCE_REPOSITORY:-blater/nql}"
 
 usage() {
   printf 'Current release: %s\n\n' "$current_version"
@@ -97,7 +97,7 @@ gh auth status --hostname github.com >/dev/null 2>&1 || \
 
 [[ -f .github/workflows/release.yml ]] || \
   die "The GitHub release workflow is missing."
-[[ -f util/chocolatey/nq.nuspec ]] || \
+[[ -f util/chocolatey/nql.nuspec ]] || \
   die "The Chocolatey package definition is missing."
 [[ -f util/chocolatey/VERIFICATION.txt.template ]] || \
   die "The Chocolatey verification template is missing."
@@ -132,7 +132,7 @@ remote_tag="$(git ls-remote --tags origin "refs/tags/$tag")" || \
 version_line="$(sed -n '/^[[:space:]]*<version>/{=;q;}' pom.xml)"
 [[ -n "$version_line" ]] || die "Could not locate the project version in pom.xml."
 
-temporary_pom="$(mktemp "${TMPDIR:-/tmp}/nq-pom.XXXXXX")"
+temporary_pom="$(mktemp "${TMPDIR:-/tmp}/nql-pom.XXXXXX")"
 trap 'rm -f "$temporary_pom"' EXIT
 sed "${version_line}s|<version>${current_version}</version>|<version>${version}</version>|" \
   pom.xml > "$temporary_pom"
@@ -141,7 +141,7 @@ mv "$temporary_pom" pom.xml
 updated_version="$(awk -F '[<>]' '/^[[:space:]]*<version>/ { print $3; exit }' pom.xml)"
 [[ "$updated_version" == "$version" ]] || die "Failed to update pom.xml."
 
-printf 'Updating nq from %s to %s\n' "$current_version" "$version"
+printf 'Updating nql from %s to %s\n' "$current_version" "$version"
 git add pom.xml
 git commit -m "Release $tag"
 git push
@@ -179,11 +179,11 @@ release_assets="$(
 )" || die "Could not inspect GitHub release $tag."
 
 required_assets=(
-  "nq-${version}-darwin-arm64.tar.gz"
-  "nq-${version}-linux-x64.tar.gz"
-  "nq-${version}-windows-x64.zip"
-  "nq-${version}-jvm.jar"
-  "nq.${version}.nupkg"
+  "nql-${version}-darwin-arm64.tar.gz"
+  "nql-${version}-linux-x64.tar.gz"
+  "nql-${version}-windows-x64.zip"
+  "nql-${version}-jvm.jar"
+  "nql.${version}.nupkg"
   "SHA256SUMS"
 )
 for asset in "${required_assets[@]}"; do
@@ -193,5 +193,5 @@ done
 
 printf 'Release complete: https://github.com/%s/releases/tag/%s\n' \
   "$source_repository" "$tag"
-printf 'Install on macOS: brew install blater/tap/nq\n'
-printf 'Install on Windows: irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1 | iex\n'
+printf 'Install on macOS: brew install blater/tap/nql\n'
+printf 'Install on Windows: irm https://raw.githubusercontent.com/blater/nql/master/util/chocolatey/install.ps1 | iex\n'

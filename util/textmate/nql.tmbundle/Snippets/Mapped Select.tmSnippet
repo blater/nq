@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>name</key><string>Mapped Select</string>
+  <key>scope</key><string>source.nql</string>
+  <key>tabTrigger</key><string>nselect</string>
+  <key>content</key><string>select
+  ${1:id} into {${2:items.item.id}},
+  ${3:name} into {${2:items.item}.${4:name}}
+from ${5:source}
+order by ${6:$1}
+structure {${2:items.item}} key (${7:$1});</string>
+  <key>uuid</key><string>3C9C80B1-F3D0-4762-A6A5-A158697E076E</string>
+</dict>
+</plist>

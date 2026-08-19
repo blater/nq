@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+fatal() {
+  echo "$1"; exit 1
+}
+DATAFILE="data/wikidata-companies.json"
+
+## cd "$(dirname "$0")"
+if [ "$1" = "" -o "$1" = "-h" ]; then
+  ../target/nql --help
+  exit 0
+fi
+
+SCRIPTFILE="$1"
+[[ ! -f $SCRIPTFILE ]] && fatal "File [$SCRIPTFILE] not found"
+
+
+../target/nql "$SCRIPTFILE" "$DATAFILE"

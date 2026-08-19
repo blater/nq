@@ -1,18 +1,18 @@
-[![Latest release](https://img.shields.io/github/v/release/blater/nq)](https://github.com/blater/nq/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/blater/nql)](https://github.com/blater/nql/releases/latest)
 
-NQ is a command-line tool for querying and moving data between JSON, YAML, TOML, XML, CSV, TSV files and relational databases.
+NQL is a command-line tool for querying and moving data between JSON, YAML, TOML, XML, CSV, TSV files and relational databases.
 It provides a familiar SQL language for querying JSON, YAML, TOML, XML, CSV, TSV, JSONL, and Parquet files, extracting complex
 data structures into these formats from databases, and generally working with and reshaping data.
 
-Full documentation: [NQ user manual](docs/user-manual.md).
+Full documentation: [NQL user manual](docs/user-manual.md).
 
 ## Install
 
 | Platform | instructions | 
 | --- | --- | 
-| macOS ARM64 | `brew install blater/tap/nq` |
-| Windows x64 | Run from an administrator powershell<br>with Chocolatey installed. <br>`irm https://raw.githubusercontent.com/blater/nq/master/util/chocolatey/install.ps1` | 
-| Lunux x64 | This installs the latest NQ package directly<br>from GitHub Releases. Rerun the same command to upgrade.<br>`curl -fsSL https://raw.githubusercontent.com/blater/nq/master/util/install-linux.sh` |
+| macOS ARM64 | `brew install blater/tap/nql` |
+| Windows x64 | Run from an administrator powershell<br>with Chocolatey installed. <br>`irm https://raw.githubusercontent.com/blater/nql/master/util/chocolatey/install.ps1` |
+| Lunux x64 | This installs the latest NQL package directly<br>from GitHub Releases. Rerun the same command to upgrade.<br>`curl -fsSL https://raw.githubusercontent.com/blater/nql/master/util/install-linux.sh` |
 
 
 ## What does it do?
@@ -36,16 +36,16 @@ You can run SQL queries directly against data files. For example given a json fi
 
 Get all the active users from the file:
 
-`nq "select name from users where active = 'true' order by id;" users.json`
+`nql "select name from users where active = 'true' order by id;" users.json`
 
 ` [{"name":"Alice"},{"name":"Charlie"}] `
 
 You can use very complex selects. 
-This is because Nq treats arrays as tables and fields as columns so you can run SQL over them as if the file is a database. 
+This is because NQL treats arrays as tables and fields as columns so you can run SQL over them as if the file is a database.
 
-If your file has ID fields it can match on, then nq will also infer key relationships, allowing joins and subqueries:
+If your file has ID fields it can match on, then nql will also infer key relationships, allowing joins and subqueries:
 ```
-  nq "select u.id, u.name, u.active, a.city 
+  nql "select u.id, u.name, u.active, a.city
       from users u 
       join address a on a.user_id = u.id 
       order by u.id;" users.json 
@@ -55,21 +55,21 @@ If it can't infer then you can still tell it how to match fields with its `struc
 
 You can insert into a database from the file - this example inserts it into the 'appusers' table (we're using a local H2 database):
 ```
-nq "insert into appusers (id, username, active) values ({users.id}, {users.name}, {users.active});"  \
+nql "insert into appusers (id, username, active) values ({users.id}, {users.name}, {users.active});"  \
     users.json --db h2 --database file:./users-db`
 ```
 
 This updates the database `appusers` table:
 ```
-nq "update appusers set isactive = {users.active} where id = {users.id};" \
+nql "update appusers set isactive = {users.active} where id = {users.id};" \
     users.json --db h2 --database file:./users-db
 ```
 
 You can also conveniently convert from one format to another.
 ```
-nq users.json -o csv 
-nq customers.json -o yaml
-nq customers.xml -o json
+nql users.json -o csv
+nql customers.json -o yaml
+nql customers.xml -o json
 ```
 
 All of the commands operate on JSON/JSONL/YAML/ToML/XML/CSV/TSV input files and 
@@ -82,7 +82,7 @@ This complete example queries a local database and outputs YAML.
 The output format can be controlled with "output <format>" in the script or by using `-o <format>` on the command line.
 
 ```bash
-nq "output yaml; select id, name, city from customer order by id;" \
+nql "output yaml; select id, name, city from customer order by id;" \
     --db h2 --database file:./customer-demo -o yaml
 ```
 
@@ -117,29 +117,29 @@ you can use all the usual SQL commands to insert/update/delete database data fro
 Insert:
 ```bash
 echo "person:{firstname:Barney, lastname:Rubble, city:London}" | \
-    nq "insert into person (firstname, lastname, city) values ({person.firstName}, {person.lastName}, {person.city});" \
+    nql "insert into person (firstname, lastname, city) values ({person.firstName}, {person.lastName}, {person.city});" \
       -t yaml
 ```
 Update:
 ```bash
-echo "person:{id: 1, city:London}" | nq \
+echo "person:{id: 1, city:London}" | nql \
   "update person set city = {person.city} where personid = {person.id};" \
   -t yaml --config mydb.properties
 ```
 Delete:
 ```bash
-echo "<person><id>1</id></person>" | nq \
+echo "<person><id>1</id></person>" | nql \
   "delete from person where personid = {person.id};" \
   -t xml
 ```
 
 ## Running literal sql 
 
-When running nq against a database you can also run literal sql commands with the `literal` keyword.
+When running nql against a database you can also run literal sql commands with the `literal` keyword.
 For instance, create a table...
 
 ```bash
-nq "
+nql "
    literal drop table if exists person;
 
    literal create table person (
@@ -158,7 +158,7 @@ An insert can write database-assigned values back into its input hierarchy.
 This XML insert maps the generated key into `{person.id}`:
 
 ```bash
-nq "output xml;
+nql "output xml;
    insert into person (firstname, lastname, city)
    values ({person.firstName}, {person.lastName}, {person.city})
    returns personid into {person.id};" \
@@ -245,7 +245,7 @@ A non-trivial example. Here we have 4 tables showing a customer and their orders
 | 4      | 1003      | COFFEE      | 1           |
 
 
-We want to pull the data out a list of all customers and details of any orders they might have made. Nq shows JSON by default.
+We want to pull the data out a list of all customers and details of any orders they might have made. NQL shows JSON by default.
 We will create a SQL query that joins all the tables together and uses "into" to define the output structure:
 
 ```sql
@@ -320,19 +320,19 @@ The result contains each customer once and nests orders and items beneath it:
 
 ## CLI usage
 
-NQ uses positional operands for the main inputs and flags for optional changes
+NQL uses positional operands for the main inputs and flags for optional changes
 or explicit disambiguation:
 
 ```text
-nq [run] <script> [data] [options]
-nq <data-file> [options]
-nq convert [data] [options]
-nq catalog [data] [pattern] [options]
-nq cache load [data] [name] [options]
-nq cache use <name> [options]
-nq cache list [options]
-nq cache clear (<name> | olderthan <age> | all) [options]
-nq capabilities [-r <format>]
+nql [run] <script> [data] [options]
+nql <data-file> [options]
+nql convert [data] [options]
+nql catalog [data] [pattern] [options]
+nql cache load [data] [name] [options]
+nql cache use <name> [options]
+nql cache list [options]
+nql cache clear (<name> | olderthan <age> | all) [options]
+nql capabilities [-r <format>]
 ```
 
 Common flag groups:
@@ -346,13 +346,13 @@ Common flag groups:
   `-r, --report-format <format>` selects operational reports. Result data
   defaults to JSON, catalog/cache reports default to Markdown, and the
   capability contract defaults to JSON.
-- `nq capabilities` (or `nq --capabilities`) prints a versioned, side-effect-free
+- `nql capabilities` (or `nql --capabilities`) prints a versioned, side-effect-free
   discovery contract for agents and integrations.
-- `--config <file.properties>` supplies operational NQ/JDBC settings.
+- `--config <file.properties>` supplies operational NQL/JDBC settings.
   `--params-file <file.properties>` supplies parameters visible to scripts, and
   repeatable `--param <name=value>` entries override individual parameter values.
 
-Run `nq help <command>` for command-specific syntax and examples.
+Run `nql help <command>` for command-specific syntax and examples.
 
 
 ### Connecting to a database
@@ -360,7 +360,7 @@ Run `nq help <command>` for command-specific syntax and examples.
 You can supply all the parameters on the command line
 
 ```bash
-nq myscript.nq \
+nql myscript.nql \
   --db postgresql \
   --host db.example.com \
   --port 5432 \
@@ -369,9 +369,9 @@ nq myscript.nq \
   --password secret
 
 ```
-or supply an NQ configuration file containing the connection details
+or supply an NQL configuration file containing the connection details
 ```bash
-nq myscript.nq --config mydatabase.properties
+nql myscript.nql --config mydatabase.properties
 ```
 The [JDBC guide](docs/user-manual.md#jdbc-parameters) covers this in detail.
 
@@ -384,28 +384,28 @@ build can also load a driver JAR at runtime.
 
 A query and input file use a temporary local database for that command. Use
 `cache load` explicitly only when imported data should remain available to
-later NQ commands:
+later NQL commands:
 
 ```bash
-nq cache load customers.json
-nq catalog '*'
-nq "select id, name from customers order by id;"
+nql cache load customers.json
+nql catalog '*'
+nql "select id, name from customers order by id;"
 ```
 
 The [cache reference](docs/user-manual.md#querying-input-documents-temporary-and-persistent-h2)
-covers storage, selection, inspection, and cleanup. NQ does not upload source
+covers storage, selection, inspection, and cleanup. NQL does not upload source
 data or send usage telemetry.
 
 
 ## Stdin, diagnostics, and exit status
 
-Piped, redirected, and here-document stdin is always data, never NQ script text.
+Piped, redirected, and here-document stdin is always data, never NQL script text.
 It defaults to JSON unless `-t, --input-format` says otherwise. An explicit data
 file or literal input takes precedence; if piped input is immediately detectable,
-NQ warns that stdin is being ignored.
+NQL warns that stdin is being ignored.
 
-Bare `nq` prints brief usage instead of performing an identity JSON-to-JSON
-conversion. Use `nq convert`, an output option such as `nq -o yaml`, or a script
+Bare `nql` prints brief usage instead of performing an identity JSON-to-JSON
+conversion. Use `nql convert`, an output option such as `nql -o yaml`, or a script
 when consuming stdin.
 
 Result data and successful command reports are written to stdout. Warnings,
@@ -418,9 +418,9 @@ invalid usage or configuration, and `130` when interrupted. See the
 [automation guide](docs/automation.md) for scripting and CI examples.
 
 
-## Where NQ fits
+## Where NQL fits
 
-NQ is intended for work that crosses document and relational boundaries:
+NQL is intended for work that crosses document and relational boundaries:
 
 - exporting joined database data into a deliberate JSON, YAML, or XML shape;
 - applying JSON, YAML, TOML, XML, CSV, TSV, or Parquet data through database DML;
@@ -449,4 +449,4 @@ detail.
 - [Troubleshooting](docs/troubleshooting.md)
 - [Frequently asked questions](docs/faq.md)
 
-NQ is licensed under the [GNU Affero General Public License v3.0](LICENSE.txt).
+NQL is licensed under the [GNU Affero General Public License v3.0](LICENSE.txt).

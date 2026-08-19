@@ -1,5 +1,5 @@
 name: Bug report
-description: Report reproducible incorrect NQ behaviour.
+description: Report reproducible incorrect NQL behaviour.
 title: "[Bug]: "
 labels:
   - bug
@@ -11,7 +11,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: NQ version
+      label: NQL version
       description: Release version, commit, or output identifying the build.
       placeholder: 0.9.3
     validations:
@@ -62,7 +62,7 @@ body:
   - type: textarea
     id: command
     attributes:
-      label: Exact command and NQ script
+      label: Exact command and NQL script
       description: Replace secrets with explicit placeholders.
       render: shell
     validations:

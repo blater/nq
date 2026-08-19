@@ -1,7 +1,7 @@
-# NQ TextMate Bundle
+# NQL TextMate Bundle
 
-`nq.tmbundle` provides TextMate syntax highlighting and editing support for
-`.nq` files.
+`nql.tmbundle` provides TextMate syntax highlighting and editing support for
+`.nql` files.
 
 It covers:
 
@@ -15,16 +15,16 @@ It covers:
 
 ## Install
 
-Open `util/textmate/nq.tmbundle` with TextMate, or place the bundle in:
+Open `util/textmate/nql.tmbundle` with TextMate, or place the bundle in:
 
 ```text
 ~/Library/Application Support/TextMate/Managed/Bundles/
 ```
 
 Reload bundles from TextMate's Bundles menu after installation. The language is
-selected automatically for files ending in `.nq`.
+selected automatically for files ending in `.nql`.
 
-`Samples/Language Tour.nq` is a highlighting fixture covering the language
+`Samples/Language Tour.nql` is a highlighting fixture covering the language
 surface. It is illustrative and is not intended to run as one script.
 
 ## Validate
@@ -32,5 +32,5 @@ surface. It is illustrative and is not intended to run as one script.
 On macOS, validate every property list with:
 
 ```bash
-find util/textmate/nq.tmbundle -name '*.plist' -o -name '*.tmLanguage' -o -name '*.tmPreferences' -o -name '*.tmSnippet' | xargs -n1 plutil -lint
+find util/textmate/nql.tmbundle -name '*.plist' -o -name '*.tmLanguage' -o -name '*.tmPreferences' -o -name '*.tmSnippet' | xargs -n1 plutil -lint
 ```

@@ -36,7 +36,7 @@ public final class GenerateLaunchAssets {
     writeTerminalFrame(output.resolve("terminal-demo-frame-2.png"), GenerateLaunchAssets::frameQuery);
     writeTerminalFrame(output.resolve("terminal-demo-frame-3.png"), GenerateLaunchAssets::frameCommand);
     writeTerminalFrame(output.resolve("terminal-demo-frame-4.png"), GenerateLaunchAssets::frameOutput);
-    writeSocialPreview(output.resolve("nq-social-preview.png"));
+    writeSocialPreview(output.resolve("nql-social-preview.png"));
   }
 
   private static void writeTerminalFrame(Path output, FramePainter painter) throws Exception {
@@ -52,7 +52,7 @@ public final class GenerateLaunchAssets {
     dot(graphics, 57, Color.decode("#febc2e"));
     dot(graphics, 83, Color.decode("#28c840"));
     graphics.setFont(MONO_SMALL);
-    centered(graphics, "NQ — SQL for nested data", 500, 36, Color.decode("#cbd5e1"));
+    centered(graphics, "NQL — SQL for nested data", 500, 36, Color.decode("#cbd5e1"));
     painter.paint(graphics);
     graphics.dispose();
     ImageIO.write(image, "png", output.toFile());
@@ -74,7 +74,7 @@ public final class GenerateLaunchAssets {
 
   private static void frameQuery(Graphics2D graphics) {
     text(graphics, "$", 34, 96, BLUE);
-    text(graphics, "cat identity-country-counts.nq", 58, 96, WHITE);
+    text(graphics, "cat identity-country-counts.nql", 58, 96, WHITE);
     text(graphics, "select", 34, 140, PURPLE);
     text(graphics, "  a.country_code into {result.region.country},", 58, 175, WHITE);
     text(graphics, "  count(distinct c.id) into {result.region.customerCount}", 58, 210, WHITE);
@@ -89,7 +89,7 @@ public final class GenerateLaunchAssets {
 
   private static void frameCommand(Graphics2D graphics) {
     text(graphics, "$", 34, 110, BLUE);
-    text(graphics, "nq identity-country-counts.nq \\", 58, 110, WHITE);
+    text(graphics, "nql identity-country-counts.nql \\", 58, 110, WHITE);
     text(graphics, "  identity-customers.json", 58, 147, WHITE);
     text(graphics, "Discovering customer, address, and kyc relations...", 34, 226, MUTED);
     text(graphics, "Running SQL and mapping result.region...", 34, 274, MUTED);
@@ -97,7 +97,7 @@ public final class GenerateLaunchAssets {
   }
 
   private static void frameOutput(Graphics2D graphics) {
-    text(graphics, "$ nq identity-country-counts.nq identity-customers.json", 34, 100, WHITE);
+    text(graphics, "$ nql identity-country-counts.nql identity-customers.json", 34, 100, WHITE);
     text(graphics, "{", 34, 160, MUTED);
     text(graphics, "  \"result\": {", 58, 198, PINK);
     text(graphics, "    \"region\": [", 82, 236, PINK);
@@ -125,7 +125,7 @@ public final class GenerateLaunchAssets {
     dot(graphics, 162, Color.decode("#febc2e"));
     dot(graphics, 194, Color.decode("#28c840"));
     graphics.setFont(new Font(Font.MONOSPACED, Font.BOLD, 104));
-    text(graphics, "NQ", 126, 254, BLUE);
+    text(graphics, "NQL", 126, 254, BLUE);
     graphics.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 62));
     text(graphics, "SQL for nested data", 126, 341, WHITE);
     graphics.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 30));

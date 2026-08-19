@@ -2,7 +2,7 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source_repository="${NQ_SOURCE_REPOSITORY:-blater/nq}"
+source_repository="${NQL_SOURCE_REPOSITORY:-blater/nql}"
 homebrew_token_was_provided=false
 
 die() {

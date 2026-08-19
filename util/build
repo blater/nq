@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-name=nq
+name=nql
 
 [[ -d /Library/Java/JavaVirtualMachines/graalvm-25.jdk ]] || util/graal_install.sh
 export GRAALVM_HOME="/Library/Java/JavaVirtualMachines/graalvm-25.jdk/Contents/Home"
@@ -10,7 +10,7 @@ usage() {
   cat <<'USAGE'
 Usage: ./build [--skip-tests] [--] [extra Maven args...]
 
-Builds the native nq executable with GraalVM Native Image.
+Builds the native nql executable with GraalVM Native Image.
 
 Options:
   --drivers SET      Build driver set: common, enterprise, all, or comma-separated list.

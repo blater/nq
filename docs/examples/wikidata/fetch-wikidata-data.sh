@@ -6,7 +6,7 @@ usage() {
 Usage: fetch-wikidata-data.sh [-q FILE | -o FILE | -e URL | -h | <long option>]
 
 Runs docs/examples/wikidata/getData.sparql against the Wikidata Query Service
-and writes an NQ-friendly JSON file beside this script.
+and writes an NQL-friendly JSON file beside this script.
 
 Options:
   -q, --query FILE       SPARQL query file. Default: getData.sparql beside this script
@@ -33,7 +33,7 @@ query_file="$script_dir/getData.sparql"
 endpoint="${WIKIDATA_SPARQL_ENDPOINT:-https://query.wikidata.org/sparql}"
 output_file="$script_dir/wikidata-companies.json"
 raw_output_file=""
-user_agent="${WIKIDATA_USER_AGENT:-nq-test-data-fetch/1.0}"
+user_agent="${WIKIDATA_USER_AGENT:-nql-test-data-fetch/1.0}"
 
 while (($#)); do
   case "$1" in

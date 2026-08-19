@@ -3,26 +3,26 @@
 ## Confirm the executable and version
 
 ```bash
-nq --version
-nq -h
+nql --version
+nql -h
 ```
 
-If the shell cannot find `nq`, use the full path and then add its directory to
-`PATH`. On Windows, try `.\nq.exe -h` from the extraction directory.
+If the shell cannot find `nql`, use the full path and then add its directory to
+`PATH`. On Windows, try `.\nql.exe -h` from the extraction directory.
 
 ## Operating-system warning for an unsigned binary
 
 Published native executables are not currently code-signed. Verify the archive
 against the release’s `SHA256SUMS`, then use a narrowly scoped operating-system
 exception if required. Do not disable Gatekeeper, SmartScreen, antivirus, or
-execution policy globally. See [Installing NQ](install.md).
+execution policy globally. See [Installing NQL](install.md).
 
 ## “Table not found” or “column not found”
 
-Inspect the schema NQ discovered:
+Inspect the schema NQL discovered:
 
 ```bash
-nq catalog input.json '*'
+nql catalog input.json '*'
 ```
 
 Named JSON/YAML/TOML collections normally become tables with their member names.
@@ -35,13 +35,13 @@ Persistent caches are not synchronized automatically with source changes.
 Query without `--cache` for a fresh temporary load or rebuild the cache:
 
 ```bash
-nq cache load input.json
+nql cache load input.json
 ```
 
 Inspect cache state with:
 
 ```bash
-nq cache list
+nql cache list
 ```
 
 ## No active cache or JDBC connection
@@ -49,16 +49,16 @@ nq cache list
 Supply an input file with the query, activate a cache, or configure JDBC:
 
 ```bash
-nq query.nq input.json
-nq cache load input.json
-nq query.nq
-nq query.nq --config database.properties
+nql query.nql input.json
+nql cache load input.json
+nql query.nql
+nql query.nql --config database.properties
 ```
 
 ## JDBC driver or connection failure
 
 1. Check the [support matrix](install.md#support-matrix).
-2. Run `nq --help connection`.
+2. Run `nql --help connection`.
 3. Verify hostname, port, database, username, TLS options, and network access
    using the database vendor’s client.
 4. Remember that native executables cannot load arbitrary driver JARs.
@@ -68,26 +68,26 @@ Enable debug diagnostics only while investigating and review output before
 sharing:
 
 ```bash
-nq query.nq --config database.properties --debug
+nql query.nql --config database.properties --debug
 ```
 
 ## Hierarchy-path failure
 
-NQ paths are a neutral mapping syntax, not full XPath, JSONPath, or YAMLPath.
+NQL paths are a neutral mapping syntax, not full XPath, JSONPath, or YAMLPath.
 Core paths use dotted names such as `{message.person.id}`; XML attributes use
 `@`, such as `{message.person.@id}`. See
 [Paths](user-manual.md#paths).
 
 ## Unexpected duplicate or missing nested objects
 
-NQ infers identity from database metadata and naming conventions. Inspect the
+NQL infers identity from database metadata and naming conventions. Inspect the
 warning, then add explicit `structure {path} key (...)` declarations when the
 database lacks suitable keys or the intended output grain differs from the
 inferred one. See [`structure`](user-manual.md#structure).
 
 ## Parquet naming or type failure
 
-Run `nq --help parquet` and review
+Run `nql --help parquet` and review
 [Parquet input](user-manual.md#parquet-input). Use `--parquet-root` and
 `--parquet-record` when physical names are generic. Unsafe names are projected;
 collisions are rejected rather than silently overwritten.
@@ -96,12 +96,12 @@ collisions are rejected rather than silently overwritten.
 
 Include:
 
-- NQ version and installation method;
+- NQL version and installation method;
 - operating system and architecture;
 - sanitized minimal input;
-- exact command or `.nq` script;
+- exact command or `.nql` script;
 - expected output; and
 - complete stdout and stderr with secrets removed.
 
-Open a [Q&A discussion](https://github.com/blater/nq/discussions/categories/q-a)
+Open a [Q&A discussion](https://github.com/blater/nql/discussions/categories/q-a)
 for usage help or a bug issue for reproducible incorrect behaviour.

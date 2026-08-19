@@ -87,15 +87,15 @@ jobs:
         include:
           - runner: macos-15
             platform: darwin-arm64
-            executable: target/nq
+            executable: target/nql
             archive: tar
           - runner: ubuntu-22.04
             platform: linux-x64
-            executable: target/nq
+            executable: target/nql
             archive: tar
           - runner: windows-2022
             platform: windows-x64
-            executable: target/nq.exe
+            executable: target/nql.exe
             archive: zip
     runs-on: ${{ matrix.runner }}
     steps:
@@ -124,19 +124,19 @@ jobs:
           set -euo pipefail
           executable="${{ matrix.executable }}"
           "$executable" -h >/dev/null
-          test "$("$executable" --version)" = "nq $VERSION"
+          test "$("$executable" --version)" = "nql $VERSION"
           "$executable" capabilities > capabilities.json
           grep -F '"command":"capabilities"' capabilities.json
           grep -F '"contract_version":1' capabilities.json
-          "$executable" docs/examples/identity-country-counts.nq \
+          "$executable" docs/examples/identity-country-counts.nql \
             docs/examples/identity-customers.json > actual.json
           diff -u \
             <(printf '%s\n' '{"result":{"region":[{"country":"GB","customerCount":2},{"country":"US","customerCount":4}]}}') \
             actual.json
           "$executable" --cache docs/examples/customers.json \
-            --cache-dir "$RUNNER_TEMP/nq-cache" >/dev/null
+            --cache-dir "$RUNNER_TEMP/nql-cache" >/dev/null
           "$executable" catalog '*' \
-            --cache-dir "$RUNNER_TEMP/nq-cache" >/dev/null
+            --cache-dir "$RUNNER_TEMP/nql-cache" >/dev/null
           "$executable" 'output json; select 1 into {result.value};' \
             --db h2 --database mem:release_smoke > jdbc.json
           grep -Fx '{"result":{"value":1}}' jdbc.json
@@ -154,9 +154,9 @@ jobs:
           VERSION: ${{ needs.validate.outputs.version }}
         run: |
           $ErrorActionPreference = "Stop"
-          $executable = ".\target\nq.exe"
+          $executable = ".\target\nql.exe"
           & $executable -h | Out-Null
-          if ((& $executable --version) -ne "nq $env:VERSION") {
+          if ((& $executable --version) -ne "nql $env:VERSION") {
             throw "Version output does not match release version"
           }
           $capabilities = & $executable capabilities | ConvertFrom-Json
@@ -165,7 +165,7 @@ jobs:
             throw "Capability contract smoke output mismatch"
           }
           $actual = & $executable `
-            docs/examples/identity-country-counts.nq `
+            docs/examples/identity-country-counts.nql `
             docs/examples/identity-customers.json
           $expected = '{"result":{"region":[{"country":"GB","customerCount":2},{"country":"US","customerCount":4}]}}'
           if ($actual -ne $expected) { throw "Hero query output mismatch" }
@@ -175,9 +175,9 @@ jobs:
             throw "Redirected-stdin/terminal-detection smoke output mismatch"
           }
           & $executable --cache docs/examples/customers.json `
-            --cache-dir "$env:RUNNER_TEMP\nq-cache" | Out-Null
+            --cache-dir "$env:RUNNER_TEMP\nql-cache" | Out-Null
           '{}' | & $executable catalog `
-            --cache --cache-dir "$env:RUNNER_TEMP\nq-cache" | Out-Null
+            --cache --cache-dir "$env:RUNNER_TEMP\nql-cache" | Out-Null
           $jdbc = & $executable 'output json; select 1 into {result.value};' `
             --input-text '{}' `
             --db h2 --database mem:release_smoke
@@ -198,7 +198,7 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
         run: |
           mkdir -p dist
-          tar -C target -czf "dist/nq-${VERSION}-${PLATFORM}.tar.gz" nq
+          tar -C target -czf "dist/nql-${VERSION}-${PLATFORM}.tar.gz" nql
 
       - name: Package Windows executable
         if: matrix.archive == 'zip'
@@ -209,8 +209,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Compress-Archive `
-            -Path target/nq.exe `
-            -DestinationPath "dist/nq-$env:VERSION-$env:PLATFORM.zip"
+            -Path target/nql.exe `
+            -DestinationPath "dist/nql-$env:VERSION-$env:PLATFORM.zip"
 
       - name: Build and smoke-test Chocolatey package
         if: matrix.archive == 'zip'
@@ -221,10 +221,10 @@ jobs:
           $ErrorActionPreference = "Stop"
           $tools = "util\chocolatey\tools"
           New-Item -ItemType Directory -Force -Path $tools | Out-Null
-          Copy-Item target\nq.exe "$tools\nq.exe"
+          Copy-Item target\nql.exe "$tools\nql.exe"
           Copy-Item LICENSE.txt "$tools\LICENSE.txt"
 
-          $exeHash = (Get-FileHash "$tools\nq.exe" -Algorithm SHA256).Hash.ToLower()
+          $exeHash = (Get-FileHash "$tools\nql.exe" -Algorithm SHA256).Hash.ToLower()
           $verification = Get-Content `
             util\chocolatey\VERIFICATION.txt.template -Raw
           $verification = $verification.Replace("__VERSION__", $env:VERSION)
@@ -236,7 +236,7 @@ jobs:
 
           Push-Location util\chocolatey
           try {
-            choco pack nq.nuspec `
+            choco pack nql.nuspec `
               --version $env:VERSION `
               --output-directory ..\..\dist
           } finally {
@@ -244,18 +244,18 @@ jobs:
           }
 
           $source = (Resolve-Path dist).Path
-          choco install nq `
+          choco install nql `
             --version $env:VERSION `
             --source $source `
             --yes `
             --no-progress
           try {
-            $installed = & "$env:ChocolateyInstall\bin\nq.exe" --version
-            if ($installed -ne "nq $env:VERSION") {
+            $installed = & "$env:ChocolateyInstall\bin\nql.exe" --version
+            if ($installed -ne "nql $env:VERSION") {
               throw "Chocolatey package installed unexpected version: $installed"
             }
           } finally {
-            choco uninstall nq --yes --no-progress
+            choco uninstall nql --yes --no-progress
           }
 
       - name: Upload packaged executable
@@ -290,25 +290,25 @@ jobs:
         run: |
           set -euo pipefail
           mvn --batch-mode --no-transfer-progress -DskipTests package
-          jar="target/nq-${VERSION}.jar"
-          test "$(java -jar "$jar" --version)" = "nq $VERSION"
+          jar="target/nql-${VERSION}.jar"
+          test "$(java -jar "$jar" --version)" = "nql $VERSION"
           java -jar "$jar" capabilities > capabilities.json
           grep -F '"command":"capabilities"' capabilities.json
           grep -F '"contract_version":1' capabilities.json
-          java -jar "$jar" docs/examples/identity-country-counts.nq \
+          java -jar "$jar" docs/examples/identity-country-counts.nql \
             docs/examples/identity-customers.json > actual.json
           diff -u \
             <(printf '%s\n' '{"result":{"region":[{"country":"GB","customerCount":2},{"country":"US","customerCount":4}]}}') \
             actual.json
           java -jar "$jar" --cache docs/examples/customers.json \
-            --cache-dir "$RUNNER_TEMP/nq-cache" >/dev/null
+            --cache-dir "$RUNNER_TEMP/nql-cache" >/dev/null
           java -jar "$jar" catalog '*' \
-            --cache-dir "$RUNNER_TEMP/nq-cache" >/dev/null
+            --cache-dir "$RUNNER_TEMP/nql-cache" >/dev/null
           java -jar "$jar" 'output json; select 1 into {result.value};' \
             --db h2 --database mem:release_smoke > jdbc.json
           grep -Fx '{"result":{"value":1}}' jdbc.json
           mkdir -p dist
-          cp "$jar" "dist/nq-${VERSION}-jvm.jar"
+          cp "$jar" "dist/nql-${VERSION}-jvm.jar"
 
       - name: Upload packaged JVM artifact
         uses: actions/upload-artifact@v4
@@ -337,7 +337,7 @@ jobs:
         shell: bash
         run: |
           cd dist
-          sha256sum nq-* nq.*.nupkg > SHA256SUMS
+          sha256sum nql-* nql.*.nupkg > SHA256SUMS
 
       - name: Create or update GitHub release
         env:
@@ -352,7 +352,7 @@ jobs:
           else
             gh release create "$RELEASE_TAG" dist/* \
               --verify-tag \
-              --title "NQ $VERSION" \
+              --title "NQL $VERSION" \
               --generate-notes
           fi
 
@@ -374,7 +374,7 @@ jobs:
       - name: Publish Homebrew formula
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          NQ_RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+          NQL_RELEASE_VERSION: ${{ needs.validate.outputs.version }}
         run: |
           gh auth setup-git --hostname github.com --force
           ./util/build_brew

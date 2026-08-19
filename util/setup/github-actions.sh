@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source_repository="${NQ_SOURCE_REPOSITORY:-blater/nq}"
-tap_repository="${NQ_TAP_REPOSITORY:-blater/homebrew-tap}"
+source_repository="${NQL_SOURCE_REPOSITORY:-blater/nql}"
+tap_repository="${NQL_TAP_REPOSITORY:-blater/homebrew-tap}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 project_dir="$(cd "$script_dir/../.." && pwd)"
 

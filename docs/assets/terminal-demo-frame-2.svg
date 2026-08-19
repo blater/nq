@@ -3,9 +3,9 @@
   <rect width="1000" height="58" rx="22" fill="#182036"/>
   <rect y="38" width="1000" height="20" fill="#182036"/>
   <circle cx="31" cy="29" r="8" fill="#ff5f57"/><circle cx="57" cy="29" r="8" fill="#febc2e"/><circle cx="83" cy="29" r="8" fill="#28c840"/>
-  <text x="500" y="36" text-anchor="middle" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">NQ — SQL for nested data</text>
+  <text x="500" y="36" text-anchor="middle" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">NQL — SQL for nested data</text>
   <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">
-    <text x="34" y="96" fill="#65d1ff">$</text><text x="58" y="96" fill="#f8fafc">cat identity-country-counts.nq</text>
+    <text x="34" y="96" fill="#65d1ff">$</text><text x="58" y="96" fill="#f8fafc">cat identity-country-counts.nql</text>
     <text x="34" y="140" fill="#c084fc">select</text>
     <text x="58" y="175" fill="#f8fafc">a.country_code </text><text x="262" y="175" fill="#c084fc">into</text><text x="322" y="175" fill="#fbbf24"> {result.region.country},</text>
     <text x="58" y="210" fill="#f8fafc">count(distinct c.id) </text><text x="310" y="210" fill="#c084fc">into</text><text x="370" y="210" fill="#fbbf24"> {result.region.customerCount}</text>

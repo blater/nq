@@ -8,10 +8,10 @@ cd "$script_dir"
 export GRAALVM_HOME="$graalvm_home"
 export PATH="$GRAALVM_HOME/bin:$PATH"
 
-printf '==> Building NQ executable with %s\n' "$GRAALVM_HOME"
+printf '==> Building NQL executable with %s\n' "$GRAALVM_HOME"
 mvn -Pnative,jdbc-common -DskipTests clean package
 
-[[ -x target/nq ]] || {
-  printf 'Error: Expected executable was not produced at %s/target/nq.\n' "$script_dir" >&2
+[[ -x target/nql ]] || {
+  printf 'Error: Expected executable was not produced at %s/target/nql.\n' "$script_dir" >&2
   exit 1
 }

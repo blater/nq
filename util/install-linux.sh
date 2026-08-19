@@ -9,25 +9,25 @@ die() {
 [ "$(uname -s)" = "Linux" ] || die "This installer supports Linux only."
 case "$(uname -m)" in
   x86_64|amd64) ;;
-  *) die "NQ releases currently support Linux x64 only." ;;
+  *) die "NQL releases currently support Linux x64 only." ;;
 esac
 
 for command in curl tar awk; do
   command -v "$command" >/dev/null 2>&1 || die "$command is required."
 done
 
-version="${NQ_VERSION:-}"
+version="${NQL_VERSION:-}"
 if [ -z "$version" ]; then
   latest_url="$(curl -fsSL -o /dev/null -w '%{url_effective}' \
-    https://github.com/blater/nq/releases/latest)"
+    https://github.com/blater/nql/releases/latest)"
   version="${latest_url##*/v}"
 fi
 version="${version#v}"
 
-asset="nq-$version-linux-x64.tar.gz"
-release="https://github.com/blater/nq/releases/download/v$version"
-install_dir="${NQ_INSTALL_DIR:-$HOME/.local/bin}"
-temp="$(mktemp -d "${TMPDIR:-/tmp}/nq-install.XXXXXX")"
+asset="nql-$version-linux-x64.tar.gz"
+release="https://github.com/blater/nql/releases/download/v$version"
+install_dir="${NQL_INSTALL_DIR:-$HOME/.local/bin}"
+temp="$(mktemp -d "${TMPDIR:-/tmp}/nql-install.XXXXXX")"
 trap 'rm -rf "$temp"' EXIT HUP INT TERM
 
 curl -fsSL "$release/$asset" -o "$temp/$asset"
@@ -45,13 +45,13 @@ fi
 [ "$actual" = "$expected" ] || die "Checksum verification failed for $asset."
 
 tar -xzf "$temp/$asset" -C "$temp"
-[ -f "$temp/nq" ] || die "$asset does not contain nq."
+[ -f "$temp/nql" ] || die "$asset does not contain nql."
 mkdir -p "$install_dir"
-cp "$temp/nq" "$install_dir/nq"
-chmod 755 "$install_dir/nq"
+cp "$temp/nql" "$install_dir/nql"
+chmod 755 "$install_dir/nql"
 
-printf 'Installed nq %s at %s/nq\n' "$version" "$install_dir"
+printf 'Installed nql %s at %s/nql\n' "$version" "$install_dir"
 case ":${PATH:-}:" in
   *":$install_dir:"*) ;;
-  *) printf 'Add %s to PATH to run nq directly.\n' "$install_dir" ;;
+  *) printf 'Add %s to PATH to run nql directly.\n' "$install_dir" ;;
 esac

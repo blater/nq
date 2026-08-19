@@ -1,4 +1,4 @@
-# NQ shell completion
+# NQL shell completion
 
 Completion definitions cover the stable command-line options and help topics.
 They do not inspect live databases or input files.
@@ -8,19 +8,19 @@ They do not inspect live databases or input files.
 For the current shell:
 
 ```bash
-source util/completions/nq.bash
+source util/completions/nql.bash
 ```
 
-For future shells, copy `nq.bash` to a completion directory used by your Bash
+For future shells, copy `nql.bash` to a completion directory used by your Bash
 installation.
 
 ## Zsh
 
-Place `_nq` in a directory on `$fpath`, then rebuild the completion cache:
+Place `_nql` in a directory on `$fpath`, then rebuild the completion cache:
 
 ```zsh
 mkdir -p ~/.zsh/completions
-cp util/completions/_nq ~/.zsh/completions/
+cp util/completions/_nql ~/.zsh/completions/
 fpath=(~/.zsh/completions $fpath)
 autoload -Uz compinit && compinit
 ```
@@ -29,5 +29,5 @@ autoload -Uz compinit && compinit
 
 ```fish
 mkdir -p ~/.config/fish/completions
-cp util/completions/nq.fish ~/.config/fish/completions/
+cp util/completions/nql.fish ~/.config/fish/completions/
 ```
