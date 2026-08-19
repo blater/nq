@@ -1,0 +1,9 @@
+output json;
+
+select
+  region,
+  count(*) as sale_count,
+  sum(amount) as revenue
+from item
+group by region
+order by region;

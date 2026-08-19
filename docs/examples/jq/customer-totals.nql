@@ -1,0 +1,10 @@
+output json;
+
+select
+  c.name as customer,
+  count(p.id) as order_count,
+  coalesce(sum(p.amount), 0) as total
+from customer c
+left join purchase p on p.customer_id = c.id
+group by c.id, c.name
+order by c.id;

@@ -4,12 +4,11 @@ import blater.nql.testsupport.CliTestHarness;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static blater.nql.testsupport.CliTestHarness.captureStdout;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class JsonTypeAndIdentifierE2ETest {
@@ -62,20 +61,4 @@ class JsonTypeAndIdentifierE2ETest {
             "run", "--script-text", script, "--input-file", input.toString())));
   }
 
-  private String captureStdout(ThrowingRunnable runnable) throws Exception {
-    PrintStream original = System.out;
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
-    try (PrintStream capture = new PrintStream(output, true, StandardCharsets.UTF_8)) {
-      System.setOut(capture);
-      runnable.run();
-    } finally {
-      System.setOut(original);
-    }
-    return output.toString(StandardCharsets.UTF_8);
-  }
-
-  @FunctionalInterface
-  private interface ThrowingRunnable {
-    void run() throws Exception;
-  }
 }

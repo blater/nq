@@ -4,6 +4,7 @@ import blater.nql.domain.ScalarKind;
 
 import lombok.AllArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -39,7 +40,12 @@ public class QueryResultRow {
    */
   public String getStringValue(final String columnName) {
     final Object val = getValue(columnName);
-    return val == null ? "" : val instanceof LocalDateTime time ? TIMESTAMP.format(time) : val.toString();
+    return switch (val) {
+      case null -> "";
+      case BigDecimal decimal -> decimal.toPlainString();
+      case LocalDateTime time -> TIMESTAMP.format(time);
+      default -> val.toString();
+    };
   }
 
   public boolean isNull(final String columnName) {

@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "Ada, \"Ace\"",
+    "city": "Zürich",
+    "active": true,
+    "note": null,
+    "meta": {
+      "empty_object": {},
+      "empty_array": []
+    }
+  },
+  {
+    "id": 2,
+    "name": "Björk",
+    "city": "Reykjavík",
+    "active": false,
+    "note": "line one\nline two"
+  },
+  {
+    "id": 3,
+    "name": "水 😀",
+    "city": "東京",
+    "active": true
+  }
+]

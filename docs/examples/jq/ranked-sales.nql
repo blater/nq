@@ -1,0 +1,12 @@
+output json;
+
+select
+  region,
+  rep,
+  amount,
+  row_number() over (
+    partition by region
+    order by amount desc, rep
+  ) as sales_rank
+from item
+order by region, sales_rank;

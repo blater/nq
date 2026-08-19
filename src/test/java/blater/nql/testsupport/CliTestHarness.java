@@ -4,7 +4,10 @@ import blater.nql.NqlApplication;
 import blater.nql.execution.InputEnvironment;
 import blater.nql.execution.StdinDisposition;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
 /** Runs the real application boundary without terminating the shared test JVM. */
 public final class CliTestHarness {
@@ -17,6 +20,18 @@ public final class CliTestHarness {
 
   public static void runWithRedirectedInput(String... arguments) {
     runWithDisposition(StdinDisposition.REDIRECTED, arguments);
+  }
+
+  public static synchronized String captureStdout(Runnable action) {
+    PrintStream originalOut = System.out;
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    try (PrintStream capture = new PrintStream(buffer, true, StandardCharsets.UTF_8)) {
+      System.setOut(capture);
+      action.run();
+    } finally {
+      System.setOut(originalOut);
+    }
+    return buffer.toString(StandardCharsets.UTF_8);
   }
 
   private static void runWithDisposition(

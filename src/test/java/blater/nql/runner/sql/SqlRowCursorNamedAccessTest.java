@@ -9,6 +9,7 @@ import blater.nql.testsupport.H2Database;
 import blater.nql.util.Template;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -96,5 +97,23 @@ class SqlRowCursorNamedAccessTest {
     );
     assertEquals("", row.getStringValue("nullable"));
     assertTrue(row.isNull("nullable"));
+  }
+
+  @Test
+  void decimalValuesUsePlainNotation() {
+    QueryResultRow row = new QueryResultRow(Map.of(
+        "whole", QueryColumn.builder()
+            .columnName("whole")
+            .sqlType(SqlType.NUMBER)
+            .columnValue(new BigDecimal("2.5E+2"))
+            .build(),
+        "fraction", QueryColumn.builder()
+            .columnName("fraction")
+            .sqlType(SqlType.NUMBER)
+            .columnValue(new BigDecimal("1E-7"))
+            .build()));
+
+    assertEquals("250", row.getStringValue("whole"));
+    assertEquals("0.0000001", row.getStringValue("fraction"));
   }
 }

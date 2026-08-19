@@ -1,0 +1,7 @@
+[
+  {"id": 1, "region": "north", "rep": "Ada", "amount": 120.5},
+  {"id": 2, "region": "north", "rep": "Grace", "amount": 75},
+  {"id": 3, "region": "south", "rep": "Linus", "amount": 2e2},
+  {"id": 4, "region": "south", "rep": "Margaret", "amount": 5e1},
+  {"id": 5, "region": "north", "rep": "Alan", "amount": 120.5}
+]

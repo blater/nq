@@ -1,0 +1,12 @@
+{
+  "customer": [
+    {"id": "C1", "name": "Ada"},
+    {"id": "C2", "name": "Grace"},
+    {"id": "C3", "name": "Alan"}
+  ],
+  "purchase": [
+    {"id": "P1", "customer_id": "C1", "amount": 1.25e1},
+    {"id": "P2", "customer_id": "C1", "amount": 7.5},
+    {"id": "P3", "customer_id": "C2", "amount": 3e1}
+  ]
+}
