@@ -167,6 +167,9 @@ public final class HierarchyCacheLoader {
     if (node.isAttribute()) {
       return false;
     }
+    if (node.isCollection() && node.getChildren().isEmpty()) {
+      return false;
+    }
     boolean emptyObject = !root && !node.hasValue() && node.getChildren().isEmpty();
     return !valuesByName.isEmpty() || (!root && (!objectChildren.isEmpty() || emptyObject));
   }

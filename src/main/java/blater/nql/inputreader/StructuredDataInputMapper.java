@@ -64,6 +64,7 @@ final class StructuredDataInputMapper {
     }
 
     if (value instanceof List<?> array) {
+      node.setCollection(true);
       for (Object item : array) {
         Node child = toNode(ARRAY_ITEM, item, parameters);
         child.setArrayItem(true);
@@ -91,6 +92,9 @@ final class StructuredDataInputMapper {
       Map<String, String> parameters) {
     if (!(value instanceof List<?> array)) {
       return List.of(toNode(name, value, parameters));
+    }
+    if (array.isEmpty()) {
+      return List.of(toNode(name, array, parameters));
     }
     List<Node> nodes = new ArrayList<>(array.size());
     for (Object item : array) {
